@@ -1,7 +1,7 @@
 package clcv2
 
 import (
-	"terminal"
+	"github.com/grrtrr/clcv2/utils"
 	"time"
 	"flag"
 	"fmt"
@@ -72,7 +72,7 @@ func resolveUserAndPass() (username, password string, err error) {
 		username = os.Getenv("CLC_V2_API_USERNAME")
 	}
 	if username == "" {
-		if username, err = terminal.PromptInput(prompt); err != nil {
+		if username, err = utils.PromptInput(prompt); err != nil {
 			return
 		}
 		prompt = "Password"
@@ -85,7 +85,7 @@ func resolveUserAndPass() (username, password string, err error) {
 		password = os.Getenv("CLC_V2_API_PASSWORD")
 	}
 	if password == "" {
-		if password, err = terminal.GetPass(prompt); err != nil {
+		if password, err = utils.GetPass(prompt); err != nil {
 			return
 		}
 	}
