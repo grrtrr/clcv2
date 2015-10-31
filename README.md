@@ -7,8 +7,8 @@ It is _not yet complete_. Contributions are welcome.
 ### Getting started
 
 Get this package from inside your `$GOPATH`:
-```sh
-> go get -d   github.com/grrtrr/clcv2
+```bash
+> go get -d  github.com/grrtrr/clcv2
 ```
 
 Try some of the examples in the `examples/` folder. These illustrate individual API calls.
@@ -24,9 +24,9 @@ _Credentials_ can be passed in one of two forms:
   + `CLC_V2_API_USERNAME=<CLC-Portal-Username>`,
   + `CLC_V2_API_PASSWORD=<CLC-Portal-Password>`.
 
-***Caveat***: Be careful with the credentials. Using 3 times the wron username and/or password will cause the account to be blocked.
+***Caveat***: Be careful with the credentials. Using 3 times the wrong username and/or password will cause the account to be locked.
 
 ### TODO
 
 This is as yet a partial implementation. Also many examples are missing.
-After that, refactoring is desirable. Would be good to store bearer tokens on disk (they are good up to 2 weeks).
+After that, refactoring is desirable. Would be good to store bearer tokens on disk (they are good up to circa 2 weeks).
