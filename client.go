@@ -1,7 +1,6 @@
 package clcv2
 
 import (
-	"github.com/grrtrr/clcv2/utils"
 	"net/http/httputil"
 	"encoding/json"
 	"io/ioutil"
@@ -41,34 +40,6 @@ func init() {
 	flag.DurationVar(&g_timeout, "timeout", 180 * time.Second, "Client default timeout")
 }
 
-/*
- * Client Authentication
- */
-type LoginReq struct {
-	// Control Portal user name value.
-	Username	string	`json:"username"`
-	// Control Portal password value.
-	Password	string	`json:"password"`
-}
-
-type LoginRes struct {
-	// Control Portal user name value
-	UserName      string	`json: "userName"`
-
-	// Account that contains this user record
-	AccountAlias  string	`json: "accountAlias"`
-
-	// Default data center of the user
-	LocationAlias string	`json: "locationAlias"`
-
-	// Permission roles associated with this user
-	Roles         []string	`json: "roles"`
-
-	// Security token for this user that is included in the Authorization header
-	// for all other API requests as "Bearer [LONG TOKEN VALUE]".
-	BearerToken   string	`json: "bearerToken"`
-}
-
 type Client struct {
 	requestor	Requestor
 
@@ -79,70 +50,23 @@ type Client struct {
 	 Log        *log.Logger
 }
 
-/**
- * Support multiple ways of resolving the username and password
- * 1. directly (pass-through),
- * 2. command-line flags (g_user, g_pass),
- * 3. environment variables (CLC_V2_API_USERNAME/PASSWORD),
- * 4. prompt for values
- */
-func resolveUserAndPass() (username, password string, err error) {
-	var prompt string = "Username"
+// Return authenticated client
+// The environment variable CLC_ALIAS, if set, is allowed to override the default LocationAlias.
+func NewClient() (client *Client, err error) {
+	client = &Client{ requestor: &http.Client{Timeout: g_timeout} }
 
-	username = g_user
-	if username == "" {
-		username = os.Getenv("CLC_V2_API_USERNAME")
-	}
-	if username == "" {
-		if username, err = utils.PromptInput(prompt); err != nil {
-			return
-		}
-		prompt = "Password"
+	if g_debug {
+		client.Log = log.New(os.Stdout, "", log.Ltime | log.Lshortfile)
 	} else {
-		prompt = fmt.Sprintf("Password for %s", username)
+		client.Log = log.New(ioutil.Discard, "", 0)
 	}
 
-	password = g_pass
-	if password == "" {
-		password = os.Getenv("CLC_V2_API_PASSWORD")
-	}
-	if password == "" {
-		if password, err = utils.GetPass(prompt); err != nil {
-			return
-		}
-	}
-	return
-}
-
-/* Log in after resolving username and password, update client's LoginRes credentials. */
-func (c *Client) login() (err error) {
-	username, password, err := resolveUserAndPass()
-	if err != nil {
+	if err = client.loadCredentials(); err != nil {
 		return
 	}
-	c.LoginRes = new(LoginRes)
-	err = c.getResponse("POST", "/v2/authentication/login", &LoginReq{ username, password }, c.LoginRes)
-	return
-}
 
-/* Return authenticated client */
-func NewClient(creds *LoginRes, logger *log.Logger) (*Client, error) {
-	if g_debug {
-		logger = log.New(os.Stdout, "", log.Ltime | log.Lshortfile)
-	} else if logger == nil {
-		logger = log.New(ioutil.Discard, "", log.Ltime | log.Lshortfile)
-	}
-
-	client := &Client{
-		requestor: &http.Client{Timeout: g_timeout},
-		LoginRes:  creds,
-		Log:       logger,
-	}
-
-	if creds == nil {
-		if err := client.login(); err != nil {
-			return nil, err
-		}
+	if alias := os.Getenv("CLC_ALIAS"); alias != "" {
+		client.LoginRes.LocationAlias = alias
 	}
 	client.requestor = Authorization("Bearer " + client.BearerToken)(client.requestor)
 	return client, nil
@@ -256,4 +180,3 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 	}
 	return
 }
-
