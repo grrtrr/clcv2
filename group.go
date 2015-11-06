@@ -93,7 +93,9 @@ func visitGroup(g *Group, res chan *Group, found func(*Group) bool) {
 // @found:     Function returning true if the passed Group qualifies.
 // Returns array of pointers to Group; or error on failure.
 func (c *Client) GetGroupsFiltered(location string, found func(*Group) bool) (res []*Group, err error) {
-	if rootNode, err := c.GetGroups(location); err == nil {
+	var rootNode Group
+
+	if rootNode, err = c.GetGroups(location); err == nil {
 		resultChan := make(chan *Group)
 		go func() {
 			visitGroup(&rootNode, resultChan, found)
@@ -111,12 +113,12 @@ func (c *Client) GetGroupsFiltered(location string, found func(*Group) bool) (re
 // @found:     Function returning true if the passed Hardware Group is the one looked for.
 // Returns pointer to Group, nil if not found; or error on failure.
 func (c *Client) GetGroupFiltered(location string, found func(*Group) bool) (res *Group, err error) {
-	if groups, err := c.GetGroupsFiltered(location, found); err == nil {
-		if len(groups) == 1 {
-			res = groups[0]
-		} else if len(groups) > 1 {
-			return nil, fmt.Errorf("Ambiguous - %d matching groups found at %s", len(groups), location)
-		}
+	if groups, err := c.GetGroupsFiltered(location, found); err != nil {
+		return nil, err
+	} else if len(groups) == 1 {
+		res = groups[0]
+	} else if len(groups) > 1 {
+		return nil, fmt.Errorf("Ambiguous - %d matching groups found at %s", len(groups), location)
 	}
 	return
 }
