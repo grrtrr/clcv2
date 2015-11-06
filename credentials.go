@@ -54,6 +54,11 @@ func (c *Client) login() error {
 	return c.LoginRes.saveCredentials()
 }
 
+// Remove (stale) credentials
+func (c *Client) destroyCredentials() {
+	os.Remove(defaultCredentialsPath())
+}
+
 // Try to load credentials from file at default path, or do a fresh login.
 func (c *Client) loadCredentials() error {
 	var path = defaultCredentialsPath()

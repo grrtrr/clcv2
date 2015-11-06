@@ -135,6 +135,10 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 					  res.ContentLength)
 		}
 		return nil
+	case 401:
+		/* Unauthorized: only destroy credentials, resist temptation to re-authenticate here for now. */
+		c.destroyCredentials()
+		return fmt.Errorf("Credentials are stale, please try again to re-authenticate.")
 	}
 
 	if res.ContentLength > 0 {
