@@ -27,9 +27,19 @@ type Link struct {
 	// Valid HTTP verbs that can act on this resource.
 	// If none are explicitly listed, GET is assumed to be the only one.
 	Verbs	[]string
-
 }
 
 func (l *Link) String() string {
 	return fmt.Sprintf("%s: %s %s", l.Rel, l.Href, strings.Join(l.Verbs, ", "))
+}
+
+// Extract Link whose 'Rel' field matches @rel_type, return nil if none found.
+func extractLink(from []Link, rel_type string) (*Link, error) {
+	for _, l := range from {
+		if l.Rel == rel_type {
+			return &l, nil
+		}
+	}
+	return nil, fmt.Errorf("No link with Rel=%s found in %+v", rel_type, from)
+
 }
