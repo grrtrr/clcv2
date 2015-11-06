@@ -64,9 +64,6 @@ func main() {
 
 		}
 
-		fmt.Println(server.LocationId)
-
-
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
@@ -74,7 +71,7 @@ func main() {
 
 		table.SetHeader([]string{
 			"Name", "Group", "Description", "OS",
-			"CPU", "Disk",
+			"CPU", "Mem/GB",
 			"IP", "Power", "Last Change",
 		})
 
@@ -90,7 +87,7 @@ func main() {
 
 		table.Append([]string{
 			server.Name, grp.Name, server.Description, server.OsType,
-			fmt.Sprint(server.Details.Cpu),	fmt.Sprintf("%dGB", server.Details.StorageGb),
+			fmt.Sprint(server.Details.Cpu),	fmt.Sprintf("%d", server.Details.MemoryMb/1024),
 			strings.Join(IPs, " "),
 			server.Details.PowerState, modifiedStr,
 		})
@@ -111,14 +108,15 @@ func main() {
 		table.Render()
 
 		// Partitions
+		fmt.Printf("Disks of %s:\n", server.Name)
 		table = tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_RIGHT)
 		table.SetAutoWrapText(true)
 
-		table.SetHeader([]string{ "Partition Size/GB", "Partition Path" })
+		table.SetHeader([]string{ "Partition Path", "Partition Size/GB" })
 		for _, p := range server.Details.Partitions {
-			table.Append([]string{ fmt.Sprintf("%.1f", p.SizeGb), p.Path })
+			table.Append([]string{ p.Path, fmt.Sprintf("%.1f", p.SizeGb) })
 		}
 		table.Render()
 	}
