@@ -39,5 +39,5 @@ func main() {
 	}
 
 	fmt.Printf("Status: %s\n", status)
-	fmt.Println(status == clcv2.Succeeded)
+//	fmt.Println(status == clcv2.Succeeded)
 }
