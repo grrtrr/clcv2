@@ -11,7 +11,6 @@ import (
 	"time"
 	"path"
 	"flag"
-	"log"
 	"fmt"
 	"os"
 )
@@ -47,7 +46,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	client, err := clcv2.NewClient(nil, log.New(os.Stdout, "", log.LstdFlags | log.Ltime))
+	client, err := clcv2.NewClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}

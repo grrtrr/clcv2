@@ -8,7 +8,6 @@ import (
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
 	"flag"
-	"log"
 	"os"
 )
 
@@ -17,7 +16,7 @@ func main() {
 
 	flag.Parse()
 
-	client, err := clcv2.NewClient(nil, log.New(os.Stdout, "", log.LstdFlags | log.Ltime))
+	client, err := clcv2.NewClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
