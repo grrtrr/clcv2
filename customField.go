@@ -39,7 +39,6 @@ type AccountCustomField struct {
 	Options		[]struct { Name, Value string }
 }
 
-
 // Retrieve the custom field(s) defined for a given account.
 // @acctAlias: Short code for a particular account (leave empty to use default account alias)
 func (c *Client) GetCustomFields(acctAlias string) (res []AccountCustomField, err error) {
@@ -48,4 +47,14 @@ func (c *Client) GetCustomFields(acctAlias string) (res []AccountCustomField, er
 	}
 	err = c.getResponse("GET", fmt.Sprintf("/v2/accounts/%s/customFields", acctAlias), nil, &res)
 	return
+}
+
+/* Simplified struct, to be used e.g. in Group operations */
+type SimpleCustomField struct {
+	// ID of the custom field to set.
+	// Available custom field IDs can be retrieved from the Get Custom Fields API operation.
+	Id	string	`json:"id"`
+
+	// Value to set the custom field to for this server.
+	Value	string	`json:"value"`
 }
