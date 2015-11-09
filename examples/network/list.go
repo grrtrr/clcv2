@@ -35,7 +35,7 @@ func main() {
 
 	networks, err := client.GetNetworks(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to list account networks: %s", err)
+		exit.Fatalf("Failed to list networks: %s", err)
 	}
 
 	if len(networks) == 0 {

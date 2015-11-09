@@ -2,6 +2,7 @@ package clcv2
 
 import (
 	"fmt"
+	"net"
 )
 
 /*
@@ -41,4 +42,21 @@ type Network struct {
 func (c *Client) GetNetworks(location string) (nets []Network, err error) {
 	err = c.getResponse("GET", fmt.Sprintf("/v2-experimental/networks/%s/%s", c.AccountAlias, location), nil, &nets)
 	return
+}
+
+// Utility routine to look up a network by member IP @ips in @networks.
+// Return pointer to matching network if found, else nil.
+func NetworkByIP(ips string, networks []Network) (*Network, error) {
+	ip := net.ParseIP(ips)
+	if ip == nil {
+		return nil, fmt.Errorf("Invalid IP address %s", ips)
+	}
+	for i := range networks {
+		if _, net, err := net.ParseCIDR(networks[i].Cidr); err != nil {
+			return nil, fmt.Errorf("Failed to parse CIDR %s: %s", networks[i].Cidr, err)
+		} else if net.Contains(ip) {
+			return &networks[i], nil
+		}
+	}
+	return nil, nil
 }

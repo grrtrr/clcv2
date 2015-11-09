@@ -6,9 +6,9 @@ package main
 import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/dustin/go-humanize"
-	"github.com/grrtrr/clcv2/utils"
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
+	"github.com/kr/pretty"
 	"encoding/hex"
 	"strings"
 	"path"
@@ -42,7 +42,7 @@ func main() {
 	}
 
 	if *simple {
-		utils.PrintStruct(server.Details)
+		pretty.Println(server)
 	} else {
 		grp, err := client.GetGroup(server.GroupId)
 		if err != nil {
@@ -107,16 +107,18 @@ func main() {
 		table.Render()
 
 		// Partitions
-		fmt.Printf("Disks of %s:\n", server.Name)
-		table = tablewriter.NewWriter(os.Stdout)
-		table.SetAutoFormatHeaders(false)
-		table.SetAlignment(tablewriter.ALIGN_RIGHT)
-		table.SetAutoWrapText(true)
+		if len(server.Details.Partitions) > 0 {
+			fmt.Printf("Partitions of %s:\n", server.Name)
+			table = tablewriter.NewWriter(os.Stdout)
+			table.SetAutoFormatHeaders(false)
+			table.SetAlignment(tablewriter.ALIGN_RIGHT)
+			table.SetAutoWrapText(true)
 
-		table.SetHeader([]string{ "Partition Path", "Partition Size/GB" })
-		for _, p := range server.Details.Partitions {
-			table.Append([]string{ p.Path, fmt.Sprintf("%.1f", p.SizeGb) })
+			table.SetHeader([]string{ "Partition Path", "Partition Size/GB" })
+			for _, p := range server.Details.Partitions {
+				table.Append([]string{ p.Path, fmt.Sprintf("%.1f", p.SizeGb) })
+			}
+			table.Render()
 		}
-		table.Render()
 	}
 }
