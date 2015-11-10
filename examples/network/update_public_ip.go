@@ -1,5 +1,5 @@
 /*
- * Update an existing public IP address of a server.
+ * Configure firewall settings of a public IP Address.
  */
 package main
 

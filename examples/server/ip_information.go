@@ -60,19 +60,19 @@ func main() {
 		}
 		fmt.Printf("Private IPs: %s\n", strings.Join(private_ips, ", "))
 */
-		
+
 	for _, ip_string := range private_ips {
 		n, err := clcv2.NetworkByIP(ip_string, networks)
 		if err != nil {
 			exit.Fatalf("Failed to identify network for %s: %s", ip_string, err)
 		}
-		
+
 		fmt.Printf("Network for %s of %s in %s:\n", ip_string, server.Name, server.LocationId)
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_RIGHT)
 		table.SetAutoWrapText(true)
-			
+
 		table.SetHeader([]string{
 			"Name", "Description", "Type", "ID",
 			"CIDR", "Netmask", "Gateway", "VLAN",

@@ -45,13 +45,13 @@ func main() {
 	} else {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
+		table.SetAlignment(tablewriter.ALIGN_RIGHT)
 		table.SetAutoWrapText(false)
 
-		table.SetHeader([]string{ "CIDR", "Gateway", "VLAN", "Name", "Description", "ID" })
+		table.SetHeader([]string{ "ID", "Name", "Description",  "Type", "CIDR", "Gateway", "VLAN" })
 		for _, l := range networks {
-			table.Append([]string{ l.Cidr, l.Gateway, fmt.Sprint(l.Vlan),
-				               l.Name, l.Description, l.Id })
+			table.Append([]string{ l.Id, l.Name, l.Description, l.Type,
+					       l.Cidr, l.Gateway, fmt.Sprint(l.Vlan) })
 		}
 		table.Render()
 	}
