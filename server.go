@@ -33,14 +33,7 @@ type Server struct {
 	// Resource allocations, alert policies, snapshots, and more.
 	Details		struct {
 		// Details about IP addresses associated with the server
-		IpAddresses		[]struct{
-			// Private IP address.
-			Internal	string
-
-			// If applicable, the public IP
-			// If associated with a public IP address, then the "public" value is populated
-			Public		string
-		}
+		IpAddresses		[]ServerIPAddress
 
 		// Describe each alert policy applied to the server
 		AlertPolicies		[]struct{
@@ -122,6 +115,15 @@ type Server struct {
 
 	// Collection of entity links that point to resources related to this server
 	Links		[]Link
+}
+
+type ServerIPAddress struct{
+	// Private IP address.
+	Internal	string
+
+	// If applicable, the public IP
+	// If associated with a public IP address, then the "public" value is populated
+	Public		string
 }
 
 // Query Server details by URI path.
