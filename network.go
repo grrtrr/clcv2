@@ -92,6 +92,14 @@ func (c *Client) UpdateNetwork(datacentre, network, name, description string) er
 	} { name, description }, nil)
 }
 
+// Utility routine to extract only the list of IP addresses from @detailsList
+func ExtractIPs(detailsList []IpAddressDetails) (ips []string) {
+	for _, ip := range detailsList {
+		ips = append(ips, ip.Address)
+	}
+	return
+}
+
 // Utility routine to look up a network by member IP @ips in @networks.
 // Return pointer to matching network if found, else nil.
 func NetworkByIP(ips string, networks []Network) (*Network, error) {

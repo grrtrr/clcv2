@@ -5,6 +5,7 @@ package main
 
 import (
 	"github.com/olekukonko/tablewriter"
+	"github.com/grrtrr/clcv2/utils"
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
 	"github.com/kr/pretty"
@@ -47,6 +48,11 @@ func main() {
 		println("Empty result.")
 	} else if *simple {
 		pretty.Println(details)
+	} else if *query == "free" {
+		fmt.Printf("Free IP addresses on %s (%s):\n", details.Cidr, details.Name)
+		for _, rng := range utils.CollapseIpRanges(clcv2.ExtractIPs(details.IpAddresses)) {
+			fmt.Println(rng)
+		}
 	} else {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
@@ -54,11 +60,6 @@ func main() {
 		table.SetAutoWrapText(false)
 
 		switch *query {
-		case "free":
-			table.SetHeader([]string{ "Address" })
-			for _, i := range details.IpAddresses {
-				table.Append([]string{ i.Address })
-			}
 		case "claimed":
 			table.SetAlignment(tablewriter.ALIGN_LEFT)
 			table.SetHeader([]string{ "Address", "Server" })
