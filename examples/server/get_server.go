@@ -94,7 +94,7 @@ func main() {
 
 
 		// Disks
-		fmt.Printf("Disks of %s (total storage: %d GB)\n", server.Name, server.Details.StorageGb)
+		fmt.Printf("\nDisks of %s (total storage: %d GB)\n", server.Name, server.Details.StorageGb)
 		table = tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_RIGHT)
@@ -108,7 +108,7 @@ func main() {
 
 		// Partitions
 		if len(server.Details.Partitions) > 0 {
-			fmt.Printf("Partitions of %s:\n", server.Name)
+			fmt.Printf("\nPartitions of %s:\n", server.Name)
 			table = tablewriter.NewWriter(os.Stdout)
 			table.SetAutoFormatHeaders(false)
 			table.SetAlignment(tablewriter.ALIGN_RIGHT)
@@ -117,6 +117,22 @@ func main() {
 			table.SetHeader([]string{ "Partition Path", "Partition Size/GB" })
 			for _, p := range server.Details.Partitions {
 				table.Append([]string{ p.Path, fmt.Sprintf("%.1f", p.SizeGb) })
+			}
+			table.Render()
+		}
+
+		// Snapshots
+		if len(server.Details.Snapshots) > 0 {
+			fmt.Println()
+
+			table = tablewriter.NewWriter(os.Stdout)
+			table.SetAutoFormatHeaders(false)
+			table.SetAlignment(tablewriter.ALIGN_CENTRE)
+			table.SetAutoWrapText(true)
+
+			table.SetHeader([]string{ fmt.Sprintf("Snapshots of %s", server.Name) })
+			for _, s := range server.Details.Snapshots {
+				table.Append([]string{ s.Name })
 			}
 			table.Render()
 		}

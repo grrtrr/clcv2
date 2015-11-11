@@ -85,14 +85,7 @@ type Server struct {
 		}
 
 		// Details about any snapshot associated with the server
-		Snapshots		[]struct{
-			// Timestamp of the snapshot
-			// FIXME: maybe time.Time?
-			Name	string
-
-			// Collection of entity links that point to resources related to this snapshot
-			Links	[]Link
-		}
+		Snapshots		[]ServerSnapshot
 
 		// Details about any custom fields and their values
 		CustomFields		[]CustomField
@@ -134,11 +127,10 @@ func (c *Client) GetServerByURI(path string) (res Server, err error) {
 }
 
 // Get the details for a individual server.
-// @serverId: ID/name of the server being queried (e.g. WA1DTGDFEDAD0
+// @serverId: name of the server being queried (e.g. WA1DTGDFEDAD0
 func (c *Client) GetServer(serverId string) (res Server, err error) {
 	return c.GetServerByURI(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId))
 }
-
 
 /*
  * Create Server
@@ -213,7 +205,7 @@ type CreateServerReq struct {
 	AdditionalDisks		[]ServerDisk		`json:"additionalDisks"`
 
 	// Date/time that the server should be deleted (ignored for bare metal servers)
-	Ttl			time.Time		`json:"ttl"`
+	Ttl			*time.Time		`json:"ttl"`
 
 	// Collection of packages to run on the server after it has been built (ignored for bare metal servers)
 	Packages		[]struct {
@@ -425,4 +417,102 @@ func (c *Client) ServerSetDescription(serverId, desc string) error {
 func (c *Client) ServerSetGroup(serverId, parentUUID string) error {
 	return c.patch(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId),
 		       &PatchOperation{ "set", "groupId", parentUUID })
+}
+
+/*
+ * Server Snapshots
+ */
+type ServerSnapshot struct{
+	// Timestamp of the snapshot (non-standard format)
+	Name	string
+
+	// Collection of entity links that point to resources related to this snapshot
+	Links	[]Link
+}
+
+// Return the single snapshot of a server, nil if none exists, or error.
+// @serverId: name of the server to query
+// FIXME: current (Nov 2015) CLC policy is to keep a single snapshot.
+//        This may or may not change in the future.
+func (c *Client) GetServerSnapshot(serverId string) (sn *ServerSnapshot, err error) {
+	if server, err := c.GetServer(serverId); err != nil {
+		return nil, err
+	} else if len(server.Details.Snapshots) == 0 {
+		return nil, nil
+	} else if len(server.Details.Snapshots) > 1 {
+		return nil, fmt.Errorf("%s unexpectedly has more (%d) than one snapshot",
+				      serverId, len(server.Details.Snapshots))
+	} else {
+		return &server.Details.Snapshots[0], nil
+	}
+}
+
+// Send the create snapshot operation to a list of servers (along with the number of days
+// to keep the snapshot for) and adds operation to queue.
+// @serverId:   Server name to perform create snapshot operation on.
+// @daysToKeep: Number of days to keep the snapshot(s) for (must be between 1 and 10).
+func (c *Client) SnapshotServer(serverId string, daysToKeep int) (statusId string, err error) {
+	var status []ServerStatus
+	var link *Link
+
+	var path = fmt.Sprintf("/v2/operations/%s/servers/createSnapshot", c.AccountAlias)
+	var req  = struct {
+		ServerIds		[]string	`json:"serverIds"`
+		SnapshotExpirationDays	int		`json:"snapshotExpirationDays"`
+	} { []string{serverId}, daysToKeep }
+
+	if err = c.getResponse("POST", path, &req, &status); err != nil {
+		return
+	} else if len(status) == 0 {
+		err = fmt.Errorf("Empty status response from server")
+	} else if len(status) != 1 {
+		err = fmt.Errorf("Multiple status responses (%d) from server", len(status))
+	} else if status[0].ErrorMessage != "" {
+		err = fmt.Errorf("Request on %s failed: %s", status[0].Server, status[0].ErrorMessage)
+	} else if !status[0].IsQueued {
+		err = fmt.Errorf("Request on %s was not queued", status[0].Server)
+	} else if link, err = extractLink(status[0].Links, "status"); err == nil {
+		statusId = link.Id
+	}
+	return
+}
+
+// Delete the server snapshot.
+// @serverId: Server name to delete snapshot from.
+func (c *Client) DeleteSnapshot(serverId string) (sn *ServerSnapshot, statusId string, err error) {
+	var link *Link
+	/*
+	 * FIXME: there is no way of querying the Snapshot ID. The GetServer request
+	 *        only returns the snapshot name; the ID is buried inside the URLs of
+	 *        the Links array. Hence need to run 2 API requests for 1 deletion.
+	 */
+	if sn, err = c.GetServerSnapshot(serverId); err != nil {
+		return
+	} else	if sn == nil {
+		err = fmt.Errorf("nothing to delete - %s has no snapshots", serverId)
+		return
+	} else if link, err = extractLink(sn.Links, "delete"); err != nil {
+		return
+	}
+	statusId, err = c.getStatus("DELETE", link.Href, nil)
+	return
+}
+
+// Revert server to snapshot.
+// @serverId: Name of servert to revert.
+func (c *Client) RevertToSnapshot(serverId string) (sn *ServerSnapshot, statusId string, err error) {
+	var link *Link
+	/*
+	 * FIXME: see above comments why this is done in this way.
+	 */
+	if sn, err = c.GetServerSnapshot(serverId); err != nil {
+		return
+	} else if sn == nil {
+		err = fmt.Errorf("nothing to revert to - %s has no snapshots", serverId)
+		return
+	} else if link, err = extractLink(sn.Links, "restore"); err != nil {
+		return
+	}
+	statusId, err = c.getStatus("POST", link.Href, nil)
+	return
 }
