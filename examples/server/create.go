@@ -112,7 +112,7 @@ func main() {
 
 	/* Date/time that the server should be deleted. */
 	if *ttl != 0 {
-		req.Ttl = time.Now().Add(*ttl)
+		*req.Ttl = time.Now().Add(*ttl)
 	}
 
 	/* hwGroup may be hex uuid or group name */
