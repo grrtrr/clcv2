@@ -39,13 +39,12 @@ func main() {
 		exit.Fatalf("Failed to list hardware groups: %s", err)
 	}
 
-
-	fmt.Printf("%s in %s (%s, %d servers), ID %s:\n", rootNode.Name, rootNode.LocationId,
-  		   rootNode.Status, rootNode.Serverscount, rootNode.Id)
-
 	if *simple {
 		pretty.Println(rootNode)
 	} else {
+		fmt.Printf("%s in %s (%s, %d servers), ID %s:\n", rootNode.Name, rootNode.LocationId,
+			   rootNode.Status, rootNode.Serverscount, rootNode.Id)
+
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
