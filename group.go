@@ -1,7 +1,7 @@
 package clcv2
 
 import (
-_	"time"
+	"time"
 	"fmt"
 )
 
@@ -134,7 +134,6 @@ func (c *Client) GetGroupByUUID(uuid, location string) (*Group, error) {
 	return c.GetGroupFiltered(location, func(g *Group) bool { return g.Id == uuid })
 }
 
-
 // Create a new Hardware Group.
 // @name:   Name of the group to create.
 // @parent: The unique identifier of the parent group.
@@ -204,4 +203,30 @@ func PrintGroupHierarchy(g *Group, indent string) {
 	for idx := range g.Groups {
 		PrintGroupHierarchy(&g.Groups[idx], indent + "    ")
 	}
+}
+
+/*
+ * Group Billing Details
+ */
+type GroupBillingDetails struct {
+	// Date that this billing information applies to
+	Date	time.Time
+	// List of groups (with the first being the queried group) in the requested hierarchy.
+	// The keys of the map are the group Ids.
+	Groups	map[string]struct{
+		// User-defined name of the group
+		Name	string
+
+		// Collection of servers in this group, each with billing information.
+		// The keys of this map are the server names.
+		Servers	map[string]ServerBillingDetails
+	}
+}
+
+// Get the current and estimated charges for each server in a designated group hierarchy.
+// @groupId: ID of the group being queried.
+func (c *Client) GetGroupBillingDetails(groupId string) (res GroupBillingDetails, err error) {
+	path := fmt.Sprintf("/v2/groups/%s/%s/billing", c.AccountAlias, groupId)
+	err = c.getResponse("GET", path, nil, &res)
+	return
 }

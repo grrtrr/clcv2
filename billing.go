@@ -98,3 +98,21 @@ func (c *Client) GetInvoiceData(year, month int, pricingAccount string) (res Inv
 	err = c.getResponse("GET", path, nil, &res)
 	return
 }
+
+// Used by the 'Get Group Billing Details' call
+type ServerBillingDetails struct {
+	// Cost of templates stored in the group
+	TemplateCost	float64
+
+	// Cost of archived servers in this group
+	ArchiveCost	float64
+
+	// Projected charges for the servers given current usage
+	MonthlyEstimate	float64
+
+	// Charges up until the requested time
+	MonthToDate	float64
+
+	// Charges for the most recent hour
+	CurrentHour	float64
+}
