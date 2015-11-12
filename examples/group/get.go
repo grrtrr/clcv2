@@ -94,14 +94,12 @@ func main() {
 		if rootNode.Serverscount > 0 {
 			var servers []string
 
-			if sl := clcv2.ExtractLinks(rootNode.Links, "server"); len(sl) == 0 {
-				exit.Errorf("Server count > 0, but no servers found")
-			} else {
+			if sl := clcv2.ExtractLinks(rootNode.Links, "server"); len(sl) > 0 {
 				for _, s := range sl {
 					servers = append(servers, s.Id)
 				}
+				fmt.Printf("Servers:       %s\n", strings.Join(servers, ", "))
 			}
-			fmt.Printf("Servers:       %s\n", strings.Join(servers, ", "))
 		}
 
 		// Sub-groups
