@@ -230,3 +230,67 @@ func (c *Client) GetGroupBillingDetails(groupId string) (res GroupBillingDetails
 	err = c.getResponse("GET", path, nil, &res)
 	return
 }
+
+/*
+ * Group Scheduled Activities
+ */
+type GroupScheduledActivity struct {
+	// ID of the group
+	Id			string
+
+	// Data center location identifier
+	LocationId		string
+
+	// Change history
+	ChangeInfo		ChangeInfo
+
+	// Collection of entity links that point to resources related to this data center
+	Links			[]Link
+
+	// State of scheduled activity: on or off
+	Status			string
+
+	// Type of activity: archive, createsnapshot, delete, deletesnapshot, pause, poweron, reboot, shutdown
+	Type			string
+
+	// Time when scheduled activity should start
+	BeginDateUtc		time.Time
+
+	// How often to repeat: never, daily, weekly, monthly, customWeekly
+	Repeat			string
+
+	// An array of strings for the days of the week: sun, mon, tue, wed, thu, fri, sat
+	CustomWeeklyDays	[]string
+
+	// When the scheduled activities are set to expire: never, afterDate, afterCount
+	Expire			string
+
+	// Number of times scheduled activity should run before expiring
+	ExpireCount		int
+
+	// When the scheduled activity should expire
+	ExpireDateUtc		time.Time
+
+	// To display in local time
+	TimeZoneOffset		string
+
+	// True: scheduled activity has expired. False: scheduled activity is active
+	IsExpired		bool
+
+	// Last time scheduled activity was run
+	LastOccurrenceDateUtc	time.Time
+
+	// How many times scheduled activity has been run
+	OccurrenceCount		int
+
+	// When the next scheduled activty will be run
+	NextOccurrenceDateUtc	time.Time
+}
+
+// Get the scheduled activities associated with a group.
+// @groupId: ID of the group being queried.
+func (c *Client) GetGroupScheduledActivities(groupId string) (res []GroupScheduledActivity, err error) {
+	path := fmt.Sprintf("/v2/groups/%s/%s/ScheduledActivities", c.AccountAlias, groupId)
+	err = c.getResponse("GET", path, nil, &res)
+	return
+}
