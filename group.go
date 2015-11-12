@@ -118,7 +118,7 @@ func (c *Client) GetGroupFiltered(location string, found func(*Group) bool) (res
 	} else if len(groups) == 1 {
 		res = groups[0]
 	} else if len(groups) > 1 {
-		return nil, fmt.Errorf("Ambiguous - %d matching groups found at %s", len(groups), location)
+		return nil, fmt.Errorf("ambiguous - %d matching groups found at %s", len(groups), location)
 	}
 	return
 }
@@ -149,6 +149,30 @@ func (c *Client) CreateGroup(name, parent, desc string, cf []SimpleCustomField) 
 	} { name, desc, parent, cf }
 	err = c.getResponse("POST", fmt.Sprintf("/v2/groups/%s", c.AccountAlias), &req, &res)
 	return
+}
+
+// Change the name of an existing group.
+// @groupId: ID of the group to update
+// @newName: new name for @groupId.
+func (c *Client) GroupSetName(groupId, newName string) error {
+	return c.patch(fmt.Sprintf("/v2/groups/%s/%s", c.AccountAlias, groupId),
+		       &PatchOperation{ "set", "name", newName })
+}
+
+// Change the description of an existing group.
+// @groupId: ID of the group to update
+// @newDesc: new description for @groupId.
+func (c *Client) GroupSetDescription(groupId, newDesc string) error {
+	return c.patch(fmt.Sprintf("/v2/groups/%s/%s", c.AccountAlias, groupId),
+		       &PatchOperation{ "set", "description", newDesc })
+}
+
+// Change the parent HW group of an existing group.
+// @groupId: ID of the group to update
+// @parentUUID: UUID of new parent group for @groupId.
+func (c *Client) GroupSetParent(groupId, parentUUID string) error {
+	return c.patch(fmt.Sprintf("/v2/groups/%s/%s", c.AccountAlias, groupId),
+		       &PatchOperation{ "set", "parentGroupId", parentUUID })
 }
 
 
