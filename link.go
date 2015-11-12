@@ -33,13 +33,23 @@ func (l *Link) String() string {
 	return fmt.Sprintf("%s: %s %s", l.Rel, l.Href, strings.Join(l.Verbs, ", "))
 }
 
-// Extract Link whose 'Rel' field matches @rel_type, return nil if none found.
-func extractLink(from []Link, rel_type string) (*Link, error) {
+// Extract Links whose 'Rel' field matches @rel_type.
+func ExtractLinks(from []Link, rel_type string) (res []Link) {
 	for _, l := range from {
 		if l.Rel == rel_type {
-			return &l, nil
+			res = append(res, l)
 		}
 	}
-	return nil, fmt.Errorf("No link with Rel=%s found in %+v", rel_type, from)
+	return
+}
 
+// Extract first Link whose 'Rel' field matches @rel_type, return nil if none found.
+func extractLink(from []Link, rel_type string) (l *Link, err error) {
+	if links := ExtractLinks(from, rel_type); len(links) > 0 {
+		// FIXME: maybe warn here if there is more than 1 match
+		l = &links[0]
+	} else {
+		err = fmt.Errorf("No link with Rel=%s found in %+v", rel_type, from)
+	}
+	return
 }
