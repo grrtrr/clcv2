@@ -42,7 +42,7 @@ func main() {
 	}
 
 	if parentUUID == "" {
-		var group clcv2.Group
+		var group *clcv2.Group
 
 		if group, err = client.GetGroupByName(*parentGroup, *location); err != nil {
 			exit.Errorf("Failed to resolve group name %q: %s", *parentGroup, err)
