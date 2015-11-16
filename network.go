@@ -44,6 +44,20 @@ func (c *Client) GetNetworks(location string) (nets []Network, err error) {
 	return
 }
 
+// Get the network Id by the network name
+// @name:      Name of the network to match.
+// @location:  The Network's home datacenter alias.
+func (c *Client) GetNetworkIdByName(name, location string) (net *Network, err error) {
+	if nets, err := c.GetNetworks(location); err == nil {
+		for idx := range nets {
+			if nets[idx].Name == name {
+				return &nets[idx], nil
+			}
+		}
+	}
+	return
+}
+
 type IpAddressDetails struct {
 	// An IP Address on the Network
 	Address	string
