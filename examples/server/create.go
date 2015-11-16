@@ -31,7 +31,7 @@ func main() {
 	var extraDrv   = flag.Int("drive",  0,           "Extra storage (in GB) to add to server as a raw disk")
 	var numCpu     = flag.Int("cpu",    1,           "Number of Cpus to use")
 	var memGB      = flag.Int("memory", 4,           "Amount of memory in GB")
-	var serverType = flag.String("type", "standard", "The type of server to create (standard, hyperscale, or bareMetals)")
+	var serverType = flag.String("type", "standard", "The type of server to create (standard, hyperscale, or bareMetal)")
 	var storType   = flag.String("level", "premium", "Data storage service level (standard or premium)")
 	var ttl        = flag.Duration("ttl",  0,        "Time span (counting from time of creation) until server gets deleted")
 
@@ -41,10 +41,6 @@ func main() {
 	}
 
 	flag.Parse()
-	if *hwGroup == "" || *location == "" || *srcServer == "" || *seed == "" || *net == "" {
-		flag.Usage()
-		os.Exit(0)
-	}
 
 	client, err := clcv2.NewClient()
 	if err != nil {
@@ -112,6 +108,7 @@ func main() {
 
 	/* Date/time that the server should be deleted. */
 	if *ttl != 0 {
+		req.Ttl = new(time.Time)
 		*req.Ttl = time.Now().Add(*ttl)
 	}
 
