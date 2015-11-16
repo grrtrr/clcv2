@@ -294,3 +294,42 @@ func (c *Client) GetGroupScheduledActivities(groupId string) (res []GroupSchedul
 	err = c.getResponse("GET", path, nil, &res)
 	return
 }
+
+/*
+ * Group Defaults
+ */
+type GroupDefaults struct {
+	// Number of processors to configure the server with (1-16) (ignored for bare metal servers)
+	Cpu		int	`json:"cpu"`
+
+	// Number of GB of memory to configure the server with (1-128) (ignored for bare metal servers)
+	MemoryGB	int	`json:"memoryGB,omitempty"`
+
+	// ID of the Network. This can be retrieved from the Get Network List API operation.
+	NetworkId	string	`json:"networkId"`
+
+	// Primary DNS to set on the server. If not supplied the default value set on the account will be used.
+	PrimaryDns	string	`json:"primaryDns"`
+
+	// Secondary DNS to set on the server. If not supplied the default value set on the account will be used.
+	SecondaryDns	string	`json:"secondaryDns"`
+
+	// Name of the template to use as the source. (Ignored for bare metal servers.)
+	TemplateName	string	`json:"templateName"`
+}
+
+type GroupDefaultSetting struct {
+	// Value applied as group setting
+	Value		interface{}
+
+	// Whether the value is set explicitly (false) or by its parent (true)
+	Inherited	bool
+}
+
+// Set the defaults for a group.
+// @groupId: ID of the group to set defaults of.
+func (c *Client) SetGroupDefaults(groupId string, gd *GroupDefaults) (res map[string]GroupDefaultSetting, err error) {
+	path := fmt.Sprintf("/v2/groups/%s/%s/defaults", c.AccountAlias, groupId)
+	err = c.getResponse("POST", path, gd, &res)
+	return
+}
