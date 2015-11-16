@@ -94,17 +94,19 @@ func main() {
 
 
 		// Disks
-		fmt.Printf("\nDisks of %s (total storage: %d GB)\n", server.Name, server.Details.StorageGb)
-		table = tablewriter.NewWriter(os.Stdout)
-		table.SetAutoFormatHeaders(false)
-		table.SetAlignment(tablewriter.ALIGN_RIGHT)
-		table.SetAutoWrapText(true)
+		if len(server.Details.Disks) > 0 {
+			fmt.Printf("\nDisks of %s (total storage: %d GB)\n", server.Name, server.Details.StorageGb)
+			table = tablewriter.NewWriter(os.Stdout)
+			table.SetAutoFormatHeaders(false)
+			table.SetAlignment(tablewriter.ALIGN_RIGHT)
+			table.SetAutoWrapText(true)
 
-		table.SetHeader([]string{ "Disk ID", "Disk Size/GB", "Paths" })
-		for _, d := range server.Details.Disks {
-			table.Append([]string{ d.Id, fmt.Sprint(d.SizeGb), strings.Join(d.PartitionPaths, ", ")})
+			table.SetHeader([]string{ "Disk ID", "Disk Size/GB", "Paths" })
+			for _, d := range server.Details.Disks {
+				table.Append([]string{ d.Id, fmt.Sprint(d.SizeGb), strings.Join(d.PartitionPaths, ", ")})
+			}
+			table.Render()
 		}
-		table.Render()
 
 		// Partitions
 		if len(server.Details.Partitions) > 0 {
