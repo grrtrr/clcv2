@@ -273,9 +273,9 @@ func (c *Client) getServerStatus(verb, path string, reqModel interface{}, useArr
 		if err = c.getResponse(verb, path, reqModel, &status); err != nil {
 			return
 		} else if len(status) == 0 {
-			err = fmt.Errorf("Empty status response from server")
+			err = fmt.Errorf("empty status response from server")
 		} else if len(status) != 1 {
-			err = fmt.Errorf("Multiple status responses (%d) from server", len(status))
+			err = fmt.Errorf("multiple status responses (%d) from server", len(status))
 		} else {
 			res = status[0]
 		}
@@ -285,9 +285,9 @@ func (c *Client) getServerStatus(verb, path string, reqModel interface{}, useArr
 
 	if err == nil {
 		if res.ErrorMessage != "" {
-			err = fmt.Errorf("Request on %s failed: %s", res.Server, res.ErrorMessage)
+			err = fmt.Errorf("request on %s failed - %s", res.Server, res.ErrorMessage)
 		} else if !res.IsQueued {
-			err = fmt.Errorf("Request on %s was not queued", res.Server)
+			err = fmt.Errorf("request on %s was not queued", res.Server)
 		}
 	}
 	return
@@ -487,7 +487,7 @@ func (c *Client) CreateSnapshot(serverId string, daysToKeep int) (statusId strin
 }
 
 // Delete the server snapshot.
-// @serverId: Server name to delete snapshot from.
+// @serverId: Server name to delete snapshot of.
 func (c *Client) DeleteSnapshot(serverId string) (sn *ServerSnapshot, statusId string, err error) {
 	var link *Link
 	/*
@@ -508,7 +508,7 @@ func (c *Client) DeleteSnapshot(serverId string) (sn *ServerSnapshot, statusId s
 }
 
 // Revert server to snapshot.
-// @serverId: Name of servert to revert.
+// @serverId: Name of server to revert.
 func (c *Client) RevertToSnapshot(serverId string) (sn *ServerSnapshot, statusId string, err error) {
 	var link *Link
 	/*
@@ -524,4 +524,63 @@ func (c *Client) RevertToSnapshot(serverId string) (sn *ServerSnapshot, statusId
 	}
 	statusId, err = c.getStatus("POST", link.Href, nil)
 	return
+}
+
+/*
+ * Power Operations
+ */
+// Send the pause operation to a server and add operation to queue.
+// @serverId: Name of server to revert.
+func (c *Client) PauseServer(serverId string) (statusId string, err error) {
+	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/pause", c.AccountAlias),
+				   []string{serverId}, true)
+}
+
+// Send the power-on operation to a server and add operation to queue.
+// @serverId: Name of server to power on.
+func (c *Client) PowerOnServer(serverId string) (statusId string, err error) {
+	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/powerOn", c.AccountAlias),
+				   []string{serverId}, true)
+}
+
+// Send the power-off operation to a server and add operation to queue.
+// @serverId: Name of server to power off.
+func (c *Client) PowerOffServer(serverId string) (statusId string, err error) {
+	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/powerOff", c.AccountAlias),
+				   []string{serverId}, true)
+}
+
+// Send the shut-down operation to a server and add operation to queue.
+// @serverId: Name of server to shut down.
+func (c *Client) ShutdownServer(serverId string) (statusId string, err error) {
+	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/shutDown", c.AccountAlias),
+				   []string{serverId}, true)
+}
+
+// Send the reboot operation to a server and add operation to queue.
+// @serverId: Name of server to reboot.
+func (c *Client) RebootServer(serverId string) (statusId string, err error) {
+	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/reboot", c.AccountAlias),
+				   []string{serverId}, true)
+}
+
+// Send the reset operation to a server and add operation to queue.
+// @serverId: Name of server to reset.
+func (c *Client) ResetServer(serverId string) (statusId string, err error) {
+	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/reset", c.AccountAlias),
+				   []string{serverId}, true)
+}
+
+// Send the start-maintenance operation to a server and add operation to queue.
+// @serverId: Name of server to change.
+func (c *Client) ServerStartMaintenance(serverId string) (statusId string, err error) {
+	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/startMaintenance", c.AccountAlias),
+				   []string{serverId}, true)
+}
+
+// Send the stop-maintenance operation to a server and add operation to queue.
+// @serverId: Name of server to change.
+func (c *Client) ServerStopMaintenance(serverId string) (statusId string, err error) {
+	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/stopMaintenance", c.AccountAlias),
+				   []string{serverId}, true)
 }
