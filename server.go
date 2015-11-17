@@ -529,58 +529,55 @@ func (c *Client) RevertToSnapshot(serverId string) (sn *ServerSnapshot, statusId
 /*
  * Power Operations
  */
+func (c *Client) serverPowerOperation(op, serverId string) (statusId string, err error) {
+	var path = fmt.Sprintf("/v2/operations/%s/servers/%s", c.AccountAlias, op)
+	return c.getServerStatusId("POST", path, []string{serverId}, true)
+}
+
 // Send the pause operation to a server and add operation to queue.
-// @serverId: Name of server to revert.
+// @serverId: Name of server to pause.
 func (c *Client) PauseServer(serverId string) (statusId string, err error) {
-	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/pause", c.AccountAlias),
-				   []string{serverId}, true)
+	return c.serverPowerOperation("pause", serverId)
 }
 
 // Send the power-on operation to a server and add operation to queue.
 // @serverId: Name of server to power on.
 func (c *Client) PowerOnServer(serverId string) (statusId string, err error) {
-	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/powerOn", c.AccountAlias),
-				   []string{serverId}, true)
+	return c.serverPowerOperation("powerOn", serverId)
 }
 
 // Send the power-off operation to a server and add operation to queue.
 // @serverId: Name of server to power off.
 func (c *Client) PowerOffServer(serverId string) (statusId string, err error) {
-	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/powerOff", c.AccountAlias),
-				   []string{serverId}, true)
+	return c.serverPowerOperation("powerOff", serverId)
 }
 
 // Send the shut-down operation to a server and add operation to queue.
 // @serverId: Name of server to shut down.
 func (c *Client) ShutdownServer(serverId string) (statusId string, err error) {
-	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/shutDown", c.AccountAlias),
-				   []string{serverId}, true)
+	return c.serverPowerOperation("shutDown", serverId)
 }
 
 // Send the reboot operation to a server and add operation to queue.
 // @serverId: Name of server to reboot.
 func (c *Client) RebootServer(serverId string) (statusId string, err error) {
-	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/reboot", c.AccountAlias),
-				   []string{serverId}, true)
+	return c.serverPowerOperation("reboot", serverId)
 }
 
 // Send the reset operation to a server and add operation to queue.
 // @serverId: Name of server to reset.
 func (c *Client) ResetServer(serverId string) (statusId string, err error) {
-	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/reset", c.AccountAlias),
-				   []string{serverId}, true)
+	return c.serverPowerOperation("reset", serverId)
 }
 
 // Send the start-maintenance operation to a server and add operation to queue.
 // @serverId: Name of server to change.
 func (c *Client) ServerStartMaintenance(serverId string) (statusId string, err error) {
-	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/startMaintenance", c.AccountAlias),
-				   []string{serverId}, true)
+	return c.serverPowerOperation("startMaintenance", serverId)
 }
 
 // Send the stop-maintenance operation to a server and add operation to queue.
 // @serverId: Name of server to change.
 func (c *Client) ServerStopMaintenance(serverId string) (statusId string, err error) {
-	return c.getServerStatusId("POST", fmt.Sprintf("/v2/operations/%s/servers/stopMaintenance", c.AccountAlias),
-				   []string{serverId}, true)
+	return c.serverPowerOperation("stopMaintenance", serverId)
 }
