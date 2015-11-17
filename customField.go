@@ -40,12 +40,8 @@ type AccountCustomField struct {
 }
 
 // Retrieve the custom field(s) defined for a given account.
-// @acctAlias: Short code for a particular account (leave empty to use default account alias)
-func (c *Client) GetCustomFields(acctAlias string) (res []AccountCustomField, err error) {
-	if acctAlias == "" {
-		acctAlias = c.AccountAlias
-	}
-	err = c.getResponse("GET", fmt.Sprintf("/v2/accounts/%s/customFields", acctAlias), nil, &res)
+func (c *Client) GetCustomFields() (res []AccountCustomField, err error) {
+	err = c.getResponse("GET", fmt.Sprintf("/v2/accounts/%s/customFields", c.AccountAlias), nil, &res)
 	return
 }
 

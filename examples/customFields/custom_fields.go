@@ -1,5 +1,6 @@
 /*
  * List the AccountCustomFields associated with an account.
+ * This will use the default Account Alias if -a <acctAlias> is not set.
  */
 package main
 
@@ -18,7 +19,7 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	customFields, err := client.GetCustomFields(client.LoginRes.AccountAlias)
+	customFields, err := client.GetCustomFields()
 	if err != nil {
 		exit.Fatalf("Failed to obtain Custom Fields: %s", err)
 	}
