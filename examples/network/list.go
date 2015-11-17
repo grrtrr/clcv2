@@ -48,10 +48,9 @@ func main() {
 		table.SetAlignment(tablewriter.ALIGN_RIGHT)
 		table.SetAutoWrapText(false)
 
-		table.SetHeader([]string{ "ID", "Name", "Description",  "Type", "CIDR", "Gateway", "VLAN" })
+		table.SetHeader([]string{ "CIDR", "Gateway", "VLAN", "Name", "Description", "Type", "ID" })
 		for _, l := range networks {
-			table.Append([]string{ l.Id, l.Name, l.Description, l.Type,
-					       l.Cidr, l.Gateway, fmt.Sprint(l.Vlan) })
+			table.Append([]string{ l.Cidr, l.Gateway, fmt.Sprint(l.Vlan), l.Name, l.Description, l.Type, l.Id })
 		}
 		table.Render()
 	}
