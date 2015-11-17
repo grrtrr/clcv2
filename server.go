@@ -266,7 +266,7 @@ type ServerStatus struct {
 // Run an Http request and evaluate the returned %ServerStatus, return links
 // @verb, @path, @reqModel: as in getResponse()
 // @useArray:               whether to expect a singleton ServerStatus, or an array with one such element
-func (c *Client) getServerStatus(verb, path string, reqModel interface{}, useArray bool) (res ServerStatus, err error) {
+func (c *Client) getServerStatus(verb, path string, useArray bool, reqModel interface{}) (res ServerStatus, err error) {
 	if useArray {
 		var status []ServerStatus
 
@@ -294,12 +294,12 @@ func (c *Client) getServerStatus(verb, path string, reqModel interface{}, useArr
 }
 
 // Wrap getServerStatus() to only extract the statusId contained in the 'status' link
-// @verb, @path, @reqModel, @useArray: as in getServerStatus
-func (c *Client) getServerStatusId(verb, path string, reqModel interface{}, useArray bool) (statusId string, err error) {
+// @verb, @path, @useArray, @reqModel: as in getServerStatus
+func (c *Client) getServerStatusId(verb, path string, useArray bool, reqModel interface{}) (statusId string, err error) {
 	var status ServerStatus
 	var link *Link
 
-	status, err = c.getServerStatus(verb, path, reqModel, useArray)
+	status, err = c.getServerStatus(verb, path, useArray, reqModel)
 	if err != nil {
 		return
 	}
@@ -317,7 +317,7 @@ func (c *Client) CreateServer(req *CreateServerReq) (name, statusId string, err 
 	var server Server
 	var link *Link
 
-	status, err = c.getServerStatus("POST", fmt.Sprintf("/v2/servers/%s", c.AccountAlias), req, false)
+	status, err = c.getServerStatus("POST", fmt.Sprintf("/v2/servers/%s", c.AccountAlias), false, req)
 	if err != nil {
 		return
 	}
@@ -344,7 +344,7 @@ func (c *Client) CreateServer(req *CreateServerReq) (name, statusId string, err 
 func (c *Client) DeleteServer(serverId string) (statusId string, err error) {
 	var path = fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId)
 
-	return c.getServerStatusId("DELETE", path, nil, false)
+	return c.getServerStatusId("DELETE", path, false, nil)
 }
 
 /*
@@ -478,12 +478,11 @@ func (c *Client) GetServerSnapshot(serverId string) (sn *ServerSnapshot, err err
 // @daysToKeep: Number of days to keep the snapshot(s) for (must be between 1 and 10).
 func (c *Client) CreateSnapshot(serverId string, daysToKeep int) (statusId string, err error) {
 	var path = fmt.Sprintf("/v2/operations/%s/servers/createSnapshot", c.AccountAlias)
-	var req  = struct {
+
+	return c.getServerStatusId("POST", path, true, &struct {
 		ServerIds		[]string	`json:"serverIds"`
 		SnapshotExpirationDays	int		`json:"snapshotExpirationDays"`
-	} { []string{serverId}, daysToKeep }
-
-	return c.getServerStatusId("POST", path, &req, true)
+	} { []string{serverId}, daysToKeep })
 }
 
 // Delete the server snapshot.
@@ -531,7 +530,8 @@ func (c *Client) RevertToSnapshot(serverId string) (sn *ServerSnapshot, statusId
  */
 func (c *Client) serverPowerOperation(op, serverId string) (statusId string, err error) {
 	var path = fmt.Sprintf("/v2/operations/%s/servers/%s", c.AccountAlias, op)
-	return c.getServerStatusId("POST", path, []string{serverId}, true)
+
+	return c.getServerStatusId("POST", path, true, []string{serverId})
 }
 
 // Send the pause operation to a server and add operation to queue.
@@ -580,4 +580,23 @@ func (c *Client) ServerStartMaintenance(serverId string) (statusId string, err e
 // @serverId: Name of server to change.
 func (c *Client) ServerStopMaintenance(serverId string) (statusId string, err error) {
 	return c.serverPowerOperation("stopMaintenance", serverId)
+}
+
+type MaintenanceMode struct {
+	// ID of server to set maintenance mode on or off
+	Id			string	`json:"id"`
+
+	// Indicator of whether to place server in maintenance mode or not
+	InMaintenanceMode	bool	`json:"inMaintenanceMode"`
+}
+
+// Send a specified setting for maintenance mode to a server and add operation to queue.
+// @serverId: Name of server to change.
+// @enable:   Whether to enable (true) or disable (false) Maintenance Mode on @serverId.
+func (c *Client) ServerSetMaintenance(serverId string, enable bool) (statusId string, err error) {
+	var path = fmt.Sprintf("/v2/operations/%s/servers/setMaintenance", c.AccountAlias)
+
+	return c.getServerStatusId("POST", path, true, &struct {
+		Servers		[]MaintenanceMode	`json:"servers"`
+	} { []MaintenanceMode{ {serverId, enable} } } )
 }
