@@ -9,19 +9,22 @@ import (
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
 	"github.com/kr/pretty"
+	"encoding/hex"
 	"path"
 	"flag"
+	"net"
 	"fmt"
 	"os"
 )
 
 func main() {
+	var netw string	/* The network ID, name or CIDR to query */
 	var query    = flag.String("q", "free",   "Filter IP addresses; one of 'claimed', 'free', or 'all'")
-	var location = flag.String("l", "",       "Data centre alias of the network (uses Home Data Centre by default)")
+	var location = flag.String("l", "",       "Data centre alias of the network")
 	var simple   = flag.Bool("simple", false, "Use simple (debugging) output format")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Network-ID (hex)>\n", path.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Network-ID|Network-Name|Network-CIDR>)>\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 
@@ -38,10 +41,33 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
+	/* Allow argument to be one of hex-ID, CIDR, or network name. */
+	if _, err := hex.DecodeString(flag.Arg(0)); err == nil {
+		netw = flag.Arg(0)
+	} else if  *location == "" {
+		exit.Errorf("Need a location argument (-l) if not using a network ID (%s)", flag.Arg(0))
+	} else if _, _, err := net.ParseCIDR(flag.Arg(0)); err == nil {
+		if network, err := client.GetNetworkIdByCIDR(flag.Arg(0), *location); err != nil {
+			exit.Errorf("Failed to resolve network %s: %s", flag.Arg(0), err)
+		} else if network == nil {
+			exit.Errorf("No network of type %s was found on %s", flag.Arg(0), *location)
+		} else {
+			netw = network.Id
+		}
+	} else {
+		if network, err := client.GetNetworkIdByName(flag.Arg(0), *location); err != nil {
+			exit.Errorf("Failed to resolve network name %q: %s", flag.Arg(0), err)
+		} else if network == nil {
+			exit.Errorf("No network named %q was found on %s", flag.Arg(0), *location)
+		} else {
+			netw = network.Id
+		}
+	}
+
 	// Note: re-using the 'Get Network' call here. There seems to be no dedicated 'Get IP Address List' call.
-	details, err := client.GetNetworkDetails(*location, flag.Arg(0), *query)
+	details, err := client.GetNetworkDetails(*location, netw, *query)
 	if err != nil {
-		exit.Fatalf("Failed to query network details of %s: %s", flag.Arg(0), err)
+		exit.Fatalf("Failed to query network details of %s: %s", netw, err)
 	}
 
 	if len(details.IpAddresses) == 0 {

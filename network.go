@@ -58,6 +58,20 @@ func (c *Client) GetNetworkIdByName(name, location string) (net *Network, err er
 	return
 }
 
+// Get the network Id by CIDR
+// @cidr:      CIDR of the network to match.
+// @location:  The Network's home datacenter alias.
+func (c *Client) GetNetworkIdByCIDR(cidr, location string) (net *Network, err error) {
+	if nets, err := c.GetNetworks(location); err == nil {
+		for idx := range nets {
+			if nets[idx].Cidr == cidr {
+				return &nets[idx], nil
+			}
+		}
+	}
+	return
+}
+
 type IpAddressDetails struct {
 	// An IP Address on the Network
 	Address	string
