@@ -24,6 +24,7 @@ const (
 /* Global variables */
 var (
 	g_user, g_pass	string		/* Command-line username/password */
+	g_acct		string		/* Account Alias to use instead of the default */
 	g_timeout	time.Duration	/* Client default timeout */
 	g_debug		bool		/* Command-line debug flag */
 )
@@ -32,6 +33,7 @@ func init() {
 	flag.BoolVar(&g_debug,  "d", false, "Produce debug output")
 	flag.StringVar(&g_user, "u", "",    "CLC Login Username")
 	flag.StringVar(&g_pass, "p", "",    "CLC Login Password")
+	flag.StringVar(&g_acct, "a", "",    "CLC Account Alias to use (instead of default)")
 	/*
 	  * Caveat: keep the timeout value high, at least a few minutes.
 	  *         Some operations, such as querying details of a new server immediately
@@ -50,8 +52,11 @@ type Client struct {
 	 Log        *log.Logger
 }
 
-// Return authenticated client
-// The environment variable CLC_ALIAS, if set, is allowed to override the default LocationAlias.
+// Return authenticated client.
+// This will use the default values for AccountAlias  and LocationAlias.
+// It will respect the following environment variables to override the defaults:
+// - CLC_ALIAS:   takes precedence over default LocationAlias
+// - CLC_ACCOUNT: takes precedence over default AccountAlias
 func NewClient() (client *Client, err error) {
 	client = &Client{ requestor: &http.Client{Timeout: g_timeout} }
 
@@ -67,6 +72,14 @@ func NewClient() (client *Client, err error) {
 
 	if alias := os.Getenv("CLC_ALIAS"); alias != "" {
 		client.LoginRes.LocationAlias = alias
+	}
+	if account := os.Getenv("CLC_ACCOUNT"); account != "" {
+		client.LoginRes.AccountAlias = account
+	}
+
+	/* Commandline flags take precedence over environment variables. */
+	if g_acct != "" {
+		client.LoginRes.AccountAlias = g_acct
 	}
 	client.requestor = Authorization("Bearer " + client.BearerToken)(client.requestor)
 	return client, nil
@@ -155,8 +168,8 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 		 * 2) struct { message: "string" }
 		 * 3) struct { message: "string", "modelState": map[string]interface{} }
 		      E.g.:  {"":["The server must be in Active or Archived state."]}
-		              "modelState":{"body.networkId":["The network vlan_1249_10.81.149 is not valid."]}
-		              "modelState":{"":["The server must be in Active or Archived state."]}
+			      "modelState":{"body.networkId":["The network vlan_1249_10.81.149 is not valid."]}
+			      "modelState":{"":["The server must be in Active or Archived state."]}
 		 */
 		errMsg = string(body)
 		if ct, _, _ := mime.ParseMediaType(res.Header.Get("Content-Type")); ct == "application/json" {

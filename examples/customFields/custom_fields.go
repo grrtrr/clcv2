@@ -8,12 +8,9 @@ import (
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
 	"flag"
-	"os"
 )
 
 func main() {
-	var acctAlias = flag.String("a", "", "Account alias to use")
-
 	flag.Parse()
 
 	client, err := clcv2.NewClient()
@@ -21,7 +18,7 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	customFields, err := client.GetCustomFields(*acctAlias)
+	customFields, err := client.GetCustomFields(client.LoginRes.AccountAlias)
 	if err != nil {
 		exit.Fatalf("Failed to obtain Custom Fields: %s", err)
 	}

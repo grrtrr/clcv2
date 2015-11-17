@@ -16,10 +16,10 @@ import (
 
 func main() {
 	var now = time.Now()
-	var pricingAcct  = flag.String("a", "", "Pricing account (to use instead of default account alias)")
+	var pricingAcct  = flag.String("pricing", "",        "Pricing account (to use instead of default account alias)")
 	var invoiceYear  = flag.Int("y", now.Year(),         "Year of the invoice date")
 	var invoiceMonth = flag.Int("m", int(now.Month())-1, "Month of the invoice date")
-	var itemDetails  = flag.Bool("details", false, "Print individual line item details also")
+	var itemDetails  = flag.Bool("details", false,       "Print individual line item details also")
 
 	flag.Parse()
 

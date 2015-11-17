@@ -24,9 +24,14 @@ _Credentials_ can be passed in one of two forms:
   + `CLC_V2_API_USERNAME=<CLC-Portal-Username>`,
   + `CLC_V2_API_PASSWORD=<CLC-Portal-Password>`.
 
+To _override the default Account Alias_, use one of
+
+* flag: `-a <AccountAlias>` or
+* environment: `CLC_ACCOUNT=<AccountAlias>`
+
 ***Caveat***: Be careful with the credentials. Using 3 times the wrong username and/or password will cause the account to be locked.
 
 ### TODO
 
 This is as yet a partial implementation. Also many examples are missing.
-After that, refactoring is desirable. Would be good to store bearer tokens on disk (they are good up to circa 2 weeks).
+After that, refactoring is desirable.
