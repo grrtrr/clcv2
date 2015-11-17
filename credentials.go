@@ -102,7 +102,7 @@ func defaultCredentialsPath() string {
  * Support multiple ways of resolving the username and password
  * 1. directly (pass-through),
  * 2. command-line flags (g_user, g_pass),
- * 3. environment variables (CLC_USERNAME/PASSWORD, CLC_V2_API_USERNAME/PASSWORD),
+ * 3. environment variables (CLC_USERNAME, CLC_PASSWORD),
  * 4. prompt for values
  */
 func resolveUserAndPass() (username, password string, err error) {
@@ -112,10 +112,6 @@ func resolveUserAndPass() (username, password string, err error) {
 	if username == "" {
 		username = os.Getenv("CLC_USERNAME")
 	}
-	if username == "" {
-		username = os.Getenv("CLC_V2_API_USERNAME")
-	}
-
 	if username == "" {
 		if username, err = utils.PromptInput(prompt); err != nil {
 			return
@@ -127,10 +123,7 @@ func resolveUserAndPass() (username, password string, err error) {
 
 	password = g_pass
 	if password == "" {
-		password = os.Getenv("CLC_USERNAME")
-	}
-	if password == "" {
-		password = os.Getenv("CLC_V2_API_PASSWORD")
+		password = os.Getenv("CLC_PASSWORD")
 	}
 	if password == "" {
 		if password, err = utils.GetPass(prompt); err != nil {
