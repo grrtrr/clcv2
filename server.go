@@ -247,7 +247,7 @@ type ServerDisk struct {
 
 
 /* Status response, used by: CreateServer, CloneServer, DeleteServer, ImportServer,
-                             ArchiveServer, CreateSnapshot, ExecutePackage,  */
+			     ArchiveServer, CreateSnapshot, ExecutePackage,  */
 type ServerStatus struct {
 	// ID of the server that the operation was performed on.
 	Server		string
@@ -265,13 +265,46 @@ type ServerStatus struct {
 
 // Run an Http request and evaluate the returned %ServerStatus, return links
 // @verb, @path, @reqModel: as in getResponse()
-func (c *Client) getServerStatus(verb, path string, reqModel interface{}) (res ServerStatus, err error) {
-	if err = c.getResponse(verb, path, reqModel, &res); err == nil {
+// @useArray:               whether to expect a singleton ServerStatus, or an array with one such element
+func (c *Client) getServerStatus(verb, path string, reqModel interface{}, useArray bool) (res ServerStatus, err error) {
+	if useArray {
+		var status []ServerStatus
+
+		if err = c.getResponse(verb, path, reqModel, &status); err != nil {
+			return
+		} else if len(status) == 0 {
+			err = fmt.Errorf("Empty status response from server")
+		} else if len(status) != 1 {
+			err = fmt.Errorf("Multiple status responses (%d) from server", len(status))
+		} else {
+			res = status[0]
+		}
+	} else {
+		err = c.getResponse(verb, path, reqModel, &res)
+	}
+
+	if err == nil {
 		if res.ErrorMessage != "" {
 			err = fmt.Errorf("Request on %s failed: %s", res.Server, res.ErrorMessage)
 		} else if !res.IsQueued {
 			err = fmt.Errorf("Request on %s was not queued", res.Server)
 		}
+	}
+	return
+}
+
+// Wrap getServerStatus() to only extract the statusId contained in the 'status' link
+// @verb, @path, @reqModel, @useArray: as in getServerStatus
+func (c *Client) getServerStatusId(verb, path string, reqModel interface{}, useArray bool) (statusId string, err error) {
+	var status ServerStatus
+	var link *Link
+
+	status, err = c.getServerStatus(verb, path, reqModel, useArray)
+	if err != nil {
+		return
+	}
+	if link, err = extractLink(status.Links, "status"); err == nil {
+		statusId = link.Id
 	}
 	return
 }
@@ -284,7 +317,7 @@ func (c *Client) CreateServer(req *CreateServerReq) (name, statusId string, err 
 	var server Server
 	var link *Link
 
-	status, err = c.getServerStatus("POST", fmt.Sprintf("/v2/servers/%s", c.AccountAlias), req)
+	status, err = c.getServerStatus("POST", fmt.Sprintf("/v2/servers/%s", c.AccountAlias), req, false)
 	if err != nil {
 		return
 	}
@@ -309,17 +342,9 @@ func (c *Client) CreateServer(req *CreateServerReq) (name, statusId string, err 
 // Send the delete operation to a given server and add operation to queue.
 // @serverId: ID of the server to be deleted.
 func (c *Client) DeleteServer(serverId string) (statusId string, err error) {
-	var status ServerStatus
-	var link *Link
+	var path = fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId)
 
-	status, err = c.getServerStatus("DELETE", fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId), nil)
-	if err != nil {
-		return
-	}
-	if link, err = extractLink(status.Links, "status"); err == nil {
-		statusId = link.Id
-	}
-	return
+	return c.getServerStatusId("DELETE", path, nil, false)
 }
 
 /*
@@ -451,30 +476,14 @@ func (c *Client) GetServerSnapshot(serverId string) (sn *ServerSnapshot, err err
 // to keep the snapshot for) and adds operation to queue.
 // @serverId:   Server name to perform create snapshot operation on.
 // @daysToKeep: Number of days to keep the snapshot(s) for (must be between 1 and 10).
-func (c *Client) SnapshotServer(serverId string, daysToKeep int) (statusId string, err error) {
-	var status []ServerStatus
-	var link *Link
-
+func (c *Client) CreateSnapshot(serverId string, daysToKeep int) (statusId string, err error) {
 	var path = fmt.Sprintf("/v2/operations/%s/servers/createSnapshot", c.AccountAlias)
 	var req  = struct {
 		ServerIds		[]string	`json:"serverIds"`
 		SnapshotExpirationDays	int		`json:"snapshotExpirationDays"`
 	} { []string{serverId}, daysToKeep }
 
-	if err = c.getResponse("POST", path, &req, &status); err != nil {
-		return
-	} else if len(status) == 0 {
-		err = fmt.Errorf("Empty status response from server")
-	} else if len(status) != 1 {
-		err = fmt.Errorf("Multiple status responses (%d) from server", len(status))
-	} else if status[0].ErrorMessage != "" {
-		err = fmt.Errorf("Request on %s failed: %s", status[0].Server, status[0].ErrorMessage)
-	} else if !status[0].IsQueued {
-		err = fmt.Errorf("Request on %s was not queued", status[0].Server)
-	} else if link, err = extractLink(status[0].Links, "status"); err == nil {
-		statusId = link.Id
-	}
-	return
+	return c.getServerStatusId("POST", path, &req, true)
 }
 
 // Delete the server snapshot.
@@ -488,7 +497,7 @@ func (c *Client) DeleteSnapshot(serverId string) (sn *ServerSnapshot, statusId s
 	 */
 	if sn, err = c.GetServerSnapshot(serverId); err != nil {
 		return
-	} else	if sn == nil {
+	} else if sn == nil {
 		err = fmt.Errorf("nothing to delete - %s has no snapshots", serverId)
 		return
 	} else if link, err = extractLink(sn.Links, "delete"); err != nil {

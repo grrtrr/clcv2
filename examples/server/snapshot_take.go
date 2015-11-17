@@ -31,7 +31,7 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	statusId, err := client.SnapshotServer(flag.Arg(0), *days)
+	statusId, err := client.CreateSnapshot(flag.Arg(0), *days)
 	if err != nil {
 		exit.Fatalf("Failed to take snapshot of server %s: %s", flag.Arg(0), err)
 	}
