@@ -16,14 +16,14 @@ import (
 )
 
 func main() {
-	var hwGroup    = flag.String("g", "",            "UUID or name (if unique) of the HW group to add this server to")
-	var location   = flag.String("l", "",            "Data centre alias (only used in conjunction with -g)")
-	var srcServer  = flag.String("src", "",          "The name of a source-server, or a template, to create from")
+	var hwGroup    = flag.String("g",       "",      "UUID or name (if unique) of the HW group to add this server to")
+	var location   = flag.String("l",       "",      "Data centre alias (only used in conjunction with -g)")
+	var srcServer  = flag.String("src",     "",      "The name of a source-server, or a template, to create from")
 	var srcPass    = flag.String("srcPass", "",      "When cloning from a source-server, use this password")
-	var seed       = flag.String("s", "AUTO",        "The seed for the server name")
-	var desc       = flag.String("t", "",            "Description of the server")
+	var seed       = flag.String("s",       "AUTO",  "The seed for the server name")
+	var desc       = flag.String("t",       "",      "Description of the server")
 
-	var net        = flag.String("net",  "",         "Name of the Network to use")
+	var net        = flag.String("net",  "",         "ID or name of the Network to use")
 	var primDNS    = flag.String("dns1", "8.8.8.8",  "Primary DNS to use")
 	var secDNS     = flag.String("dns2", "8.8.4.4",  "Secondary DNS to use")
 	var password   = flag.String("pass", "",         "Desired password. Leave blank to auto-generate")
@@ -41,10 +41,46 @@ func main() {
 	}
 
 	flag.Parse()
+	if *hwGroup == "" {
+		flag.Usage()
+		os.Exit(0)
+	}
 
 	client, err := clcv2.NewClient()
 	if err != nil {
 		exit.Fatal(err.Error())
+	}
+
+	/* hwGroup may be hex uuid or group name */
+	if _, err := hex.DecodeString(*hwGroup); err != nil {
+		fmt.Printf("Resolving ID of Hardware Group %q ...\n", *hwGroup)
+
+		if group, err := client.GetGroupByName(*hwGroup, *location); err != nil {
+			exit.Errorf("Failed to resolve group name %q: %s", *hwGroup, err)
+		} else if group == nil {
+			exit.Errorf("No group named %q was found on %s", *hwGroup, *location)
+		} else {
+			*hwGroup = group.Id
+		}
+	}
+
+	/* net is supposed to be a (hex) ID, but allow network names, too */
+	if *net != "" {
+		if _, err := hex.DecodeString(*net); err == nil {
+			/* already looks like a HEX ID */
+		} else if  *location == "" {
+			exit.Errorf("Need a location argument (-l) if not using a network ID (%s)", *net)
+		} else {
+			fmt.Printf("Resolving network id of %q ...\n", *net)
+
+			if netw, err := client.GetNetworkIdByName(*net, *location); err != nil {
+				exit.Errorf("Failed to resolve network name %q: %s", *net, err)
+			} else if netw == nil {
+				exit.Errorf("No network named %q was found on %s", *net, *location)
+			} else {
+				*net = netw.Id
+			}
+		}
 	}
 
 	req := clcv2.CreateServerReq{
@@ -103,24 +139,13 @@ func main() {
 
 	if *extraDrv != 0 {
 		req.AdditionalDisks = append(req.AdditionalDisks,
-			                     clcv2.ServerDisk{SizeGB: *extraDrv, Type: "raw"})
+					     clcv2.ServerDisk{SizeGB: *extraDrv, Type: "raw"})
 	}
 
 	/* Date/time that the server should be deleted. */
 	if *ttl != 0 {
 		req.Ttl = new(time.Time)
 		*req.Ttl = time.Now().Add(*ttl)
-	}
-
-	/* hwGroup may be hex uuid or group name */
-	if _, err := hex.DecodeString(*hwGroup); err != nil {
-		if group, err := client.GetGroupByName(*hwGroup, *location); err != nil {
-			exit.Errorf("Failed to resolve group name %q: %s", *hwGroup, err)
-		} else if group == nil {
-			exit.Errorf("No group named %q was found on %s", *hwGroup, *location)
-		} else {
-			req.GroupId = group.Id
-		}
 	}
 
 	name, status, err := client.CreateServer(&req)
