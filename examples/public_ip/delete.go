@@ -30,9 +30,10 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	reqId, err := client.RemovePublicIPAddress(flag.Arg(0), flag.Arg(1))	if err != nil {
+	statusId, err := client.RemovePublicIPAddress(flag.Arg(0), flag.Arg(1))
+	if err != nil {
 		exit.Fatalf("Failed to remove public IP on %q: %s", flag.Arg(0), err)
 	}
 
-	fmt.Println("Request ID for removing public IP:", reqId)
+	fmt.Printf("Request ID for removing public IP %s: %s\n", flag.Arg(1), statusId)
 }
