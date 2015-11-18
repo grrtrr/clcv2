@@ -83,8 +83,9 @@ func main() {
 		n, err := clcv2.NetworkByIP(ip_string, networks)
 		if err != nil {
 			exit.Fatalf("Failed to identify network for %s: %s", ip_string, err)
+		} else if n == nil {
+			exit.Fatalf("No matching network found for %s in %s", ip_string, server.LocationId)
 		}
-
 		table.Append([]string{
 			ip_string, n.Cidr, n.Gateway, fmt.Sprint(n.Vlan),
 			n.Type, n.Description, n.Name, n.Id,
