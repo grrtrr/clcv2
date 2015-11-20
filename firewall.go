@@ -41,13 +41,21 @@ type FWPolicy struct {
 
 }
 
-
+// Get details of a specific firewall policy associated with a given account in a given data center
+// (an "intra data center firewall policy").
+// @location: Short string representing the data center to query.
+// @policyId: ID of the firewall policy to display.
+func (c *Client) GetFWPolicy(location, policyId string) (res FWPolicy, err error) {
+	path := fmt.Sprintf("/v2-experimental/firewallPolicies/%s/%s/%s", c.AccountAlias, location, policyId)
+	err = c.getResponse("GET", path, nil, &res)
+	return
+}
 
 // List firewall policies associated with a given account in a given data center
 // ("intra data center firewall policies").
 // Optionally filter results to policies associated with a second "destination" account.
-// @location:   Short string representing the data center you are querying.
-// @dstAccount: Optional destination account.
+// @location:   Short string representing the data center to query.
+// @dstAccount: Optional destination account (empty string to omit).
 func (c *Client) GetFWPolicyList(location, dstAccount string) (res []FWPolicy, err error) {
 	path := fmt.Sprintf("/v2-experimental/firewallPolicies/%s/%s", c.AccountAlias, location)
 	if dstAccount != "" {

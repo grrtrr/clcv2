@@ -1,7 +1,6 @@
 /*
- * List firewall policies associated with a given account in a given data center
- * ("intra data center firewall policies").
- * Optionally filter results to policies associated with a second "destination" account.
+ * Get details of a specific firewall policy associated with a given account in a given data center
+ * (an "intra data center firewall policy").
  */
 package main
 
@@ -18,8 +17,8 @@ import (
 )
 
 func main() {
-	var simple = flag.Bool("simple", false, "Use simple (debugging) output format")
-	var dst    = flag.String("dst", "",     "Destination account to filter policies by")
+	var location = flag.String("l", "", "Data centre location to query")
+	var simple   = flag.Bool("simple", false, "Use simple (debugging) output format")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Location>\n", path.Base(os.Args[0]))
@@ -27,7 +26,7 @@ func main() {
 	}
 	flag.Parse()
 
-	if flag.NArg() != 1 {
+	if flag.NArg() != 1 || *location == "" {
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -37,41 +36,29 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	
-	fwpl, err := client.GetFWPolicyList(flag.Arg(0), *dst)
+	fwp, err := client.GetFWPolicy(*location, flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to list firewall policies at %s: %s", flag.Arg(0), err)
+		exit.Fatalf("Failed to list firewall policy %s at %s: %s", *location, flag.Arg(0), err)
 	}
 
-	if len(fwpl) == 0 {
-		fmt.Printf("Empty result - nothing listed at %s.\n", flag.Arg(0))
-	} else if *simple {
-		pretty.Println(fwpl)
+	if *simple {
+		pretty.Println(fwp)
 	} else {
-		fmt.Printf("Intra Data Center Firewall Policies at %s:\n", flag.Arg(0))
-
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_CENTRE)
 		table.SetAutoWrapText(true)
 
-		table.SetHeader([]string{ "State", "Source", "Destination",
-					  "Ports", "Dst Account", "Id",
+		table.SetHeader([]string{ "Source", "Destination", "Ports",
+			"Dst Account", "Enabled", "State", "Id",
 		})
-		for _, p := range fwpl {
-			var stateStr = p.Status
-
-			if p.Enabled {
-				stateStr += "*"
-			}
-			table.Append([]string{ stateStr,
-				strings.Join(p.Source, ", "),
-				strings.Join(p.Destination, ", "),
-				strings.Join(p.Ports, ", "),
-				strings.ToUpper(p.DestinationAccount), p.Id,
-			})
-		}
-
+		table.Append([]string{
+			strings.Join(fwp.Source, ", "),
+			strings.Join(fwp.Destination, ", "),
+			strings.Join(fwp.Ports, ", "),
+			strings.ToUpper(fwp.DestinationAccount),
+			fmt.Sprint(fwp.Enabled), fwp.Status, fwp.Id,
+		})
 		table.Render()
 	}
 }

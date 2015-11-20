@@ -37,7 +37,7 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	
+
 	fwpl, err := client.GetFWPolicyList(flag.Arg(0), *dst)
 	if err != nil {
 		exit.Fatalf("Failed to list firewall policies at %s: %s", flag.Arg(0), err)
@@ -55,20 +55,17 @@ func main() {
 		table.SetAlignment(tablewriter.ALIGN_CENTRE)
 		table.SetAutoWrapText(true)
 
-		table.SetHeader([]string{ "State", "Source", "Destination",
-					  "Ports", "Dst Account", "Id",
+		table.SetHeader([]string{ "Source", "Destination", "Ports",
+			 "Dst Account", "Enabled", "State", "Id",
 		})
-		for _, p := range fwpl {
-			var stateStr = p.Status
 
-			if p.Enabled {
-				stateStr += "*"
-			}
-			table.Append([]string{ stateStr,
+		for _, p := range fwpl {
+			table.Append([]string{
 				strings.Join(p.Source, ", "),
 				strings.Join(p.Destination, ", "),
 				strings.Join(p.Ports, ", "),
-				strings.ToUpper(p.DestinationAccount), p.Id,
+				strings.ToUpper(p.DestinationAccount),
+				fmt.Sprint(p.Enabled), p.Status, p.Id,
 			})
 		}
 
