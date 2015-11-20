@@ -39,18 +39,22 @@ func main() {
 		exit.Fatalf("Failed to list server imports available at %q: %s", flag.Arg(0), err)
 	}
 
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetAutoFormatHeaders(false)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAutoWrapText(true)
+	if len(imports) == 0 {
+		fmt.Printf("No imports listed at %s.\n", flag.Arg(0))
+	} else {
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetAutoFormatHeaders(false)
+		table.SetAlignment(tablewriter.ALIGN_LEFT)
+		table.SetAutoWrapText(true)
 
-	table.SetHeader([]string{ "Id", "Name", "Storage/GB", "#CPU", "Membory/MB" })
+		table.SetHeader([]string{ "Id", "Name", "Storage/GB", "#CPU", "Membory/MB" })
 
-	for _, i := range imports {
-		table.Append([]string{
-			i.Id, i.Name, fmt.Sprint(i.StorageSizeGb),
-			fmt.Sprint(i.CpuCount), fmt.Sprint(i.MemorySizeMb),
-		})
+		for _, i := range imports {
+			table.Append([]string{
+				i.Id, i.Name, fmt.Sprint(i.StorageSizeGb),
+				fmt.Sprint(i.CpuCount), fmt.Sprint(i.MemorySizeMb),
+			})
+		}
+		table.Render()
 	}
-	table.Render()
 }
