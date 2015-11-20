@@ -37,5 +37,5 @@ func main() {
 
 	fmt.Printf("Credentials for %s:\n", flag.Arg(0))
 	fmt.Printf("User:     %s\n", credentials.Username)
-	fmt.Printf("Password: %s\n", credentials.Password)
+	fmt.Printf("Password: \"%s\"\n", credentials.Password)
 }

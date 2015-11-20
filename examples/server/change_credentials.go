@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	var oldPasswd = flag.String("old", "", "The existing password (for authentication)")
+	var oldPasswd = flag.String("old", "", "The existing password (optional, used for authentication)")
 	var newPasswd = flag.String("new", "", "The new password to apply")
 
 	flag.Usage = func() {
