@@ -600,3 +600,79 @@ func (c *Client) ServerSetMaintenance(serverId string, enable bool) (statusId st
 		Servers		[]MaintenanceMode	`json:"servers"`
 	} { []MaintenanceMode{ {serverId, enable} } } )
 }
+
+
+/*
+ * Adding/removing secondary network adapters.
+ * FIXME: the status response returns a different object than the regular queue status
+ *        operation, which requires patching up here (experimental API).
+ */
+const (
+	/* Poll interval in seconds for adding/removing a secondary network adapter */
+	change_nic_poll    = 1 * time.Second
+
+	/* Maximum acceptable time in seconds to poll for secondary NIC change in minutes */
+	change_nic_timeout = 3 * time.Minute
+)
+
+type ChangeNicResponse struct {
+	// GUID for the item in the queue for completion
+	OperationId	string
+
+	// Link to review status of the operation,
+	Uri		string
+}
+
+// The object returned from a GET at ChangeNicResponse.Uri
+type ChangeNicStatus struct {
+	// This seems to be "secondaryNetworkAdapter"
+	RequestType	string
+
+	// This starts with "queued" and reaches "succeeded" when done
+	Status		string
+
+	// Use maps for the rest: there is no documentation currently
+	Summary, Source	map[string]string
+}
+
+// Helper function to poll the queue used for adding/removing secondary network interfaces.
+// Since this uses a diffrent API, the standard Queue -> Get Status can not be used.
+func (c *Client) changeNic(verb, path string, reqModel interface{}) (err error) {
+	var res ChangeNicResponse
+	var s ChangeNicStatus
+
+	if err = c.getResponse(verb, path, reqModel, &res); err == nil {
+		for start := time.Now(); s.Status != Succeeded; time.Sleep(change_nic_poll) {
+			if err = c.getResponse("GET", res.Uri, nil, &s); err != nil {
+				break
+			} else if s.Status == Failed {
+				return fmt.Errorf("request %s %s failed", verb, path)
+			} else if time.Since(start) > change_nic_timeout {
+				return fmt.Errorf("request %s %s timed out after %s", verb,
+						  path, time.Since(start))
+			}
+		}
+	}
+	return
+}
+
+// Add secondary network adapter to server.
+// @serverId: ID of the server to change
+// @netId:    (Hex) ID of the network to connect to (must be different from server's existing ones)
+// @ip:       Optional IP address to claim on the network @netId
+func (c *Client) ServerAddNic(serverId, netId, ip string) (err error) {
+	return c.changeNic("POST", fmt.Sprintf("/v2/servers/%s/%s/networks", c.AccountAlias, serverId), struct {
+		// (Hex) ID of the network.
+		NetworkId       string  `json:"networkId"`
+
+		// Optional IP address for the networkId
+		IpAddress       string  `json:"ipAddress,omitempty"`
+	} { netId, ip })
+}
+
+// Remove secondary network adapter from server.
+// @serverId: ID of the server to change
+// @netId:    ID of the network
+func (c *Client) ServerDelNic(serverId, netId string) (err error) {
+	return c.changeNic("DELETE", fmt.Sprintf("/v2/servers/%s/%s/networks/%s", c.AccountAlias, serverId, netId), nil)
+}

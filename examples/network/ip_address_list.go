@@ -29,7 +29,8 @@ func main() {
 	}
 
 	flag.Parse()
-	if flag.NArg() != 1 {
+	/* It seems that Location is always required, even if using the hex ID of the network. */
+	if flag.NArg() != 1 || *location == "" {
 		flag.Usage()
 		os.Exit(1)
 	} else if !inStringArray(*query, "claimed", "free", "all") {

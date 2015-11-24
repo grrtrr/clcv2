@@ -17,7 +17,7 @@ import (
 
 func main() {
 	var hwGroup    = flag.String("g",       "",      "UUID or name (if unique) of the HW group to add this server to")
-	var location   = flag.String("l",       "",      "Data centre alias (only used in conjunction with -g)")
+	var location   = flag.String("l",       "",      "Data centre alias (to resolve group and/or network ID)")
 	var srcServer  = flag.String("src",     "",      "The name of a source-server, or a template, to create from")
 	var srcPass    = flag.String("srcPass", "",      "When cloning from a source-server, use this password")
 	var seed       = flag.String("s",       "AUTO",  "The seed for the server name")
