@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os/user"
+	"strings"
 	"path"
 	"fmt"
 	"os"
@@ -40,14 +41,9 @@ type LoginRes struct {
 }
 
 // Log in and save credentials if successful
-func (c *Client) login() error {
-	username, password, err := resolveUserAndPass()
-	if err != nil {
-		return err
-	}
-
-	err = c.getResponse("POST", "/v2/authentication/login",
-			    &LoginReq{ username, password }, c.LoginRes)
+func (c *Client) login(user, pass string) error {
+	err := c.getResponse("POST", "/v2/authentication/login",
+			     &LoginReq{ user, pass }, c.LoginRes)
 	if err != nil {
 		return err
 	}
@@ -63,6 +59,11 @@ func (c *Client) destroyCredentials() {
 func (c *Client) loadCredentials() error {
 	var path = defaultCredentialsPath()
 
+	username, password, err := resolveUserAndPass()
+	if err != nil {
+		return err
+	}
+
 	c.LoginRes = new(LoginRes)
 	if _, err := os.Stat(path); err == nil {
 		fd, err := os.Open(path)
@@ -70,11 +71,20 @@ func (c *Client) loadCredentials() error {
 			return err
 		}
 		defer fd.Close()
-		return json.NewDecoder(fd).Decode(c.LoginRes)
+		err = json.NewDecoder(fd).Decode(c.LoginRes)
+		if err != nil {
+			return err
+		} else if strings.ToLower(username) == strings.ToLower(c.LoginRes.UserName) {
+			return nil
+		}
+		/* User switch - clear all related environment variables */
+		os.Unsetenv("CLC_ALIAS")
+		os.Unsetenv("CLC_ACCOUNT")
+		os.Rename(path, path + ".bak")
 	} else if err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	return c.login()
+	return c.login(username, password)
 }
 
 // Save credentials to default file path. Return error on failure.
