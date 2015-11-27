@@ -95,7 +95,8 @@ func main() {
 
 		// Disks
 		if len(server.Details.Disks) > 0 {
-			fmt.Printf("\nDisks of %s (total storage: %d GB)\n", server.Name, server.Details.StorageGb)
+			fmt.Printf("\nDisks of %s (total storage: %s)\n", server.Name,
+				   humanize.Bytes(uint64(server.Details.StorageGb) << 30))
 			table = tablewriter.NewWriter(os.Stdout)
 			table.SetAutoFormatHeaders(false)
 			table.SetAlignment(tablewriter.ALIGN_RIGHT)
