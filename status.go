@@ -53,3 +53,67 @@ func (c *Client) getStatus(verb, path string, reqModel interface{}) (statusId st
 	}
 	return
 }
+
+// StatusResponse is the type of response returned by operations such as
+// CreateServer, CloneServer, DeleteServer, ImportServer,
+// ArchiveServer, CreateSnapshot, ExecutePackage
+type StatusResponse struct {
+	// ID of the server that the operation was performed on.
+	Server string
+
+	// Boolean indicating whether the operation was successfully added to the queue.
+	IsQueued bool
+
+	// Collection of entity links that point to resources related to this server operation.
+	Links []Link
+
+	// If something goes wrong or the request is not queued,
+	// this is the message that contains the details about what happened.
+	ErrorMessage string
+}
+
+// Run an Http request and evaluate the returned %StatusResponse, return links
+// @verb, @path, @reqModel: as in getResponse()
+// @useArray:               whether to expect a singleton StatusResponse, or an array with one such element
+func (c *Client) getStatusResponse(verb, path string, useArray bool, reqModel interface{}) (res StatusResponse, err error) {
+	if useArray {
+		var status []StatusResponse
+
+		if err = c.getResponse(verb, path, reqModel, &status); err != nil {
+			return
+		} else if len(status) == 0 {
+			err = fmt.Errorf("empty status response from server")
+		} else if len(status) != 1 {
+			err = fmt.Errorf("multiple status responses (%d) from server", len(status))
+		} else {
+			res = status[0]
+		}
+	} else {
+		err = c.getResponse(verb, path, reqModel, &res)
+	}
+
+	if err == nil {
+		if res.ErrorMessage != "" {
+			err = fmt.Errorf("request on %s failed - %s", res.Server, res.ErrorMessage)
+		} else if !res.IsQueued {
+			err = fmt.Errorf("request on %s was not queued", res.Server)
+		}
+	}
+	return
+}
+
+// Wrap getStatusResponse() to only extract the statusId contained in the 'status' link
+// @verb, @path, @useArray, @reqModel: as in getStatusResponse
+func (c *Client) getStatusResponseId(verb, path string, useArray bool, reqModel interface{}) (statusId string, err error) {
+	var status StatusResponse
+	var link *Link
+
+	status, err = c.getStatusResponse(verb, path, useArray, reqModel)
+	if err != nil {
+		return
+	}
+	if link, err = extractLink(status.Links, "status"); err == nil {
+		statusId = link.Id
+	}
+	return
+}

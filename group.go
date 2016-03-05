@@ -1,43 +1,43 @@
 package clcv2
 
 import (
-	"time"
 	"fmt"
+	"time"
 )
 
 type Group struct {
 	// ID of the group being queried
-	Id		string
+	Id string
 
 	// User-defined name of the group
-	Name		string
+	Name string
 
 	// User-defined description of this group
-	Description	string
+	Description string
 
 	// Data center location identifier
-	LocationId	string
+	LocationId string
 
 	//Group type which could include system types like "archive"
-	Type		string
+	Type string
 
 	// Describes if group is online or not
-	Status		string
+	Status string
 
 	// Number of servers this group contains
-	Serverscount	int
+	Serverscount int
 
 	// Refers to this same entity type for each sub-group
-	Groups		[]Group
+	Groups []Group
 
 	// Collection of entity links that point to resources related to this group
-	Links		[]Link
+	Links []Link
 
 	// Describes "created" and "modified" details
-	ChangeInfo	ChangeInfo
+	ChangeInfo ChangeInfo
 
 	// complexDetails about any custom fields and their values
-	CustomFields	[]CustomField
+	CustomFields []CustomField
 }
 
 // Get the details of an individual server and any sub-groups and servers that it contains.
@@ -141,11 +141,11 @@ func (c *Client) GetGroupByUUID(uuid, location string) (*Group, error) {
 // @cf:     Optional array of Custom Fields to set.
 func (c *Client) CreateGroup(name, parent, desc string, cf []SimpleCustomField) (res Group, err error) {
 	req := struct {
-		Name		string			`json:"name"`
-		Description	string			`json:"description"`
-		ParentGroupId	string			`json:"parentGroupId"`
-		customFields	[]SimpleCustomField	`json:"customFields"`
-	} { name, desc, parent, cf }
+		Name          string              `json:"name"`
+		Description   string              `json:"description"`
+		ParentGroupId string              `json:"parentGroupId"`
+		customFields  []SimpleCustomField `json:"customFields"`
+	}{name, desc, parent, cf}
 	err = c.getResponse("POST", fmt.Sprintf("/v2/groups/%s", c.AccountAlias), &req, &res)
 	return
 }
@@ -155,7 +155,7 @@ func (c *Client) CreateGroup(name, parent, desc string, cf []SimpleCustomField) 
 // @newName: new name for @groupId.
 func (c *Client) GroupSetName(groupId, newName string) error {
 	return c.patch(fmt.Sprintf("/v2/groups/%s/%s", c.AccountAlias, groupId),
-		       &PatchOperation{ "set", "name", newName })
+		&PatchOperation{"set", "name", newName})
 }
 
 // Change the description of an existing group.
@@ -163,7 +163,7 @@ func (c *Client) GroupSetName(groupId, newName string) error {
 // @newDesc: new description for @groupId.
 func (c *Client) GroupSetDescription(groupId, newDesc string) error {
 	return c.patch(fmt.Sprintf("/v2/groups/%s/%s", c.AccountAlias, groupId),
-		       &PatchOperation{ "set", "description", newDesc })
+		&PatchOperation{"set", "description", newDesc})
 }
 
 // Change the parent HW group of an existing group.
@@ -171,15 +171,31 @@ func (c *Client) GroupSetDescription(groupId, newDesc string) error {
 // @parentUUID: UUID of new parent group for @groupId.
 func (c *Client) GroupSetParent(groupId, parentUUID string) error {
 	return c.patch(fmt.Sprintf("/v2/groups/%s/%s", c.AccountAlias, groupId),
-		       &PatchOperation{ "set", "parentGroupId", parentUUID })
+		&PatchOperation{"set", "parentGroupId", parentUUID})
 }
-
 
 // Send the delete operation to a given group and adds operation to queue.
 // This operation will delete the group and all servers and groups underneath it.
 // @groupId: UUID of the group to be deleted.
 func (c *Client) DeleteGroup(groupId string) (statusId string, err error) {
 	return c.getStatus("DELETE", fmt.Sprintf("/v2/groups/%s/%s", c.AccountAlias, groupId), nil)
+}
+
+/*
+ * Archive and restore
+ */
+// ArchiveGroup archives the hardware group @groupId.
+func (c *Client) ArchiveGroup(groupId string) (statusId string, err error) {
+	return c.getStatus("POST", fmt.Sprintf("/v2/groups/%s/%s/archive", c.AccountAlias, groupId), nil)
+}
+
+// RestoreGroup restores @groupId into the HW Group identified by @targetGroupId
+func (c *Client) RestoreGroup(groupId, targetGroupId string) (statusId string, err error) {
+	var path = fmt.Sprintf("/v2/groups/%s/%s/restore", c.AccountAlias, groupId)
+
+	return c.getStatusResponseId("POST", path, false, &struct {
+		TargetGroupId string `json:"targetGroupId"`
+	}{targetGroupId})
 }
 
 // Print group hierarchy starting at @g, using initial indentation @indent.
@@ -195,13 +211,13 @@ func PrintGroupHierarchy(g *Group, indent string) {
 
 	for _, l := range g.Links {
 		if l.Rel == "server" {
-			fmt.Printf("%s", indent + "    ")
+			fmt.Printf("%s", indent+"    ")
 			fmt.Printf("%s\n", l.Id)
 		}
 	}
 
 	for idx := range g.Groups {
-		PrintGroupHierarchy(&g.Groups[idx], indent + "    ")
+		PrintGroupHierarchy(&g.Groups[idx], indent+"    ")
 	}
 }
 
@@ -210,16 +226,16 @@ func PrintGroupHierarchy(g *Group, indent string) {
  */
 type GroupBillingDetails struct {
 	// Date that this billing information applies to
-	Date	time.Time
+	Date time.Time
 	// List of groups (with the first being the queried group) in the requested hierarchy.
 	// The keys of the map are the group Ids.
-	Groups	map[string]struct{
+	Groups map[string]struct {
 		// User-defined name of the group
-		Name	string
+		Name string
 
 		// Collection of servers in this group, each with billing information.
 		// The keys of this map are the server names.
-		Servers	map[string]ServerBillingDetails
+		Servers map[string]ServerBillingDetails
 	}
 }
 
@@ -236,55 +252,55 @@ func (c *Client) GetGroupBillingDetails(groupId string) (res GroupBillingDetails
  */
 type GroupScheduledActivity struct {
 	// ID of the group
-	Id			string
+	Id string
 
 	// Data center location identifier
-	LocationId		string
+	LocationId string
 
 	// Change history
-	ChangeInfo		ChangeInfo
+	ChangeInfo ChangeInfo
 
 	// Collection of entity links that point to resources related to this data center
-	Links			[]Link
+	Links []Link
 
 	// State of scheduled activity: on or off
-	Status			string
+	Status string
 
 	// Type of activity: archive, createsnapshot, delete, deletesnapshot, pause, poweron, reboot, shutdown
-	Type			string
+	Type string
 
 	// Time when scheduled activity should start
-	BeginDateUtc		time.Time
+	BeginDateUtc time.Time
 
 	// How often to repeat: never, daily, weekly, monthly, customWeekly
-	Repeat			string
+	Repeat string
 
 	// An array of strings for the days of the week: sun, mon, tue, wed, thu, fri, sat
-	CustomWeeklyDays	[]string
+	CustomWeeklyDays []string
 
 	// When the scheduled activities are set to expire: never, afterDate, afterCount
-	Expire			string
+	Expire string
 
 	// Number of times scheduled activity should run before expiring
-	ExpireCount		int
+	ExpireCount int
 
 	// When the scheduled activity should expire
-	ExpireDateUtc		time.Time
+	ExpireDateUtc time.Time
 
 	// To display in local time
-	TimeZoneOffset		string
+	TimeZoneOffset string
 
 	// True: scheduled activity has expired. False: scheduled activity is active
-	IsExpired		bool
+	IsExpired bool
 
 	// Last time scheduled activity was run
-	LastOccurrenceDateUtc	time.Time
+	LastOccurrenceDateUtc time.Time
 
 	// How many times scheduled activity has been run
-	OccurrenceCount		int
+	OccurrenceCount int
 
 	// When the next scheduled activty will be run
-	NextOccurrenceDateUtc	time.Time
+	NextOccurrenceDateUtc time.Time
 }
 
 // Get the scheduled activities associated with a group.
@@ -300,30 +316,30 @@ func (c *Client) GetGroupScheduledActivities(groupId string) (res []GroupSchedul
  */
 type GroupDefaults struct {
 	// Number of processors to configure the server with (1-16) (ignored for bare metal servers)
-	Cpu		int	`json:"cpu"`
+	Cpu int `json:"cpu"`
 
 	// Number of GB of memory to configure the server with (1-128) (ignored for bare metal servers)
-	MemoryGB	int	`json:"memoryGB,omitempty"`
+	MemoryGB int `json:"memoryGB,omitempty"`
 
 	// ID of the Network. This can be retrieved from the Get Network List API operation.
-	NetworkId	string	`json:"networkId"`
+	NetworkId string `json:"networkId"`
 
 	// Primary DNS to set on the server. If not supplied the default value set on the account will be used.
-	PrimaryDns	string	`json:"primaryDns"`
+	PrimaryDns string `json:"primaryDns"`
 
 	// Secondary DNS to set on the server. If not supplied the default value set on the account will be used.
-	SecondaryDns	string	`json:"secondaryDns"`
+	SecondaryDns string `json:"secondaryDns"`
 
 	// Name of the template to use as the source. (Ignored for bare metal servers.)
-	TemplateName	string	`json:"templateName"`
+	TemplateName string `json:"templateName"`
 }
 
 type GroupDefaultSetting struct {
 	// Value applied as group setting
-	Value		interface{}
+	Value interface{}
 
 	// Whether the value is set explicitly (false) or by its parent (true)
-	Inherited	bool
+	Inherited bool
 }
 
 // Set the defaults for a group.

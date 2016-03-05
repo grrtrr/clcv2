@@ -1,5 +1,5 @@
 /*
- * Restore a server from archive.
+ * Restore a hardware group from archive.
  */
 package main
 
@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	var hwGroup = flag.String("g", "", "UUID or name (if unique) of the HW group to restore this server to")
+	var hwGroup = flag.String("g", "", "UUID or name (if unique) of the HW group to restore this group to")
 	var location = flag.String("l", "", "Data centre alias (to resolve group and/or network ID)")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <server-name>\n", path.Base(os.Args[0]))
@@ -50,10 +50,10 @@ func main() {
 		}
 	}
 
-	statusId, err := client.RestoreServer(flag.Arg(0), *hwGroup)
+	statusId, err := client.RestoreGroup(flag.Arg(0), *hwGroup)
 	if err != nil {
-		exit.Fatalf("Failed to restore server %s: %s", flag.Arg(0), err)
+		exit.Fatalf("Failed to restore group %s: %s", flag.Arg(0), err)
 	}
 
-	fmt.Println("Request ID for restoring server:", statusId)
+	fmt.Println("Request ID for restoring group:", statusId)
 }

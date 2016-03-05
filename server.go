@@ -245,78 +245,15 @@ type ServerDisk struct {
 	Type string `json:"type"`
 }
 
-/* Status response, used by: CreateServer, CloneServer, DeleteServer, ImportServer,
-   ArchiveServer, CreateSnapshot, ExecutePackage,  */
-type ServerStatus struct {
-	// ID of the server that the operation was performed on.
-	Server string
-
-	// Boolean indicating whether the operation was successfully added to the queue.
-	IsQueued bool
-
-	// Collection of entity links that point to resources related to this server operation.
-	Links []Link
-
-	// If something goes wrong or the request is not queued,
-	// this is the message that contains the details about what happened.
-	ErrorMessage string
-}
-
-// Run an Http request and evaluate the returned %ServerStatus, return links
-// @verb, @path, @reqModel: as in getResponse()
-// @useArray:               whether to expect a singleton ServerStatus, or an array with one such element
-func (c *Client) getServerStatus(verb, path string, useArray bool, reqModel interface{}) (res ServerStatus, err error) {
-	if useArray {
-		var status []ServerStatus
-
-		if err = c.getResponse(verb, path, reqModel, &status); err != nil {
-			return
-		} else if len(status) == 0 {
-			err = fmt.Errorf("empty status response from server")
-		} else if len(status) != 1 {
-			err = fmt.Errorf("multiple status responses (%d) from server", len(status))
-		} else {
-			res = status[0]
-		}
-	} else {
-		err = c.getResponse(verb, path, reqModel, &res)
-	}
-
-	if err == nil {
-		if res.ErrorMessage != "" {
-			err = fmt.Errorf("request on %s failed - %s", res.Server, res.ErrorMessage)
-		} else if !res.IsQueued {
-			err = fmt.Errorf("request on %s was not queued", res.Server)
-		}
-	}
-	return
-}
-
-// Wrap getServerStatus() to only extract the statusId contained in the 'status' link
-// @verb, @path, @useArray, @reqModel: as in getServerStatus
-func (c *Client) getServerStatusId(verb, path string, useArray bool, reqModel interface{}) (statusId string, err error) {
-	var status ServerStatus
-	var link *Link
-
-	status, err = c.getServerStatus(verb, path, useArray, reqModel)
-	if err != nil {
-		return
-	}
-	if link, err = extractLink(status.Links, "status"); err == nil {
-		statusId = link.Id
-	}
-	return
-}
-
 // Create a new server.
 // @serverId: ID of the server to be deleted.
 // Returns new server @name and @statusId if successful.
 func (c *Client) CreateServer(req *CreateServerReq) (name, statusId string, err error) {
-	var status ServerStatus
+	var status StatusResponse
 	var server Server
 	var link *Link
 
-	status, err = c.getServerStatus("POST", fmt.Sprintf("/v2/servers/%s", c.AccountAlias), false, req)
+	status, err = c.getStatusResponse("POST", fmt.Sprintf("/v2/servers/%s", c.AccountAlias), false, req)
 	if err != nil {
 		return
 	}
@@ -343,7 +280,7 @@ func (c *Client) CreateServer(req *CreateServerReq) (name, statusId string, err 
 func (c *Client) DeleteServer(serverId string) (statusId string, err error) {
 	var path = fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId)
 
-	return c.getServerStatusId("DELETE", path, false, nil)
+	return c.getStatusResponseId("DELETE", path, false, nil)
 }
 
 /*
@@ -471,6 +408,11 @@ func (c *Client) GetServerSnapshot(serverId string) (sn *ServerSnapshot, err err
 	}
 }
 
+// SnapshotServer wraps CreateSnapshot, using the maximum allowed expiration period.
+func (c *Client) SnapshotServer(serverId string) (statusId string, err error) {
+	return c.CreateSnapshot(serverId, 10)
+}
+
 // Send the create snapshot operation to a list of servers (along with the number of days
 // to keep the snapshot for) and adds operation to queue.
 // @serverId:   Server name to perform create snapshot operation on.
@@ -478,7 +420,7 @@ func (c *Client) GetServerSnapshot(serverId string) (sn *ServerSnapshot, err err
 func (c *Client) CreateSnapshot(serverId string, daysToKeep int) (statusId string, err error) {
 	var path = fmt.Sprintf("/v2/operations/%s/servers/createSnapshot", c.AccountAlias)
 
-	return c.getServerStatusId("POST", path, true, &struct {
+	return c.getStatusResponseId("POST", path, true, &struct {
 		ServerIds              []string `json:"serverIds"`
 		SnapshotExpirationDays int      `json:"snapshotExpirationDays"`
 	}{[]string{serverId}, daysToKeep})
@@ -547,7 +489,7 @@ func (c *Client) RestoreServer(serverId, groupId string) (statusId string, err e
 func (c *Client) serverPowerOperation(op, serverId string) (statusId string, err error) {
 	var path = fmt.Sprintf("/v2/operations/%s/servers/%s", c.AccountAlias, op)
 
-	return c.getServerStatusId("POST", path, true, []string{serverId})
+	return c.getStatusResponseId("POST", path, true, []string{serverId})
 }
 
 // Send the pause operation to a server and add operation to queue.
@@ -612,7 +554,7 @@ type MaintenanceMode struct {
 func (c *Client) ServerSetMaintenance(serverId string, enable bool) (statusId string, err error) {
 	var path = fmt.Sprintf("/v2/operations/%s/servers/setMaintenance", c.AccountAlias)
 
-	return c.getServerStatusId("POST", path, true, &struct {
+	return c.getStatusResponseId("POST", path, true, &struct {
 		Servers []MaintenanceMode `json:"servers"`
 	}{[]MaintenanceMode{{serverId, enable}}})
 }
