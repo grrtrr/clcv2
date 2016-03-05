@@ -1,55 +1,67 @@
 package clcv2
 
 import (
-	"net/http/httputil"
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
-	"reflect"
-	"errors"
 	"bytes"
-	"time"
-	"mime"
+	"encoding/json"
+	"errors"
 	"flag"
-	"log"
 	"fmt"
-	"os"
 	"io"
+	"io/ioutil"
+	"log"
+	"mime"
+	"net/http"
+	"net/http/httputil"
+	"os"
+	"reflect"
+	"runtime"
+	"strings"
+	"time"
+
+	"github.com/PuerkitoBio/rehttp"
 )
 
 const (
+	// CenturyLink Cloud API url
 	BaseURL = "https://api.ctl.io"
+
+	// Maximum number of retries per request
+	MaxRetries = 3
+
+	// Per request retry delay
+	StepDelay = time.Second * 10
 )
 
 /* Global variables */
 var (
-	g_user, g_pass	string		/* Command-line username/password */
-	g_acct		string		/* Account Alias to use instead of the default */
-	g_timeout	time.Duration	/* Client default timeout */
-	g_debug		bool		/* Command-line debug flag */
+	g_user, g_pass string        /* Command-line username/password */
+	g_acct         string        /* Account Alias to use instead of the default */
+	g_timeout      time.Duration /* Client default timeout */
+	g_debug        bool          /* Command-line debug flag */
 )
 
 func init() {
-	flag.BoolVar(&g_debug,  "d", false, "Produce debug output")
-	flag.StringVar(&g_user, "u", "",    "CLC Login Username")
-	flag.StringVar(&g_pass, "p", "",    "CLC Login Password")
-	flag.StringVar(&g_acct, "a", "",    "CLC Account Alias to use (instead of default)")
+	flag.BoolVar(&g_debug, "d", false, "Produce debug output")
+	flag.StringVar(&g_user, "u", "", "CLC Login Username")
+	flag.StringVar(&g_pass, "p", "", "CLC Login Password")
+	flag.StringVar(&g_acct, "a", "", "CLC Account Alias to use (instead of default)")
 	/*
-	  * Caveat: keep the timeout value high, at least a few minutes.
-	  *         Some operations, such as querying details of a new server immediately
-	  *         after launching a CreateServer request, can take up to circa a minute.
-	  */
-	flag.DurationVar(&g_timeout, "timeout", 180 * time.Second, "Client default timeout")
+	 * Caveat: keep the timeout value high, at least a few minutes.
+	 *         Some operations, such as querying details of a new server immediately
+	 *         after launching a CreateServer request, can take up to circa a minute.
+	 */
+	flag.DurationVar(&g_timeout, "timeout", 180*time.Second, "Client default timeout")
 }
 
+// Client wraps a http.Client, along with credentials and logging information.
 type Client struct {
-	requestor	*http.Client
+	requestor *http.Client
 
 	// Authentication information
 	*LoginRes
 
 	// Logger to use by this package
-	 Log        *log.Logger
+	Log *log.Logger
 }
 
 // Return authenticated client.
@@ -58,10 +70,30 @@ type Client struct {
 // - CLC_ALIAS:   takes precedence over default LocationAlias
 // - CLC_ACCOUNT: takes precedence over default AccountAlias
 func NewClient() (client *Client, err error) {
-	client = &Client{ requestor: &http.Client{Timeout: g_timeout} }
+	client = &Client{}
+	client.requestor = &http.Client{
+		Transport: rehttp.NewTransport(nil, // default transport
+			retryer(client, MaxRetries),
+			// Note: using g_timeout as upper bound for the exponential backoff.
+			//       This means g_timeout has to be large enough to run MaxRetries
+			//       requests with individual retries.
+			rehttp.ExpJitterDelay(StepDelay, g_timeout),
+		),
+		// The client timeout applies to the request as a whole, i.e. including any retries.
+		// See http://0value.com/Let-the-Doer-Do-it
+		Timeout: g_timeout,
+	}
+
+	// FIXME: rehttp requires go1.6 in order to deal with timeout
+	if strings.HasPrefix(runtime.Version(), "go1.5") {
+		fmt.Fprintf(os.Stderr, "\nWARNING: rehttp requires go >= 1.6 to use retry with timeout\n")
+		fmt.Fprintf(os.Stderr, "WARNING: please update Go (current version is %q)\n", runtime.Version())
+		fmt.Fprintf(os.Stderr, "WARNING: disabling timeout for now\n\n")
+		client.requestor.Timeout = 0
+	}
 
 	if g_debug {
-		client.Log = log.New(os.Stdout, "", log.Ltime | log.Lshortfile)
+		client.Log = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
 	} else {
 		client.Log = log.New(ioutil.Discard, "", 0)
 	}
@@ -82,6 +114,25 @@ func NewClient() (client *Client, err error) {
 		client.LoginRes.AccountAlias = g_acct
 	}
 	return client, nil
+}
+
+// retryer implements the retry policy: (a) any failure, (b) temporary failure status codes
+func retryer(client *Client, maxRetries int) rehttp.RetryFn {
+	return rehttp.RetryFn(func(at rehttp.Attempt) bool {
+		if at.Index < maxRetries {
+			if at.Response == nil {
+				client.Log.Printf("request failed - retry #%d", at.Index+1)
+				return true
+			}
+			/* Request timeout, server error, bad gateway, service unavailable, gateway timeout */
+			switch at.Response.StatusCode {
+			case 408, 500, 502, 503, 504:
+				client.Log.Printf("request returned %q - retry #%d", at.Response.Status, at.Index+1)
+				return true
+			}
+		}
+		return false
+	})
 }
 
 // SetTimeout changes the per-request timeout.
@@ -120,15 +171,15 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 		}
 	}
 
-	req, err := http.NewRequest(verb, BaseURL + path, reqBody)
+	req, err := http.NewRequest(verb, BaseURL+path, reqBody)
 	if err != nil {
 		return
 	}
 	if c.BearerToken != "" {
-		req.Header.Set("Authorization", "Bearer " + c.BearerToken)
+		req.Header.Set("Authorization", "Bearer "+c.BearerToken)
 	}
-	req.Header.Set("Content-Type",  "application/json; charset=utf-8")
-	req.Header.Set("Accept",        "application/json")
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	req.Header.Set("Accept", "application/json")
 
 	if g_debug {
 		reqDump, _ := httputil.DumpRequest(req, true)
@@ -147,12 +198,12 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 	}
 
 	switch res.StatusCode {
-	case 200, 201, 202, 204:	/* OK / CREATED / ACCEPTED / NO CONTENT */
+	case 200, 201, 202, 204: /* OK / CREATED / ACCEPTED / NO CONTENT */
 		if resModel != nil {
 			return json.NewDecoder(res.Body).Decode(resModel)
 		} else if res.ContentLength > 0 {
 			return fmt.Errorf("Unable to decode non-empty response (%d bytes) to nil response model",
-					  res.ContentLength)
+				res.ContentLength)
 		}
 		return nil
 	case 401:
@@ -169,15 +220,14 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 			return fmt.Errorf("Failed to read error response %d body: %s", res.StatusCode, err)
 		}
 
-		/*
-		 * Currently 3 different types of response have been observed:
-		 * 1) bare JSON string
-		 * 2) struct { message: "string" }
-		 * 3) struct { message: "string", "modelState": map[string]interface{} }
-		      E.g.:  {"":["The server must be in Active or Archived state."]}
-			      "modelState":{"body.networkId":["The network vlan_1249_10.81.149 is not valid."]}
-			      "modelState":{"":["The server must be in Active or Archived state."]}
-		 */
+		// Currently 3 different types of response have been observed:
+		// 1) bare JSON string
+		// 2) struct { message: "string" }
+		// 3) struct { message: "string", "modelState": map[string]interface{} }
+		//    E.g.:  {"":["The server must be in Active or Archived state."]}
+		//	      "modelState":{"body.networkId":["The network vlan_1249_10.81.149 is not valid."]}
+		//	      "modelState":{"":["The server must be in Active or Archived state."]}
+		//
 		errMsg = string(body)
 		if ct, _, _ := mime.ParseMediaType(res.Header.Get("Content-Type")); ct == "application/json" {
 			/* Code thanks to & inspired by clc-go-cli */
