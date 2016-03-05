@@ -22,22 +22,21 @@ const (
 // @statusId: ID of the server being queried
 func (c *Client) GetStatus(statusId string) (status QueueStatus, err error) {
 	path := fmt.Sprintf("/v2/operations/%s/status/%s", c.AccountAlias, statusId)
-	err = c.getResponse("GET", path, nil, &struct{ Status *QueueStatus } { &status })
+	err = c.getResponse("GET", path, nil, &struct{ Status *QueueStatus }{&status})
 	return
 }
-
 
 // Status struct returned by operations such as 'Delete Group' and similar.
 type StatusLink struct {
 	// The identifier of the job in queue.
 	// Can be passed to Get Status call to retrieve status of job.
-	Id		string
+	Id string
 
 	// The Link type (should be set to "status")
-	Rel		string
+	Rel string
 
 	// The URI for the 'Get Status' call for this resource
-	Href		string
+	Href string
 }
 
 // Like getResponse, but extract the Status Id from the Links array contained in the response.
@@ -47,7 +46,7 @@ func (c *Client) getStatus(verb, path string, reqModel interface{}) (statusId st
 
 	if err = c.getResponse(verb, path, reqModel, &sl); err == nil {
 		if sl.Rel != "status" {
-			err = fmt.Errorf("Link information Rel-type not set to 'status'in %+v", sl)
+			err = fmt.Errorf("Link information Rel-type not set to 'status' in %+v", sl)
 		} else {
 			statusId = sl.Id
 		}

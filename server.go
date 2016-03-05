@@ -1,122 +1,122 @@
 package clcv2
 
 import (
-	"time"
 	"fmt"
+	"time"
 )
 
 type Server struct {
 	// Server ID
-	Id		string
+	Id string
 
 	// Name of the server
-	Name		string
+	Name string
 
 	// User-defined description of this server
-	Description	string
+	Description string
 
 	// UUID of the parent hardware group
-	GroupId		string
+	GroupId string
 
 	// Whether this is a custom template or running server
-	IsTemplate	bool
+	IsTemplate bool
 
 	// Data center that this server resides in
-	LocationId	string
+	LocationId string
 
 	// Friendly name of the Operating System the server is running
-	OsType		string
+	OsType string
 
 	// Describes whether the server is active or not
-	Status		string
+	Status string
 
 	// Resource allocations, alert policies, snapshots, and more.
-	Details		struct {
+	Details struct {
 		// Details about IP addresses associated with the server
-		IpAddresses		[]ServerIPAddress
+		IpAddresses []ServerIPAddress
 
 		// Describe each alert policy applied to the server
-		AlertPolicies		[]struct{
+		AlertPolicies []struct {
 			// Unique identifier of the policy
-			Id	string
+			Id string
 			// User-defined name of the alert policy
-			Name	string
+			Name string
 			// Collection of entity links that point to resources related to this policy
-			Links	[]Link
+			Links []Link
 		}
 
 		// How many vCPUs are allocated to the server
-		Cpu			int
+		Cpu int
 
 		// How many disks are attached to the server
-		DiskCount		int
+		DiskCount int
 
 		// Fully qualified name of the server
-		Hostname		string
+		Hostname string
 
 		// Indicator of whether server has been placed in maintenance mode
-		InMaintenanceMode	bool
+		InMaintenanceMode bool
 
 		// How many MB of memory are allocated to the server
-		MemoryMb		int
+		MemoryMb int
 
 		// Whether the server is running or not
-		PowerState		string
+		PowerState string
 
 		// How many total GB of storage are allocated to the server
-		StorageGb		int
+		StorageGb int
 
 		// The disks attached to the server
-		Disks			[]struct{
+		Disks []struct {
 			// Unique identifier of the disk
-			Id		string
+			Id string
 			// Size of the disk in GB
-			SizeGb		int
+			SizeGb int
 			//  List of partition paths on the disk
-			PartitionPaths	[]string
+			PartitionPaths []string
 		}
 
 		// The partitions defined for the server
-		Partitions		[]struct{
+		Partitions []struct {
 			// Size of the partition in GB
-			SizeGb	float64
+			SizeGb float64
 			// File system location path of the partition
-			Path	string
+			Path string
 		}
 
 		// Details about any snapshot associated with the server
-		Snapshots		[]ServerSnapshot
+		Snapshots []ServerSnapshot
 
 		// Details about any custom fields and their values
-		CustomFields		[]CustomField
+		CustomFields []CustomField
 
 		// Processor configuration description (for bare metal servers only)
-		ProcessorDescription	string
+		ProcessorDescription string
 
 		// Storage configuration description (for bare metal servers only)
-		StorageDescription	string
+		StorageDescription string
 	}
 
 	// Whether a standard or premium server
-	Type		string
+	Type string
 
 	// Whether it uses standard or premium storage
-	StorageType	string
+	StorageType string
 
 	// Describes "created" and "modified" details
-	ChangeInfo	ChangeInfo
+	ChangeInfo ChangeInfo
 
 	// Collection of entity links that point to resources related to this server
-	Links		[]Link
+	Links []Link
 }
 
-type ServerIPAddress struct{
+type ServerIPAddress struct {
 	// Private IP address.
-	Internal	string
+	Internal string
 
 	// If applicable, the public IP
-	// If associated with a public IP address, then the "public" value is populated
-	Public		string
+	// If associated with a public IP address, the "public" value is populated
+	Public string
 }
 
 // Query Server details by URI path.
@@ -141,86 +141,86 @@ type CreateServerReq struct {
 	// The combination of account alias and server name here must be no more than 10 characters in length.
 	// (This name will be appended with a two digit number and prepended with the datacenter code
 	// and account alias to make up the final server name.)
-	Name			string			`json:"name"`
+	Name string `json:"name"`
 
 	// User-defined description of this server
-	Description		string			`json:"description,omitempty"`
+	Description string `json:"description,omitempty"`
 
 	// ID of the parent group. Retrieved from query to parent group, or by looking at the URL on the UI pages in the Control Portal.
-	GroupId			string			`json:"groupId"`
+	GroupId string `json:"groupId"`
 
 	// ID of the server to use a source. May be the ID of a template, or when cloning, an existing server ID.
-	SourceServerId		string			`json:"sourceServerId"`
+	SourceServerId string `json:"sourceServerId"`
 
 	// Whether to create the server as managed or not. Default is false. (Ignored for bare metal servers.)
-	IsManagedOs		bool			`json:"isManagedOS"`
+	IsManagedOs bool `json:"isManagedOS"`
 
 	// Whether to add managed backup to the server. Must be a managed OS server. (Ignored for bare metal servers.)
-	IsManagedBackup		bool			`json:"isManagedBackup"`
+	IsManagedBackup bool `json:"isManagedBackup"`
 
 	// Primary DNS to set on the server. If not supplied the default value set on the account will be used.
-	PrimaryDns		string			`json:"primaryDns,omitempty"`
+	PrimaryDns string `json:"primaryDns,omitempty"`
 
 	// Secondary DNS to set on the server. If not supplied the default value set on the account will be used.
-	SecondaryDns		string			`json:"secondaryDns,omitempty"`
+	SecondaryDns string `json:"secondaryDns,omitempty"`
 
 	// ID of the network to which to deploy the server. If not provided, a network will be chosen automatically.
 	// If your account has not yet been assigned a network, leave this blank and one will be assigned automatically.
-	NetworkId		string			`json:"networkId,omitempty"`
+	NetworkId string `json:"networkId,omitempty"`
 
 	// IP address to assign to the server. If not provided, one will be assigned automatically.
 	// (Ignored for bare metal servers.)
-	IpAddress		string			`json:"ipAddress,omitempty"`
+	IpAddress string `json:"ipAddress,omitempty"`
 
 	// Password of administrator or root user on server. If not provided, one will be generated automatically.
-	Password		string			`json:"password,omitempty"`
+	Password string `json:"password,omitempty"`
 
 	// Password of the source server, used only when creating a clone from an existing server.
 	// (Ignored for bare metal servers.)
-	SourceServerPassword	string			`json:"sourceServerPassword,omitempty"`
+	SourceServerPassword string `json:"sourceServerPassword,omitempty"`
 
 	// Number of processors to configure the server with (1-16) (ignored for bare metal servers)
-	Cpu			int			`json:"cpu"`
+	Cpu int `json:"cpu"`
 
 	// ID of the vertical CPU Autoscale policy to associate the server with. (Ignored for bare metal servers.)
-	CpuAutoscalePolicyId	string			`json:"cpuAutoscalePolicyId,omitempty"`
+	CpuAutoscalePolicyId string `json:"cpuAutoscalePolicyId,omitempty"`
 
 	// Number of GB of memory to configure the server with (1-128) (ignored for bare metal servers)
-	MemoryGB		int			`json:"memoryGB"`
+	MemoryGB int `json:"memoryGB"`
 
 	// Whether to create a 'standard', 'hyperscale', or 'bareMetal' server
-	Type			string			`json:"type"`
+	Type string `json:"type"`
 
 	// For standard servers, whether to use standard or premium storage.  (Ignored for bare metal servers.)
 	// If not provided, will default to premium storage.
-	StorageType		string			`json:"storageType,omitempty"`
+	StorageType string `json:"storageType,omitempty"`
 
 	// ID of the Anti-Affinity policy to associate the server with. Only valid for hyperscale servers.
-	AntiAffinityPolicyId	string			`json:"antiAffinityPolicyId,omitempty"`
+	AntiAffinityPolicyId string `json:"antiAffinityPolicyId,omitempty"`
 
 	// Collection of custom field ID-value pairs to set for the server.
-	CustomFields		[]SimpleCustomField	`json:"customFields"`
+	CustomFields []SimpleCustomField `json:"customFields"`
 
 	// Collection of disk parameters (ignored for bare metal servers)
-	AdditionalDisks		[]ServerDisk		`json:"additionalDisks"`
+	AdditionalDisks []ServerDisk `json:"additionalDisks"`
 
 	// Date/time that the server should be deleted (ignored for bare metal servers)
-	Ttl			*time.Time		`json:"ttl"`
+	Ttl *time.Time `json:"ttl"`
 
 	// Collection of packages to run on the server after it has been built (ignored for bare metal servers)
-	Packages		[]struct {
+	Packages []struct {
 		// ID of the package to run on the server after it builds.
-		PackageId	string	`json:"packageId"`
+		PackageId string `json:"packageId"`
 
 		// Collection of name-value pairs to specify package-specific parameters.
-		Parameters	struct {
-			name, value string	// FIXME lack of API documentation here
-		}			`json:"parameters"`
-	}						`json:"packages"`
+		Parameters struct {
+			name, value string // FIXME lack of API documentation here
+		} `json:"parameters"`
+	} `json:"packages"`
 
 	// Specifies the identifier for the specific configuration type of bare metal server to deploy.
 	// Only required for bare metal servers. (Ignored for standard and hyperscale servers.)
-	ConfigurationId		string			`json:"configurationId,omitempty"`
+	ConfigurationId string `json:"configurationId,omitempty"`
 
 	// Specifies the OS to provision with the bare metal server.
 	// Only required for bare metal servers. (Ignored for standard and hyperscale servers.)
@@ -230,37 +230,36 @@ type CreateServerReq struct {
 	// - windows2012R2Standard_64Bit,
 	// - windows2012R2Datacenter_64Bit,
 	// - ubuntu14_64Bit.
-	OsType			string			`json:"osType"`
+	OsType string `json:"osType"`
 }
 
 type ServerDisk struct {
 	// File system path for disk (Windows drive letter or Linux mount point).
 	// Must not be one of reserved names.
-	Path	string	`json:"path"`
+	Path string `json:"path"`
 
 	// Amount in GB to allocate for disk, up to 1024 GB
-	SizeGB	int	`json:"sizeGB"`
+	SizeGB int `json:"sizeGB"`
 
 	// Whether the disk should be raw or partitioned
-	Type	string	`json:"type"`
+	Type string `json:"type"`
 }
 
-
 /* Status response, used by: CreateServer, CloneServer, DeleteServer, ImportServer,
-			     ArchiveServer, CreateSnapshot, ExecutePackage,  */
+   ArchiveServer, CreateSnapshot, ExecutePackage,  */
 type ServerStatus struct {
 	// ID of the server that the operation was performed on.
-	Server		string
+	Server string
 
 	// Boolean indicating whether the operation was successfully added to the queue.
-	IsQueued	bool
+	IsQueued bool
 
 	// Collection of entity links that point to resources related to this server operation.
-	Links		[]Link
+	Links []Link
 
 	// If something goes wrong or the request is not queued,
 	// this is the message that contains the details about what happened.
-	ErrorMessage	string
+	ErrorMessage string
 }
 
 // Run an Http request and evaluate the returned %ServerStatus, return links
@@ -352,19 +351,19 @@ func (c *Client) DeleteServer(serverId string) (statusId string, err error) {
  */
 type ImportOVF struct {
 	// ID of the OVF.
-	Id		string
+	Id string
 
 	// Name of the OVF.
-	Name		string
+	Name string
 
 	// Number of GB of storage the server is configured with.
-	StorageSizeGb	int
+	StorageSizeGb int
 
 	// Number of processors the server is configured with.
-	CpuCount	int
+	CpuCount int
 
 	// Number of MB of memory the server is configured with.
-	MemorySizeMb	int
+	MemorySizeMb int
 }
 
 // Get the list of available servers that can be imported.
@@ -380,10 +379,10 @@ func (c *Client) GetServerImports(locationId string) (res []ImportOVF, err error
 type ServerCredentials struct {
 	// The username of root/administrator on the server.
 	// Typically "root" for Linux machines and "Administrator" for Windows.
-	Username        string
+	Username string
 
 	// The administrator/root password used to login.
-	Password        string
+	Password string
 }
 
 // Retrieve the administrator/root password on an existing server.
@@ -401,13 +400,13 @@ func (c *Client) ServerChangePassword(serverId, curPass, newPass string) (status
 	var op = PatchOperation{
 		Op:     "set",
 		Member: "password",
-		Value:  struct{
+		Value: struct {
 			// The current administrator/root password used to login.
-			Current		string	`json:"current"`
+			Current string `json:"current"`
 
 			// The new administrator/root password to change to.
-			Password	string	`json:"password"`
-		} { curPass, newPass },
+			Password string `json:"password"`
+		}{curPass, newPass},
 	}
 	return c.patchStatus(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId), &op)
 }
@@ -417,7 +416,7 @@ func (c *Client) ServerChangePassword(serverId, curPass, newPass string) (status
 // @cpus:     number of CPUs to allocate for @serverId.
 func (c *Client) ServerSetCpus(serverId, cpus string) (statusId string, err error) {
 	return c.patchStatus(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId),
-			     &PatchOperation{ "set", "cpu", cpus })
+		&PatchOperation{"set", "cpu", cpus})
 }
 
 // Change the amount of memory on an existing server.
@@ -425,7 +424,7 @@ func (c *Client) ServerSetCpus(serverId, cpus string) (statusId string, err erro
 // @memGB:    amount of memory (in GB) to allocate.
 func (c *Client) ServerSetMemory(serverId, memGB string) (statusId string, err error) {
 	return c.patchStatus(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId),
-			     &PatchOperation{ "set", "memory", memGB })
+		&PatchOperation{"set", "memory", memGB})
 }
 
 // Change the description of an existing server.
@@ -433,7 +432,7 @@ func (c *Client) ServerSetMemory(serverId, memGB string) (statusId string, err e
 // @desc:     new description to use for @serverId.
 func (c *Client) ServerSetDescription(serverId, desc string) error {
 	return c.patch(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId),
-		       &PatchOperation{ "set", "description", desc })
+		&PatchOperation{"set", "description", desc})
 }
 
 // Change the description of an existing server.
@@ -441,18 +440,18 @@ func (c *Client) ServerSetDescription(serverId, desc string) error {
 // @parentUUID: UUID of new parent group for @serverId.
 func (c *Client) ServerSetGroup(serverId, parentUUID string) error {
 	return c.patch(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId),
-		       &PatchOperation{ "set", "groupId", parentUUID })
+		&PatchOperation{"set", "groupId", parentUUID})
 }
 
 /*
  * Server Snapshots
  */
-type ServerSnapshot struct{
+type ServerSnapshot struct {
 	// Timestamp of the snapshot (non-standard format)
-	Name	string
+	Name string
 
 	// Collection of entity links that point to resources related to this snapshot
-	Links	[]Link
+	Links []Link
 }
 
 // Return the single snapshot of a server, nil if none exists, or error.
@@ -466,7 +465,7 @@ func (c *Client) GetServerSnapshot(serverId string) (sn *ServerSnapshot, err err
 		return nil, nil
 	} else if len(server.Details.Snapshots) > 1 {
 		return nil, fmt.Errorf("%s unexpectedly has more (%d) than one snapshot",
-				      serverId, len(server.Details.Snapshots))
+			serverId, len(server.Details.Snapshots))
 	} else {
 		return &server.Details.Snapshots[0], nil
 	}
@@ -480,9 +479,9 @@ func (c *Client) CreateSnapshot(serverId string, daysToKeep int) (statusId strin
 	var path = fmt.Sprintf("/v2/operations/%s/servers/createSnapshot", c.AccountAlias)
 
 	return c.getServerStatusId("POST", path, true, &struct {
-		ServerIds		[]string	`json:"serverIds"`
-		SnapshotExpirationDays	int		`json:"snapshotExpirationDays"`
-	} { []string{serverId}, daysToKeep })
+		ServerIds              []string `json:"serverIds"`
+		SnapshotExpirationDays int      `json:"snapshotExpirationDays"`
+	}{[]string{serverId}, daysToKeep})
 }
 
 // Delete the server snapshot.
@@ -523,6 +522,23 @@ func (c *Client) RevertToSnapshot(serverId string) (sn *ServerSnapshot, statusId
 	}
 	statusId, err = c.getStatus("POST", link.Href, nil)
 	return
+}
+
+/*
+ * Archive and restore
+ */
+// ArchiveServer puts @serverId into the archive
+func (c *Client) ArchiveServer(serverId string) (statusId string, err error) {
+	return c.serverPowerOperation("archive", serverId)
+}
+
+// RestoreServer restores @serverId into the HW Group identified by @groupId
+func (c *Client) RestoreServer(serverId, groupId string) (statusId string, err error) {
+	var path = fmt.Sprintf("/v2/servers/%s/%s/restore", c.AccountAlias, serverId)
+
+	return c.getStatus("POST", path, &struct {
+		TargetGroupId string `json:"targetGroupId"`
+	}{groupId})
 }
 
 /*
@@ -584,10 +600,10 @@ func (c *Client) ServerStopMaintenance(serverId string) (statusId string, err er
 
 type MaintenanceMode struct {
 	// ID of server to set maintenance mode on or off
-	Id			string	`json:"id"`
+	Id string `json:"id"`
 
 	// Indicator of whether to place server in maintenance mode or not
-	InMaintenanceMode	bool	`json:"inMaintenanceMode"`
+	InMaintenanceMode bool `json:"inMaintenanceMode"`
 }
 
 // Send a specified setting for maintenance mode to a server and add operation to queue.
@@ -597,10 +613,9 @@ func (c *Client) ServerSetMaintenance(serverId string, enable bool) (statusId st
 	var path = fmt.Sprintf("/v2/operations/%s/servers/setMaintenance", c.AccountAlias)
 
 	return c.getServerStatusId("POST", path, true, &struct {
-		Servers		[]MaintenanceMode	`json:"servers"`
-	} { []MaintenanceMode{ {serverId, enable} } } )
+		Servers []MaintenanceMode `json:"servers"`
+	}{[]MaintenanceMode{{serverId, enable}}})
 }
-
 
 /*
  * Adding/removing secondary network adapters.
@@ -609,7 +624,7 @@ func (c *Client) ServerSetMaintenance(serverId string, enable bool) (statusId st
  */
 const (
 	/* Poll interval in seconds for adding/removing a secondary network adapter */
-	change_nic_poll    = 1 * time.Second
+	change_nic_poll = 1 * time.Second
 
 	/* Maximum acceptable time in seconds to poll for secondary NIC change in minutes */
 	change_nic_timeout = 3 * time.Minute
@@ -617,22 +632,22 @@ const (
 
 type ChangeNicResponse struct {
 	// GUID for the item in the queue for completion
-	OperationId	string
+	OperationId string
 
 	// Link to review status of the operation,
-	Uri		string
+	Uri string
 }
 
 // The object returned from a GET at ChangeNicResponse.Uri
 type ChangeNicStatus struct {
 	// This seems to be "secondaryNetworkAdapter"
-	RequestType	string
+	RequestType string
 
 	// This starts with "queued" and reaches "succeeded" when done
-	Status		string
+	Status string
 
 	// Use maps for the rest: there is no documentation currently
-	Summary, Source	map[string]string
+	Summary, Source map[string]string
 }
 
 // Helper function to poll the queue used for adding/removing secondary network interfaces.
@@ -649,7 +664,7 @@ func (c *Client) changeNic(verb, path string, reqModel interface{}) (err error) 
 				return fmt.Errorf("request %s %s failed", verb, path)
 			} else if time.Since(start) > change_nic_timeout {
 				return fmt.Errorf("request %s %s timed out after %s", verb,
-						  path, time.Since(start))
+					path, time.Since(start))
 			}
 		}
 	}
@@ -663,11 +678,11 @@ func (c *Client) changeNic(verb, path string, reqModel interface{}) (err error) 
 func (c *Client) ServerAddNic(serverId, netId, ip string) (err error) {
 	return c.changeNic("POST", fmt.Sprintf("/v2/servers/%s/%s/networks", c.AccountAlias, serverId), struct {
 		// (Hex) ID of the network.
-		NetworkId       string  `json:"networkId"`
+		NetworkId string `json:"networkId"`
 
 		// Optional IP address for the networkId
-		IpAddress       string  `json:"ipAddress,omitempty"`
-	} { netId, ip })
+		IpAddress string `json:"ipAddress,omitempty"`
+	}{netId, ip})
 }
 
 // Remove secondary network adapter from server.
