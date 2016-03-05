@@ -43,7 +43,7 @@ func init() {
 }
 
 type Client struct {
-	requestor	Requestor
+	requestor	*http.Client
 
 	// Authentication information
 	*LoginRes
@@ -81,8 +81,12 @@ func NewClient() (client *Client, err error) {
 	if g_acct != "" {
 		client.LoginRes.AccountAlias = g_acct
 	}
-	client.requestor = Authorization("Bearer " + client.BearerToken)(client.requestor)
 	return client, nil
+}
+
+// SetTimeout changes the per-request timeout.
+func (c *Client) SetTimeout(to time.Duration) {
+	c.requestor.Timeout = to
 }
 
 // Perform a v2 API request
@@ -120,8 +124,11 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 	if err != nil {
 		return
 	}
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	req.Header.Set("Accept",       "application/json")
+	if c.BearerToken != "" {
+		req.Header.Set("Authorization", "Bearer " + c.BearerToken)
+	}
+	req.Header.Set("Content-Type",  "application/json; charset=utf-8")
+	req.Header.Set("Accept",        "application/json")
 
 	if g_debug {
 		reqDump, _ := httputil.DumpRequest(req, true)

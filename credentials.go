@@ -40,7 +40,7 @@ type LoginRes struct {
 	BearerToken   string	`json: "bearerToken"`
 }
 
-// Log in and save credentials if successful
+// Log in and save credentials if successful. Requires c.LoginRes.BearerToken to be empty.
 func (c *Client) login(user, pass string) error {
 	err := c.getResponse("POST", "/v2/authentication/login",
 			     &LoginReq{ user, pass }, c.LoginRes)
@@ -71,10 +71,13 @@ func (c *Client) loadCredentials() error {
 			return err
 		}
 		defer fd.Close()
+
 		err = json.NewDecoder(fd).Decode(c.LoginRes)
 		if err != nil {
 			return err
-		} else if strings.ToLower(username) == strings.ToLower(c.LoginRes.UserName) {
+		}
+
+		if strings.ToLower(username) == strings.ToLower(c.LoginRes.UserName) {
 			return nil
 		}
 		/* User switch - clear all related environment variables */
