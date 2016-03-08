@@ -11,7 +11,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/dustin/go-humanize"
+	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/clcv2/utils"
 	"github.com/grrtrr/exit"
@@ -25,13 +25,13 @@ func usage() {
 
 	for _, r := range [][]string{
 		{"show", "show current status of server/group (group requires -l to be set)"},
-		{"on", "power on server/group (or resume from paused state)"},
-		{"off", "power off server/group"},
-		{"shutdown", "OS-level shutdown followed by power-off for server/group"},
-		{"pause", "pause server/group"},
-		{"reset", "perform forced power-cycle on server/group"},
-		{"reboot", "reboot server/group"},
-		{"snapshot", "snapshot server (not supported for groups)"},
+		{"on", "power on server (or resume from paused state)"},
+		{"off", "power off server"},
+		{"shutdown", "OS-level shutdown followed by power-off for server"},
+		{"pause", "pause server"},
+		{"reset", "perform forced power-cycle on server"},
+		{"reboot", "reboot server"},
+		{"snapshot", "snapshot server"},
 		{"archive", "archive the server/group"},
 		{"delete", "delete server/group (CAUTION)"},
 		{"help", "print this help screen"},
@@ -101,6 +101,10 @@ func main() {
 		// TODO: delete, archive
 		case "show":
 			showGroup(client, where, *location)
+		case "archive":
+			exit.Errorf("FIXME: archiving not yet implemented for groups")
+		case "delete":
+			exit.Errorf("FIXME: delete not yet implemented for groups")
 		default:
 			exit.Errorf("Unsupported group action %q", action)
 		}
