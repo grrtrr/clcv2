@@ -4,17 +4,18 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
 	"encoding/hex"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
-	var uuid string	/* UUID of the HW group to delete */
+	var uuid string /* UUID of the HW group to delete */
 	var location = flag.String("l", "", "Data center location if using HW Group-Name")
 
 	flag.Usage = func() {

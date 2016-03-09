@@ -45,10 +45,11 @@ func usage() {
 }
 
 func main() {
-	var location = flag.String("l", "", "Location to use for <Group-Name>")
 	var (
-		server_action bool
-		action, where string
+		location      = flag.String("l", "", "Location to use for <Group-Name>")
+		server_action bool   // what to act on
+		action, where string // what to do and where
+		reqId         string // request ID of the action
 	)
 
 	flag.Usage = usage
@@ -96,47 +97,51 @@ func main() {
 		server_action = true
 	}
 
-	if !server_action {
+	if server_action { /* Server Action */
 		switch action {
-		// TODO: delete, archive
+		case "show":
+			showServer(client, where)
+			os.Exit(0)
+		}
+		var server_actions = map[string]func(string) (string, error){
+			"on":       client.PowerOnServer,
+			"off":      client.PowerOffServer,
+			"pause":    client.PauseServer,
+			"reset":    client.ResetServer,
+			"reboot":   client.RebootServer,
+			"shutdown": client.ShutdownServer,
+			"archive":  client.ArchiveServer,
+			"delete":   client.DeleteServer,
+			"snapshot": client.SnapshotServer,
+		}
+
+		/* Long-running commands that return a RequestID */
+		handler, ok := server_actions[action]
+		if !ok {
+			exit.Fatalf("Unsupported action %s", action)
+		}
+
+		reqId, err = handler(where)
+		if err != nil {
+			exit.Fatalf("Server command %q failed: %s", action, err)
+		}
+
+	} else { /* Group Action */
+		switch action {
+		// TODO:  archive
 		case "show":
 			showGroup(client, where, *location)
+			os.Exit(0)
 		case "archive":
 			exit.Errorf("FIXME: archiving not yet implemented for groups")
 		case "delete":
-			exit.Errorf("FIXME: delete not yet implemented for groups")
+			reqId, err = client.DeleteGroup(where)
+			if err != nil {
+				exit.Fatalf("Group command %q failed: %s", action, err)
+			}
 		default:
 			exit.Errorf("Unsupported group action %q", action)
 		}
-		os.Exit(0)
-	}
-
-	switch action {
-	case "show":
-		showServer(client, where)
-		os.Exit(0)
-	}
-	var server_actions = map[string]func(string) (string, error){
-		"on":       client.PowerOnServer,
-		"off":      client.PowerOffServer,
-		"pause":    client.PauseServer,
-		"reset":    client.ResetServer,
-		"reboot":   client.RebootServer,
-		"shutdown": client.ShutdownServer,
-		"archive":  client.ArchiveServer,
-		"delete":   client.DeleteServer,
-		"snapshot": client.SnapshotServer,
-	}
-
-	/* Long-running commands that return a RequestID */
-	handler, ok := server_actions[action]
-	if !ok {
-		exit.Fatalf("Unsupported action %s", action)
-	}
-
-	reqId, err := handler(where)
-	if err != nil {
-		exit.Fatalf("Command %q failed: %s", action, err)
 	}
 
 	fmt.Printf("Request ID for %q action: %s\n", action, reqId)
