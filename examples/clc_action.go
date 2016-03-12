@@ -133,14 +133,14 @@ func main() {
 			showGroup(client, where, *location)
 			os.Exit(0)
 		case "archive":
-			exit.Errorf("FIXME: archiving not yet implemented for groups")
+			reqId, err = client.ArchiveGroup(where)
 		case "delete":
 			reqId, err = client.DeleteGroup(where)
-			if err != nil {
-				exit.Fatalf("Group command %q failed: %s", action, err)
-			}
 		default:
 			exit.Errorf("Unsupported group action %q", action)
+		}
+		if err != nil {
+			exit.Fatalf("Group command %q failed: %s", action, err)
 		}
 	}
 
