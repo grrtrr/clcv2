@@ -18,7 +18,7 @@ func main() {
 	var hwGroup = flag.String("g", "", "UUID or name (if unique) of the HW group to restore this group to")
 	var location = flag.String("l", "", "Data centre alias (to resolve group and/or network ID)")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s [options]  <server-name>\n", path.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "usage: %s [options]  <HW Group UUID>\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 

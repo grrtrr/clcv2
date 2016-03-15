@@ -1,6 +1,4 @@
-/*
- * Rewrite of the 'clc_action' bash script into go.
- */
+// Multi-function script for use with CLC servers and hardware groups.
 package main
 
 import (
@@ -46,10 +44,10 @@ func usage() {
 
 func main() {
 	var (
-		location      = flag.String("l", "", "Location to use for <Group-Name>")
-		server_action bool   // what to act on
-		action, where string // what to do and where
-		reqId         string // request ID of the action
+		location       = flag.String("l", "", "Location to use for <Group-Name>")
+		handlingServer bool   // what to act on
+		action, where  string // what to do and where
+		reqID          string // request ID of the action
 	)
 
 	flag.Usage = usage
@@ -79,9 +77,9 @@ func main() {
 
 	/* If the first argument decodes as a hex value, assume it is a Hardware Group UUID */
 	if _, err := hex.DecodeString(where); err == nil {
-		server_action = false
+		handlingServer = false
 	} else if utils.LooksLikeServerName(where) {
-		server_action = true
+		handlingServer = true
 		if *location != "" {
 			fmt.Fprintf(os.Stderr, "WARNING: location (%s) ignored for %s\n", *location, where)
 		}
@@ -94,16 +92,16 @@ func main() {
 			where = group.Id
 		}
 	} else {
-		server_action = true
+		handlingServer = true
 	}
 
-	if server_action { /* Server Action */
+	if handlingServer { /* Server Action */
 		switch action {
 		case "show":
 			showServer(client, where)
 			os.Exit(0)
 		}
-		var server_actions = map[string]func(string) (string, error){
+		var serverAction = map[string]func(string) (string, error){
 			"on":       client.PowerOnServer,
 			"off":      client.PowerOffServer,
 			"pause":    client.PauseServer,
@@ -116,26 +114,25 @@ func main() {
 		}
 
 		/* Long-running commands that return a RequestID */
-		handler, ok := server_actions[action]
+		handler, ok := serverAction[action]
 		if !ok {
 			exit.Fatalf("Unsupported action %s", action)
 		}
 
-		reqId, err = handler(where)
+		reqID, err = handler(where)
 		if err != nil {
 			exit.Fatalf("Server command %q failed: %s", action, err)
 		}
 
 	} else { /* Group Action */
 		switch action {
-		// TODO:  archive
 		case "show":
 			showGroup(client, where, *location)
 			os.Exit(0)
 		case "archive":
-			reqId, err = client.ArchiveGroup(where)
+			reqID, err = client.ArchiveGroup(where)
 		case "delete":
-			reqId, err = client.DeleteGroup(where)
+			reqID, err = client.DeleteGroup(where)
 		default:
 			exit.Errorf("Unsupported group action %q", action)
 		}
@@ -144,14 +141,14 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Request ID for %q action: %s\n", action, reqId)
+	fmt.Printf("Request ID for %q action: %s\n", action, reqID)
 
 	/* XXX
 	locationStr := *location
-	if server_action {
+	if handlingServer {
 		locationStr = utils.ExtractLocationFromServerName(where)
 	}
-	client.PollDeploymentStatus(reqId, locationStr, *acctAlias, 1)
+	client.PollDeploymentStatus(reqID, locationStr, *acctAlias, 1)
 	*/
 }
 
