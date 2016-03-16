@@ -4,17 +4,18 @@
 package main
 
 import (
-	"github.com/olekukonko/tablewriter"
+	"encoding/hex"
+	"flag"
+	"fmt"
+	"os"
+	"path"
+	"strings"
+
 	"github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
 	"github.com/kr/pretty"
-	"encoding/hex"
-	"strings"
-	"path"
-	"flag"
-	"fmt"
-	"os"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
@@ -70,7 +71,7 @@ func main() {
 
 		table.SetHeader([]string{
 			"Name", "Group", "Description", "OS",
-			"CPU", "Mem/GB",
+			"CPU", "Mem",
 			"IP", "Power", "Last Change",
 		})
 
@@ -86,25 +87,23 @@ func main() {
 
 		table.Append([]string{
 			server.Name, grp.Name, server.Description, server.OsType,
-			fmt.Sprint(server.Details.Cpu),	fmt.Sprintf("%d", server.Details.MemoryMb/1024),
+			fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024),
 			strings.Join(IPs, " "),
 			server.Details.PowerState, modifiedStr,
 		})
 		table.Render()
 
-
 		// Disks
 		if len(server.Details.Disks) > 0 {
-			fmt.Printf("\nDisks of %s (total storage: %s)\n", server.Name,
-				   humanize.Bytes(uint64(server.Details.StorageGb) << 30))
+			fmt.Printf("\nDisks of %s (total storage: %d GB)\n", server.Name, server.Details.StorageGb)
 			table = tablewriter.NewWriter(os.Stdout)
 			table.SetAutoFormatHeaders(false)
 			table.SetAlignment(tablewriter.ALIGN_RIGHT)
 			table.SetAutoWrapText(true)
 
-			table.SetHeader([]string{ "Disk ID", "Disk Size/GB", "Paths" })
+			table.SetHeader([]string{"Disk ID", "Disk Size/GB", "Paths"})
 			for _, d := range server.Details.Disks {
-				table.Append([]string{ d.Id, fmt.Sprint(d.SizeGb), strings.Join(d.PartitionPaths, ", ")})
+				table.Append([]string{d.Id, fmt.Sprint(d.SizeGb), strings.Join(d.PartitionPaths, ", ")})
 			}
 			table.Render()
 		}
@@ -117,9 +116,9 @@ func main() {
 			table.SetAlignment(tablewriter.ALIGN_RIGHT)
 			table.SetAutoWrapText(true)
 
-			table.SetHeader([]string{ "Partition Path", "Partition Size/GB" })
+			table.SetHeader([]string{"Partition Path", "Partition Size/GB"})
 			for _, p := range server.Details.Partitions {
-				table.Append([]string{ p.Path, fmt.Sprintf("%.1f", p.SizeGb) })
+				table.Append([]string{p.Path, fmt.Sprintf("%.1f", p.SizeGb)})
 			}
 			table.Render()
 		}
@@ -133,9 +132,9 @@ func main() {
 			table.SetAlignment(tablewriter.ALIGN_CENTRE)
 			table.SetAutoWrapText(true)
 
-			table.SetHeader([]string{ fmt.Sprintf("Snapshots of %s", server.Name) })
+			table.SetHeader([]string{fmt.Sprintf("Snapshots of %s", server.Name)})
 			for _, s := range server.Details.Snapshots {
-				table.Append([]string{ s.Name })
+				table.Append([]string{s.Name})
 			}
 			table.Render()
 		}
