@@ -75,10 +75,12 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	/* If the first argument decodes as a hex value, assume it is a Hardware Group UUID */
+	/*
+	 * Decide if arguments refer to a server or a hardware group.
+	 */
 	if _, err := hex.DecodeString(where); err == nil {
-		handlingServer = false
-	} else if utils.LooksLikeServerName(where) {
+		/* If the first argument decodes as a hex value, assume it is a Hardware Group UUID */
+	} else if utils.LooksLikeServerName(where) {	/* Starts with a location identifier and is not hex ... */
 		handlingServer = true
 		if *location != "" {
 			fmt.Fprintf(os.Stderr, "WARNING: location (%s) ignored for %s\n", *location, where)
@@ -92,7 +94,7 @@ func main() {
 			where = group.Id
 		}
 	} else {
-		handlingServer = true
+		exit.Errorf("Unable to determine whether %q is a server or a group", where)
 	}
 
 	if handlingServer { /* Server Action */
