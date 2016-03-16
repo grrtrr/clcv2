@@ -25,7 +25,7 @@ func main() {
 	}
 
 	flag.Parse()
-	/* Location is required, otherwise it returns 404 Not Found */
+	/* Location is required (despite hex id), an empty location leads to a "404 Not Found" response. */
 	if flag.NArg() != 1 || *location == "" {
 		flag.Usage()
 		os.Exit(1)
