@@ -80,7 +80,7 @@ func main() {
 	 */
 	if _, err := hex.DecodeString(where); err == nil {
 		/* If the first argument decodes as a hex value, assume it is a Hardware Group UUID */
-	} else if utils.LooksLikeServerName(where) {	/* Starts with a location identifier and is not hex ... */
+	} else if utils.LooksLikeServerName(where) { /* Starts with a location identifier and is not hex ... */
 		handlingServer = true
 		if *location != "" {
 			fmt.Fprintf(os.Stderr, "WARNING: location (%s) ignored for %s\n", *location, where)
@@ -188,8 +188,8 @@ func showServer(client *clcv2.Client, servname string) {
 	table.SetAutoWrapText(true)
 
 	table.SetHeader([]string{
-		"Group", "Description", "OS",
-		"CPU", "Storage",
+		"Name", "Group", "Description", "OS",
+		"CPU", "Mem",
 		"IP", "Power", "Last Change",
 	})
 
@@ -204,12 +204,42 @@ func showServer(client *clcv2.Client, servname string) {
 	}
 
 	table.Append([]string{
-		grp.Name, server.Description, server.OsType,
-		fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d GB", server.Details.StorageGb),
+		server.Name, grp.Name, server.Description, server.OsType,
+		fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024),
 		strings.Join(IPs, " "),
 		server.Details.PowerState, modifiedStr,
 	})
 	table.Render()
+
+	// Disks
+	if len(server.Details.Disks) > 0 {
+		fmt.Printf("\nDisks of %s (total storage: %d GB)\n", server.Name, server.Details.StorageGb)
+		table = tablewriter.NewWriter(os.Stdout)
+		table.SetAutoFormatHeaders(false)
+		table.SetAlignment(tablewriter.ALIGN_RIGHT)
+		table.SetAutoWrapText(true)
+
+		table.SetHeader([]string{"Disk ID", "Disk Size/GB", "Paths"})
+		for _, d := range server.Details.Disks {
+			table.Append([]string{d.Id, fmt.Sprint(d.SizeGb), strings.Join(d.PartitionPaths, ", ")})
+		}
+		table.Render()
+	}
+
+	// Partitions
+	if len(server.Details.Partitions) > 0 {
+		fmt.Printf("\nPartitions of %s:\n", server.Name)
+		table = tablewriter.NewWriter(os.Stdout)
+		table.SetAutoFormatHeaders(false)
+		table.SetAlignment(tablewriter.ALIGN_RIGHT)
+		table.SetAutoWrapText(true)
+
+		table.SetHeader([]string{"Partition Path", "Partition Size/GB"})
+		for _, p := range server.Details.Partitions {
+			table.Append([]string{p.Path, fmt.Sprintf("%.1f", p.SizeGb)})
+		}
+		table.Render()
+	}
 
 	// Snapshots
 	if len(server.Details.Snapshots) > 0 {
