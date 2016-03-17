@@ -1,14 +1,15 @@
 package clcv2
 
+// Patch operation describes a single PATCH operation to be performed on a CLCv2 resource.
 type PatchOperation struct {
 	// The operation to perform on a given property of the resource.
-	Op	string		`json:"op"`
+	Op string `json:"op"`
 
 	// The property of the resource to perform the operation on.
-	Member	string		`json:"member"`
+	Member string `json:"member"`
 
 	// The value to patch - depends on the type of operation.
-	Value	interface{}	`json:"value"`
+	Value interface{} `json:"value"`
 }
 
 // Run patch operation(s) @ops and return Link status.

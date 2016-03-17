@@ -67,14 +67,7 @@ type Server struct {
 		StorageGb int
 
 		// The disks attached to the server
-		Disks []struct {
-			// Unique identifier of the disk
-			Id string
-			// Size of the disk in GB
-			SizeGb int
-			//  List of partition paths on the disk
-			PartitionPaths []string
-		}
+		Disks []ServerDisk
 
 		// The partitions defined for the server
 		Partitions []struct {
@@ -110,6 +103,19 @@ type Server struct {
 	Links []Link
 }
 
+// ServerDisk represents a single disk attached to a server.
+type ServerDisk struct {
+	// Unique identifier of the disk
+	Id string
+
+	// Size of the disk in GB
+	SizeGb int
+
+	// List of partition paths on the disk (seems to always be empty)
+	PartitionPaths []string
+}
+
+// ServerIPAddress represents an IP address attached to a server.
 type ServerIPAddress struct {
 	// Private IP address.
 	Internal string
@@ -135,6 +141,8 @@ func (c *Client) GetServer(serverId string) (res Server, err error) {
 /*
  * Create Server
  */
+
+// CreateServerReq is the request used to create a new server instance.
 type CreateServerReq struct {
 	// Name of the server to create. Alphanumeric characters and dashes only.
 	// Must be between 1-8 characters depending on the length of the account alias.
@@ -202,7 +210,7 @@ type CreateServerReq struct {
 	CustomFields []SimpleCustomField `json:"customFields"`
 
 	// Collection of disk parameters (ignored for bare metal servers)
-	AdditionalDisks []ServerDisk `json:"additionalDisks"`
+	AdditionalDisks []ServerAdditionalDisk `json:"additionalDisks"`
 
 	// Date/time that the server should be deleted (ignored for bare metal servers)
 	Ttl *time.Time `json:"ttl"`
@@ -233,7 +241,9 @@ type CreateServerReq struct {
 	OsType string `json:"osType"`
 }
 
-type ServerDisk struct {
+// ServerAdditionalDisk is used to specify additional disks on creation.
+// Note that this is similar to, but different from, ServerDisk.
+type ServerAdditionalDisk struct {
 	// File system path for disk (Windows drive letter or Linux mount point).
 	// Must not be one of reserved names.
 	Path string `json:"path"`
@@ -378,6 +388,14 @@ func (c *Client) ServerSetDescription(serverId, desc string) error {
 func (c *Client) ServerSetGroup(serverId, parentUUID string) error {
 	return c.patch(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId),
 		&PatchOperation{"set", "groupId", parentUUID})
+}
+
+// SetServerDisks sets (adds, updates, removes) the disks of an existing server.
+// @serverId: ID of the server to change
+// @disks:    complete list of (modified) existing and (optionally) additional disks
+func (c *Client) ServerSetDisks(serverId string, disks []ServerDisk) (statusId string, err error) {
+	return c.patchStatus(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId),
+		&PatchOperation{"set", "disks", disks})
 }
 
 /*

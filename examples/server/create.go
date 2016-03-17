@@ -5,35 +5,36 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
 	"encoding/hex"
-	"time"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+	"time"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
-	var hwGroup    = flag.String("g",       "",      "UUID or name (if unique) of the HW group to add this server to")
-	var location   = flag.String("l",       "",      "Data centre alias (to resolve group and/or network ID)")
-	var srcServer  = flag.String("src",     "",      "The name of a source-server, or a template, to create from")
-	var srcPass    = flag.String("srcPass", "",      "When cloning from a source-server, use this password")
-	var seed       = flag.String("s",       "AUTO",  "The seed for the server name")
-	var desc       = flag.String("t",       "",      "Description of the server")
+	var hwGroup = flag.String("g", "", "UUID or name (if unique) of the HW group to add this server to")
+	var location = flag.String("l", "", "Data centre alias (to resolve group and/or network ID)")
+	var srcServer = flag.String("src", "", "The name of a source-server, or a template, to create from")
+	var srcPass = flag.String("srcPass", "", "When cloning from a source-server, use this password")
+	var seed = flag.String("s", "AUTO", "The seed for the server name")
+	var desc = flag.String("t", "", "Description of the server")
 
-	var net        = flag.String("net",  "",         "ID or name of the Network to use")
-	var primDNS    = flag.String("dns1", "8.8.8.8",  "Primary DNS to use")
-	var secDNS     = flag.String("dns2", "8.8.4.4",  "Secondary DNS to use")
-	var password   = flag.String("pass", "",         "Desired password. Leave blank to auto-generate")
+	var net = flag.String("net", "", "ID or name of the Network to use")
+	var primDNS = flag.String("dns1", "8.8.8.8", "Primary DNS to use")
+	var secDNS = flag.String("dns2", "8.8.4.4", "Secondary DNS to use")
+	var password = flag.String("pass", "", "Desired password. Leave blank to auto-generate")
 
-	var extraDrv   = flag.Int("drive",  0,           "Extra storage (in GB) to add to server as a raw disk")
-	var numCpu     = flag.Int("cpu",    1,           "Number of Cpus to use")
-	var memGB      = flag.Int("memory", 4,           "Amount of memory in GB")
+	var extraDrv = flag.Int("drive", 0, "Extra storage (in GB) to add to server as a raw disk")
+	var numCpu = flag.Int("cpu", 1, "Number of Cpus to use")
+	var memGB = flag.Int("memory", 4, "Amount of memory in GB")
 	var serverType = flag.String("type", "standard", "The type of server to create (standard, hyperscale, or bareMetal)")
-	var storType   = flag.String("level", "premium", "Data storage service level (standard or premium)")
-	var ttl        = flag.Duration("ttl",  0,        "Time span (counting from time of creation) until server gets deleted")
+	var storType = flag.String("level", "premium", "Data storage service level (standard or premium)")
+	var ttl = flag.Duration("ttl", 0, "Time span (counting from time of creation) until server gets deleted")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]\n", path.Base(os.Args[0]))
@@ -68,7 +69,7 @@ func main() {
 	if *net != "" {
 		if _, err := hex.DecodeString(*net); err == nil {
 			/* already looks like a HEX ID */
-		} else if  *location == "" {
+		} else if *location == "" {
 			exit.Errorf("Need a location argument (-l) if not using a network ID (%s)", *net)
 		} else {
 			fmt.Printf("Resolving network id of %q ...\n", *net)
@@ -139,7 +140,7 @@ func main() {
 
 	if *extraDrv != 0 {
 		req.AdditionalDisks = append(req.AdditionalDisks,
-					     clcv2.ServerDisk{SizeGB: *extraDrv, Type: "raw"})
+			clcv2.ServerAdditionalDisk{SizeGB: *extraDrv, Type: "raw"})
 	}
 
 	/* Date/time that the server should be deleted. */

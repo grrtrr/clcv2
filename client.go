@@ -212,6 +212,7 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 		return fmt.Errorf("Credentials are stale, please try again to re-authenticate.")
 	}
 
+	/* Remaining error cases: */
 	if res.ContentLength > 0 {
 		var errMsg string
 		var body []byte
