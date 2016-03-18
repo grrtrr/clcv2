@@ -200,10 +200,14 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 	switch res.StatusCode {
 	case 200, 201, 202, 204: /* OK / CREATED / ACCEPTED / NO CONTENT */
 		if resModel != nil {
+			if res.ContentLength == 0 {
+				return fmt.Errorf("Unable do populate %T response mode, due to empty %q response",
+					resModel, res.Status)
+			}
 			return json.NewDecoder(res.Body).Decode(resModel)
 		} else if res.ContentLength > 0 {
-			return fmt.Errorf("Unable to decode non-empty response (%d bytes) to nil response model",
-				res.ContentLength)
+			return fmt.Errorf("Unable to decode non-empty %q response (%d bytes) to nil response model",
+				res.Status, res.ContentLength)
 		}
 		return nil
 	case 401:
