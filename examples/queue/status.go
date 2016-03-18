@@ -6,16 +6,17 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
-
+	var intvl = flag.Duration("i", 0, "Poll interval (use 0 to disable polling)")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <RequestID>\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
@@ -32,11 +33,5 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	status, err := client.GetStatus(flag.Arg(0))
-	if err != nil {
-		exit.Fatalf("Failed to list queue requests: %s", err)
-	}
-
-	fmt.Printf("Status: %s\n", status)
-//	fmt.Println(status == clcv2.Succeeded)
+	client.PollStatus(flag.Arg(0), *intvl)
 }

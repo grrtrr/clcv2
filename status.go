@@ -1,7 +1,11 @@
 package clcv2
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
+// QueueStatus reflects the CLCv2 status according to https://www.ctl.io/api-docs/v2/#get-status#response
 type QueueStatus string
 
 const (
@@ -19,11 +23,30 @@ const (
 // It is usually called after running a batch job and receiving the job identifier from the
 // status link (e.g. Power On Server, Create Server, etc.) and will typically continue
 // to get called until a "succeeded" or "failed" response is returned.
-// @statusId: ID of the server being queried
+// @statusId: queue ID to query (contains location ID in the format of "wa1-<number>")
 func (c *Client) GetStatus(statusId string) (status QueueStatus, err error) {
 	path := fmt.Sprintf("/v2/operations/%s/status/%s", c.AccountAlias, statusId)
 	err = c.getResponse("GET", path, nil, &struct{ Status *QueueStatus }{&status})
 	return
+}
+
+// PollStatus polls the queue status of @statusId until it reaches either %Succeeded or %Failed.
+// @statusId:     queue ID to query
+// @pollInterval: wait interval between poll attemps, use 0 for one-shot operation
+func (c *Client) PollStatus(statusId string, pollInterval time.Duration) error {
+	for {
+		status, err := c.GetStatus(statusId)
+		if err != nil {
+			return fmt.Errorf("Failed to query status of status ID %d: %s", statusId, err)
+		}
+
+		fmt.Printf("%s %s: %s\n", time.Now().Format("15:04:05"), statusId, status)
+		if pollInterval == 0 || status == Succeeded || status == Failed {
+			break
+		}
+		time.Sleep(pollInterval)
+	}
+	return nil
 }
 
 // Status struct returned by operations such as 'Delete Group' and similar.
