@@ -221,7 +221,7 @@ func showServer(client *clcv2.Client, servname string) {
 
 		table.SetHeader([]string{"Disk ID", "Disk Size/GB", "Paths"})
 		for _, d := range server.Details.Disks {
-			table.Append([]string{d.Id, fmt.Sprint(d.SizeGb), strings.Join(d.PartitionPaths, ", ")})
+			table.Append([]string{d.Id, fmt.Sprint(d.SizeGB), strings.Join(d.PartitionPaths, ", ")})
 		}
 		table.Render()
 	}
@@ -236,7 +236,7 @@ func showServer(client *clcv2.Client, servname string) {
 
 		table.SetHeader([]string{"Partition Path", "Partition Size/GB"})
 		for _, p := range server.Details.Partitions {
-			table.Append([]string{p.Path, fmt.Sprintf("%.1f", p.SizeGb)})
+			table.Append([]string{p.Path, fmt.Sprintf("%.1f", p.SizeGB)})
 		}
 		table.Render()
 	}

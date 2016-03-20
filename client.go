@@ -201,7 +201,7 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 	case 200, 201, 202, 204: /* OK / CREATED / ACCEPTED / NO CONTENT */
 		if resModel != nil {
 			if res.ContentLength == 0 {
-				return fmt.Errorf("Unable do populate %T response mode, due to empty %q response",
+				return fmt.Errorf("Unable do populate %T result model, due to empty %q response",
 					resModel, res.Status)
 			}
 			return json.NewDecoder(res.Body).Decode(resModel)

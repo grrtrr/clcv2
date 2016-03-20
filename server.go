@@ -67,12 +67,21 @@ type Server struct {
 		StorageGb int
 
 		// The disks attached to the server
-		Disks []ServerDisk
+		Disks []struct {
+			// Unique identifier of the disk
+			Id string
+
+			// Size of the disk in GB
+			SizeGB int
+
+			// List of partition paths on the disk (seems to always be empty)
+			PartitionPaths []string
+		}
 
 		// The partitions defined for the server
 		Partitions []struct {
 			// Size of the partition in GB
-			SizeGb float64
+			SizeGB float64
 			// File system location path of the partition
 			Path string
 		}
@@ -101,18 +110,6 @@ type Server struct {
 
 	// Collection of entity links that point to resources related to this server
 	Links []Link
-}
-
-// ServerDisk represents a single disk attached to a server.
-type ServerDisk struct {
-	// Unique identifier of the disk
-	Id string
-
-	// Size of the disk in GB
-	SizeGb int
-
-	// List of partition paths on the disk (seems to always be empty)
-	PartitionPaths []string
 }
 
 // ServerIPAddress represents an IP address attached to a server.
@@ -241,17 +238,19 @@ type CreateServerReq struct {
 	OsType string `json:"osType"`
 }
 
-// ServerAdditionalDisk is used to specify additional disks on creation.
-// Note that this is similar to, but different from, ServerDisk.
+// ServerAdditionalDisk is used to specify (additional) disks to attach/modify.
 type ServerAdditionalDisk struct {
+	// Id is used by the SetServerDisks() call exclusively
+	Id string `json:"diskId,omitempty"`
+
 	// File system path for disk (Windows drive letter or Linux mount point).
-	// Must not be one of reserved names.
+	// Must not be one of the reserved names.
 	Path string `json:"path"`
 
 	// Amount in GB to allocate for disk, up to 1024 GB
 	SizeGB int `json:"sizeGB"`
 
-	// Whether the disk should be raw or partitioned
+	// Whether the disk should be "raw" or "partitioned"
 	Type string `json:"type"`
 }
 
@@ -304,7 +303,7 @@ type ImportOVF struct {
 	Name string
 
 	// Number of GB of storage the server is configured with.
-	StorageSizeGb int
+	StorageSizeGB int
 
 	// Number of processors the server is configured with.
 	CpuCount int
@@ -393,7 +392,7 @@ func (c *Client) ServerSetGroup(serverId, parentUUID string) error {
 // SetServerDisks sets (adds, updates, removes) the disks of an existing server.
 // @serverId: ID of the server to change
 // @disks:    complete list of (modified) existing and (optionally) additional disks
-func (c *Client) ServerSetDisks(serverId string, disks []ServerDisk) (statusId string, err error) {
+func (c *Client) ServerSetDisks(serverId string, disks []ServerAdditionalDisk) (statusId string, err error) {
 	return c.patchStatus(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId),
 		&PatchOperation{"set", "disks", disks})
 }
