@@ -4,12 +4,13 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
@@ -29,10 +30,10 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	sn, statusId, err := client.DeleteSnapshot(flag.Arg(0))
+	statusId, err := client.DeleteSnapshot(flag.Arg(0))
 	if err != nil {
 		exit.Fatalf("Failed to delete snapshot on %s: %s", flag.Arg(0), err)
 	}
 
-	fmt.Printf("Request ID for deleting snapshot %q: %s\n", sn.Name, statusId)
+	fmt.Printf("Request ID for deleting %s snapshot: %s\n", flag.Arg(0), statusId)
 }

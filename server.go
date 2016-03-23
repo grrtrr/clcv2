@@ -1,10 +1,18 @@
 package clcv2
 
 import (
+	"errors"
 	"fmt"
 	"time"
 )
 
+// Various server-related errors returned by this package
+var (
+	// ErrNoSnapshot is returned when trying to delete a non-existing snapshot
+	ErrNoSnapshot = errors.New("no snapshot exists")
+)
+
+// Server represents the CLC-specific server structure
 type Server struct {
 	// Server ID
 	Id string
@@ -443,25 +451,23 @@ func (c *Client) CreateSnapshot(serverId string, daysToKeep int) (statusId strin
 	}{[]string{serverId}, daysToKeep})
 }
 
-// Delete the server snapshot.
+// DeleteSnapshot deletes the server snapshot if it exists.
 // @serverId: Server name to delete snapshot of.
-func (c *Client) DeleteSnapshot(serverId string) (sn *ServerSnapshot, statusId string, err error) {
+func (c *Client) DeleteSnapshot(serverId string) (statusId string, err error) {
 	var link *Link
 	/*
 	 * FIXME: there is no way of querying the Snapshot ID. The GetServer request
 	 *        only returns the snapshot name; the ID is buried inside the URLs of
 	 *        the Links array. Hence need to run 2 API requests for 1 deletion.
 	 */
-	if sn, err = c.GetServerSnapshot(serverId); err != nil {
-		return
+	if sn, err := c.GetServerSnapshot(serverId); err != nil {
+		return "", err
 	} else if sn == nil {
-		err = fmt.Errorf("nothing to delete - %s has no snapshots", serverId)
-		return
+		return "", ErrNoSnapshot
 	} else if link, err = extractLink(sn.Links, "delete"); err != nil {
-		return
+		return "", err
 	}
-	statusId, err = c.getStatus("DELETE", link.Href, nil)
-	return
+	return c.getStatus("DELETE", link.Href, nil)
 }
 
 // Revert server to snapshot.
@@ -474,7 +480,7 @@ func (c *Client) RevertToSnapshot(serverId string) (sn *ServerSnapshot, statusId
 	if sn, err = c.GetServerSnapshot(serverId); err != nil {
 		return
 	} else if sn == nil {
-		err = fmt.Errorf("nothing to revert to - %s has no snapshots", serverId)
+		err = ErrNoSnapshot
 		return
 	} else if link, err = extractLink(sn.Links, "restore"); err != nil {
 		return
