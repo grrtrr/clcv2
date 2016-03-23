@@ -31,6 +31,7 @@ func usage() {
 		{"reboot", "reboot server"},
 		{"snapshot", "snapshot server"},
 		{"delsnapshot", "delete server snapshot"},
+		{"revsnapshot", "revert server to snapshot state"},
 		{"archive", "archive the server/group"},
 		{"delete", "delete server/group (CAUTION)"},
 		{"help", "print this help screen"},
@@ -115,6 +116,7 @@ func main() {
 			"delete":      client.DeleteServer,
 			"snapshot":    client.SnapshotServer,
 			"delsnapshot": client.DeleteSnapshot,
+			"revsnapshot": client.RevertToSnapshot,
 		}
 
 		/* Long-running commands that return a RequestID */

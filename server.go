@@ -472,21 +472,19 @@ func (c *Client) DeleteSnapshot(serverId string) (statusId string, err error) {
 
 // Revert server to snapshot.
 // @serverId: Name of server to revert.
-func (c *Client) RevertToSnapshot(serverId string) (sn *ServerSnapshot, statusId string, err error) {
+func (c *Client) RevertToSnapshot(serverId string) (statusId string, err error) {
 	var link *Link
 	/*
 	 * FIXME: see above comments why this is done in this way.
 	 */
-	if sn, err = c.GetServerSnapshot(serverId); err != nil {
-		return
+	if sn, err := c.GetServerSnapshot(serverId); err != nil {
+		return "", err
 	} else if sn == nil {
-		err = ErrNoSnapshot
-		return
+		return "", ErrNoSnapshot
 	} else if link, err = extractLink(sn.Links, "restore"); err != nil {
-		return
+		return "", err
 	}
-	statusId, err = c.getStatus("POST", link.Href, nil)
-	return
+	return c.getStatus("POST", link.Href, nil)
 }
 
 /*

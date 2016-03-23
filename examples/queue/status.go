@@ -10,13 +10,14 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
 )
 
 func main() {
-	var intvl = flag.Duration("i", 0, "Poll interval (use 0 to disable polling)")
+	var intvl = flag.Duration("i", 5*time.Second, "Poll interval (use 0 to disable polling)")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <RequestID>\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()

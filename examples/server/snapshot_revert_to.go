@@ -1,15 +1,16 @@
 /*
- * Revert to a snapshot of a server.
+ * Revert server to snapshot.
  */
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
@@ -29,10 +30,10 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	snap, statusId, err := client.RevertToSnapshot(flag.Arg(0))
+	statusId, err := client.RevertToSnapshot(flag.Arg(0))
 	if err != nil {
 		exit.Fatalf("Failed to revert %s to snapshot: %s", flag.Arg(0), err)
 	}
 
-	fmt.Printf("Request ID for reverting %s to snapshot %q: %s\n", flag.Arg(0), snap.Name, statusId)
+	fmt.Printf("Request ID for reverting %s to snapshot: %s\n", flag.Arg(0), statusId)
 }
