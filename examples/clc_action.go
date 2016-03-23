@@ -30,6 +30,7 @@ func usage() {
 		{"reset", "perform forced power-cycle on server"},
 		{"reboot", "reboot server"},
 		{"snapshot", "snapshot server"},
+		{"delsnapshot", "delete server snapshot"},
 		{"archive", "archive the server/group"},
 		{"delete", "delete server/group (CAUTION)"},
 		{"help", "print this help screen"},
@@ -104,15 +105,16 @@ func main() {
 			os.Exit(0)
 		}
 		var serverAction = map[string]func(string) (string, error){
-			"on":       client.PowerOnServer,
-			"off":      client.PowerOffServer,
-			"pause":    client.PauseServer,
-			"reset":    client.ResetServer,
-			"reboot":   client.RebootServer,
-			"shutdown": client.ShutdownServer,
-			"archive":  client.ArchiveServer,
-			"delete":   client.DeleteServer,
-			"snapshot": client.SnapshotServer,
+			"on":          client.PowerOnServer,
+			"off":         client.PowerOffServer,
+			"pause":       client.PauseServer,
+			"reset":       client.ResetServer,
+			"reboot":      client.RebootServer,
+			"shutdown":    client.ShutdownServer,
+			"archive":     client.ArchiveServer,
+			"delete":      client.DeleteServer,
+			"snapshot":    client.SnapshotServer,
+			"delsnapshot": client.DeleteSnapshot,
 		}
 
 		/* Long-running commands that return a RequestID */
