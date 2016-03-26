@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
@@ -31,7 +32,7 @@ func usage() {
 		{"reboot", "reboot server"},
 		{"snapshot", "snapshot server"},
 		{"delsnapshot", "delete server snapshot"},
-		{"revsnapshot", "revert server to snapshot state"},
+		{"revert", "revert server to snapshot state"},
 		{"archive", "archive the server/group"},
 		{"delete", "delete server/group (CAUTION)"},
 		{"help", "print this help screen"},
@@ -47,6 +48,7 @@ func usage() {
 func main() {
 	var (
 		location       = flag.String("l", "", "Location to use for <Group-Name>")
+		intvl          = flag.Duration("i", 20*time.Second, "Poll interval for status updates (use 0 to disable)")
 		handlingServer bool   // what to act on
 		action, where  string // what to do and where
 		reqID          string // request ID of the action
@@ -58,16 +60,17 @@ func main() {
 	if flag.NArg() == 2 {
 		action, where = flag.Arg(0), flag.Arg(1)
 	} else if flag.NArg() == 1 {
-		// FIXME: make switch statement, and implement
-		// - show
-		// - help
-		// - status
-		if flag.Arg(0) == "show" && *location == "" {
-			exit.Errorf("Showing group details requires location (-l) argument.")
-		} else if flag.Arg(0) == "help" {
-			usage()
-		}
 		action = flag.Arg(0)
+		switch action {
+		case "show":
+			if *location == "" {
+				exit.Errorf("Showing group details requires location (-l) argument.")
+			}
+		case "help":
+			usage()
+		default:
+			exit.Errorf("Unsupported action %q", action)
+		}
 	} else {
 		usage()
 	}
@@ -116,7 +119,7 @@ func main() {
 			"delete":      client.DeleteServer,
 			"snapshot":    client.SnapshotServer,
 			"delsnapshot": client.DeleteSnapshot,
-			"revsnapshot": client.RevertToSnapshot,
+			"revert":      client.RevertToSnapshot,
 		}
 
 		/* Long-running commands that return a RequestID */
@@ -148,14 +151,7 @@ func main() {
 	}
 
 	fmt.Printf("Request ID for %q action: %s\n", action, reqID)
-
-	/* XXX
-	locationStr := *location
-	if handlingServer {
-		locationStr = utils.ExtractLocationFromServerName(where)
-	}
-	client.PollDeploymentStatus(reqID, locationStr, *acctAlias, 1)
-	*/
+	client.PollStatus(reqID, *intvl)
 }
 
 // Show server details
