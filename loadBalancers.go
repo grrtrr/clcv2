@@ -1,10 +1,19 @@
 package clcv2
 
-import "fmt"
-
 /*
  * Load Balancers
  */
+
+import "fmt"
+
+// LoadBalancerStatus reflects the current state of a shared load balancer
+type LoadBalancerStatus string
+
+const (
+	LbEnabled  LoadBalancerStatus = "enabled"
+	LbDisabled                    = "disabled"
+	LbDeleted                     = "deleted"
+)
 
 // LoadBalancer represents CLCv2 load balancer data
 type LoadBalancer struct {
@@ -20,8 +29,8 @@ type LoadBalancer struct {
 	// The external (public) IP address of the load balancer
 	IpAddress string
 
-	// Status of the load balancer: enabled, disabled or deleted
-	Status string
+	// Status of the load balancer
+	Status LoadBalancerStatus
 
 	// Collection of pools configured for this shared load balancer
 	Pools []LoadBalancerPool
@@ -56,8 +65,8 @@ type LoadBalancerNode struct {
 	// Name of the node (generally the IP address)
 	Name string
 
-	// Status of the node: "enabled", "disabled" or "deleted".
-	Status string
+	// Status of the node
+	Status LoadBalancerStatus
 
 	// The internal (private) IP address of the node server
 	IPAddress string
