@@ -14,8 +14,6 @@ import (
 	"net/http/httputil"
 	"os"
 	"reflect"
-	"runtime"
-	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/rehttp"
@@ -70,27 +68,18 @@ type Client struct {
 // - CLC_ALIAS:   takes precedence over default LocationAlias
 // - CLC_ACCOUNT: takes precedence over default AccountAlias
 func NewClient() (client *Client, err error) {
-	client = &Client{}
-	client.requestor = &http.Client{
-		Transport: rehttp.NewTransport(nil, // default transport
-			retryer(client, MaxRetries),
-			// Note: using g_timeout as upper bound for the exponential backoff.
-			//       This means g_timeout has to be large enough to run MaxRetries
-			//       requests with individual retries.
-			rehttp.ExpJitterDelay(StepDelay, g_timeout),
-		),
-		// The client timeout applies to the request as a whole, i.e. including any retries.
-		// See http://0value.com/Let-the-Doer-Do-it
-		Timeout: g_timeout,
+	client = &Client{
+		requestor: &http.Client{
+			Transport: rehttp.NewTransport(nil, // default transport
+				retryer(client, MaxRetries),
+				// Note: using g_timeout as upper bound for the exponential backoff.
+				//       This means g_timeout has to be large enough to run MaxRetries
+				//       requests with individual retries.
+				rehttp.ExpJitterDelay(StepDelay, g_timeout),
+			),
+		},
 	}
-
-	// FIXME: rehttp requires go1.6 in order to deal with timeout
-	if strings.HasPrefix(runtime.Version(), "go1.5") {
-		fmt.Fprintf(os.Stderr, "\nWARNING: rehttp requires go >= 1.6 to use retry with timeout\n")
-		fmt.Fprintf(os.Stderr, "WARNING: please update Go (current version is %q)\n", runtime.Version())
-		fmt.Fprintf(os.Stderr, "WARNING: disabling timeout for now\n\n")
-		client.requestor.Timeout = 0
-	}
+	client.SetTimeout(g_timeout)
 
 	if g_debug {
 		client.Log = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
@@ -133,11 +122,6 @@ func retryer(client *Client, maxRetries int) rehttp.RetryFn {
 		}
 		return false
 	})
-}
-
-// SetTimeout changes the per-request timeout.
-func (c *Client) SetTimeout(to time.Duration) {
-	c.requestor.Timeout = to
 }
 
 // Perform a v2 API request

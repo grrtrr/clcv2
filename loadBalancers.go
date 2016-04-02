@@ -79,9 +79,24 @@ type LoadBalancerNode struct {
 }
 
 // GetSharedLoadBalancers returns the list of shared load balancers for a given account and data center.
-// @location: location alias of data centre to query
-func (c *Client) GetSharedLoadBalancers(location string) (lb []LoadBalancer, err error) {
-	path := fmt.Sprintf("/v2/sharedLoadBalancers/%s/%s", c.AccountAlias, location)
+// @dc: location alias of data centre to query
+func (c *Client) GetSharedLoadBalancers(dc string) (lb []LoadBalancer, err error) {
+	path := fmt.Sprintf("/v2/sharedLoadBalancers/%s/%s", c.AccountAlias, dc)
 	err = c.getResponse("GET", path, nil, &lb)
+	return
+}
+
+// CreateSharedLoadBalancer creates a new load balancer in @dc in @active state.
+// @name:   name of the load balancer to create
+// @desc:   textual description of the load balancer
+// @active: whether to create the load balancer in 'enabled' state, one of "enabled" or "disabled"
+// @dc:     location alias of the data centre in which to create the load balancer
+func (c *Client) CreateSharedLoadBalancer(name, desc, active, dc string) (lb LoadBalancer, err error) {
+	path := fmt.Sprintf("/v2/sharedLoadBalancers/%s/%s", c.AccountAlias, dc)
+	err = c.getResponse("POST", path, struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		Status      string `json:"status"`
+	}{name, desc, active}, &lb)
 	return
 }
