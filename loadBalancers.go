@@ -100,3 +100,11 @@ func (c *Client) CreateSharedLoadBalancer(name, desc, active, dc string) (lb Loa
 	}{name, desc, active}, &lb)
 	return
 }
+
+// DeleteSharedLoadbalancer deletes the load balancer @id in @dc
+// @id: ID of the load balancer to delete
+// @dc: location alias of the data centre the load balancer resides in
+func (c *Client) DeleteSharedLoadBalancer(id, dc string) error {
+	path := fmt.Sprintf("/v2/sharedLoadBalancers/%s/%s/%s", c.AccountAlias, dc, id)
+	return c.getResponse("DELETE", path, nil, nil)
+}

@@ -1,5 +1,5 @@
 /*
- * Delete a Hardware Group via its UUID
+ * Delete a Hardware Group.
  */
 package main
 
