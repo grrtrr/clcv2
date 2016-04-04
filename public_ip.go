@@ -2,6 +2,8 @@ package clcv2
 
 import (
 	"fmt"
+	"net"
+	"strings"
 )
 
 /*
@@ -10,34 +12,68 @@ import (
 type PublicIPAddress struct {
 	// The internal (private) IP address to map to the new public IP address.
 	// If not provided, one will be assigned for you.
-	InternalIPAddress	string		`json:"internalIPAddress,omitempty"`
+	InternalIPAddress string `json:"internalIPAddress,omitempty"`
 
 	// The set of ports and protocols to allow access to for the new public IP address.
 	// Only these specified ports on the respective protocols will be accessible when
 	// accessing the server using the public IP address claimed here.
-	Ports			[]PublicPort	`json:"ports"`
+	Ports []PublicPort `json:"ports"`
 
 	// The source IP address range allowed to access the new public IP address.
 	// Used to restrict access to only the specified range of source IPs.
-	SourceRestrictions	[]SourceCIDR	`json:"sourceRestrictions"`
+	SourceRestrictions []SourceCIDR `json:"sourceRestrictions"`
 }
 
+// PublicPort specifies a port mapping associated with a given PublicIPAddress.
 type PublicPort struct {
 	// The specific protocol to support for the given port(s).
 	// Should be either "tcp", "udp", or "icmp".
-	Protocol	string	`json:"protocol"`
+	Protocol string `json:"protocol"`
 
 	// The port to open for the given protocol.
 	// If defining a range of ports, this represents the first port in the range.
-	Port		int	`json:"port"`
+	Port int `json:"port"`
 
 	// If defining a range of ports, optionally provide the last number of the range.
-	PortTo		int	`json:"portTo"`
+	PortTo int `json:"portTo"`
 }
 
+func (p PublicPort) String() string {
+	// Note: v2 documentation specifies lower case, reality and examples use upper case
+	var portSpec = fmt.Sprintf("%s/%d", strings.ToLower(p.Protocol), p.Port)
+
+	if p.PortTo != 0 {
+		portSpec += fmt.Sprintf("-%d", p.PortTo)
+	}
+	return portSpec
+}
+
+// SourceCIDR wraps the IP range allowed to access a public IP, specified using CIDR notation.
 type SourceCIDR struct {
-	// The IP range allowed to access the public IP, specified using CIDR notation.
-	Cidr		string	`json:"cidr"`
+	Cidr string `json:"cidr"`
+}
+
+// SourceRestriction implements the flag.Value interface, to populate SourceCIDR fields.
+type SourceRestriction []*net.IPNet
+
+// String implements the flag.Value String method for SourceRestriction.
+func (s *SourceRestriction) String() string {
+	var cidrs = make([]string, len(*s))
+
+	for i := range *s {
+		cidrs[i] = fmt.Sprint((*s)[i])
+	}
+	return fmt.Sprintf("[%s]", strings.Join(cidrs, ", "))
+}
+
+// Set implements the flag.Value Set method for SourceRestriction.
+func (s *SourceRestriction) Set(val string) error {
+	_, net, err := net.ParseCIDR(val)
+	if err != nil {
+		return fmt.Errorf("invalid source restriction format format %q: %s", val, err)
+	}
+	*s = append(*s, net)
+	return nil
 }
 
 // Claim a public IP address and associate it with a server, allowing access to it on a given set of

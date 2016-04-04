@@ -122,11 +122,10 @@ type Server struct {
 
 // ServerIPAddress represents an IP address attached to a server.
 type ServerIPAddress struct {
-	// Private IP address.
+	// Private IP address. If @Public is non-empty, @Internal is associated with @Public.
 	Internal string
 
-	// If applicable, the public IP
-	// If associated with a public IP address, the "public" value is populated
+	// If applicable, the public IP (if empty, @Internal is a private IP address).
 	Public string
 }
 
@@ -146,6 +145,20 @@ func (c *Client) GetServerByURI(path string) (res Server, err error) {
 // @serverId: name of the server being queried (e.g. WA1DTGDFEDAD0
 func (c *Client) GetServer(serverId string) (res Server, err error) {
 	return c.GetServerByURI(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId))
+}
+
+// GetPublicIPs returns the public IP addresses associated with @serverID
+func (c *Client) GetPublicIPs(serverId string) (res []ServerIPAddress, err error) {
+	srv, err := c.GetServer(serverId)
+	if err != nil {
+		return nil, err
+	}
+	for _, ip := range srv.Details.IpAddresses {
+		if ip.IsPublic() {
+			res = append(res, ip)
+		}
+	}
+	return
 }
 
 /*

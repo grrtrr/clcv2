@@ -4,28 +4,32 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
-	var ipAddr   = flag.String("i",     "",    "Use this existing internal IP on the server")
+	var ipAddr = flag.String("i", "", "Use this existing internal IP on the server")
 
-	var http     = flag.Bool("http",    false, "Allow HTTP requests (port 80) on the new IP")
+	var http = flag.Bool("http", false, "Allow HTTP requests (port 80) on the new IP")
 	var http8080 = flag.Bool("httpAlt", false, "Allow HTTP requests (port 8080) on the new IP")
-	var https    = flag.Bool("https",   false, "Allow HTTPS requests (port 443) on the new IP")
-	var ftp      = flag.Bool("ftp",     false, "Allow FTP requests (port 21) on the new IP")
-	var ftps     = flag.Bool("ftps",    false, "Allow FTPS requests (port 990) on the new IP")
-	var ssh      = flag.Bool("ssh",     true,  "Allow SSH requests (port 22) on the new IP")
-	var sftp     = flag.Bool("sftp",    true,  "Allow SFTP requests (port 22) on the new IP")
-	var rdp      = flag.Bool("rdp",     false, "Allow RDP requests (port 3389) on the new IP")
-	var src      = flag.String("src",   "",    "Restrict source traffic to this CIDR range")
+	var https = flag.Bool("https", false, "Allow HTTPS requests (port 443) on the new IP")
+	var ftp = flag.Bool("ftp", false, "Allow FTP requests (port 21) on the new IP")
+	var ftps = flag.Bool("ftps", false, "Allow FTPS requests (port 990) on the new IP")
+	var ssh = flag.Bool("ssh", true, "Allow SSH requests (port 22) on the new IP")
+	var sftp = flag.Bool("sftp", true, "Allow SFTP requests (port 22) on the new IP")
+	var rdp = flag.Bool("rdp", false, "Allow RDP requests (port 3389) on the new IP")
+
+	var srcRes clcv2.SourceRestriction
+	flag.Var(&srcRes, "src", "Restrict source traffic to CIDR range(s)")
 
 	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "%s: Add a public IP to a server\n", path.Base(os.Args[0]))
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <server-name>\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
@@ -41,31 +45,34 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	req := clcv2.PublicIPAddress{ InternalIPAddress: *ipAddr }
+	req := clcv2.PublicIPAddress{
+		InternalIPAddress:  *ipAddr,
+		SourceRestrictions: make([]clcv2.SourceCIDR, len(srcRes)),
+	}
 	if *http {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 80, 0 })
+		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 80, 0})
 	}
 	if *http8080 {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 8080, 0 })
+		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 8080, 0})
 	}
 	if *https {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 443, 0 })
+		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 443, 0})
 	}
 	if *ftp {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 21, 0 })
+		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 21, 0})
 	}
 	if *ftps {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 990, 0 })
+		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 990, 0})
 	}
 	if *ssh || *sftp {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 22, 0 })
+		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 22, 0})
 	}
 	if *rdp {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 3389, 0 })
+		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 3389, 0})
 	}
 
-	if *src != "" {
-		req.SourceRestrictions = append(req.SourceRestrictions, clcv2.SourceCIDR{*src})
+	for i := range srcRes {
+		req.SourceRestrictions[i] = clcv2.SourceCIDR{srcRes[i].String()}
 	}
 
 	reqId, err := client.AddPublicIPAddress(flag.Arg(0), &req)
