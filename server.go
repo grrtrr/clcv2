@@ -130,6 +130,11 @@ type ServerIPAddress struct {
 	Public string
 }
 
+// IsPublic returns true if @s is a public ServerIPAddress
+func (s ServerIPAddress) IsPublic() bool {
+	return s.Public != ""
+}
+
 // Query Server details by URI path.
 // @path: relative path of the server, as e.g. returned via 'self' link in CreateServer
 func (c *Client) GetServerByURI(path string) (res Server, err error) {
