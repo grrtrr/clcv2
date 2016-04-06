@@ -3,6 +3,7 @@ package clcv2
 import (
 	"fmt"
 	"net"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -81,6 +82,7 @@ func (p PublicPort) String() string {
 // c) <proto>/<portNumber>          - single numeric port
 // d) <proto>/<startPort>-<endPort> - numeric port range
 func ParsePortSpec(ps string) (p PublicPort, err error) {
+	var numericPorts = regexp.MustCompile(`^(\d+-)?\d+$`)
 	var el = strings.Split(ps, "/")
 
 	if len(el) != 2 {
@@ -103,25 +105,26 @@ func ParsePortSpec(ps string) (p PublicPort, err error) {
 		return p, fmt.Errorf("unsupported protocol type %q", proto)
 	}
 
-	if idx := strings.Index(el[1], "-"); idx > 0 {
-		/* port range */
-		if p.Port, err = strconv.Atoi(el[1][:idx]); err != nil || p.Port < 0 || p.Port > 65535 {
-			return p, fmt.Errorf("invalid start port %q", el[1][:idx])
-		} else if p.PortTo, err = strconv.Atoi(el[1][idx+1:]); err != nil || p.PortTo < 0 || p.PortTo > 65535 {
-			return p, fmt.Errorf("invalid end port %q", el[1][idx+1:])
-		} else if p.PortTo < p.Port {
-			return p, fmt.Errorf("invalid port range %q", el[1])
+	if numericPorts.MatchString(el[1]) { /* numeric port or port range */
+		if idx := strings.Index(el[1], "-"); idx > 0 {
+			/* port range */
+			if p.Port, err = strconv.Atoi(el[1][:idx]); err != nil || p.Port < 0 || p.Port > 65535 {
+				return p, fmt.Errorf("invalid start port %q", el[1][:idx])
+			} else if p.PortTo, err = strconv.Atoi(el[1][idx+1:]); err != nil || p.PortTo < 0 || p.PortTo > 65535 {
+				return p, fmt.Errorf("invalid end port %q", el[1][idx+1:])
+			} else if p.PortTo < p.Port {
+				return p, fmt.Errorf("invalid port range %q", el[1])
+			}
+		} else if p.Port, err = strconv.Atoi(el[1]); err == nil {
+			/* numeric port */
+			if p.Port < 0 || p.Port > 65535 {
+				return p, fmt.Errorf("invalid port %q", el[1])
+			}
 		}
-	} else if p.Port, err = strconv.Atoi(el[1]); err == nil {
-		/* numeric port */
-		if p.Port < 0 || p.Port > 65535 {
-			return p, fmt.Errorf("invalid port %q", el[1])
-		}
+	} else if p.Protocol != "udp" && p.Protocol != "tcp" {
+		/* service name, as defined in /etc/services for UDP and TCP */
+		return p, fmt.Errorf("invalid service specification %q for %s", el[1], p.Protocol)
 	} else {
-		/* service name, as defined in /etc/services */
-		if p.Protocol != "udp" && p.Protocol != "tcp" {
-			return p, fmt.Errorf("invalid service specification %q for %s", el[1], p.Protocol)
-		}
 		/* CLCv2 uses IPv4 addresses exclusively - look up v4 port names only */
 		p.Port, err = net.LookupPort(p.Protocol+"4", el[1])
 	}
