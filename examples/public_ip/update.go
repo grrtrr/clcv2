@@ -1,27 +1,28 @@
 /*
- * Configure firewall settings of a public IP Address.
+ * (Re)configure firewall/port settings of a given public IP Address.
  */
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
-	var http     = flag.Bool("http",    false, "Allow HTTP requests (port 80) on the new IP")
-	var http8080 = flag.Bool("httpAlt", false, "Allow HTTP requests (port 8080) on the new IP")
-	var https    = flag.Bool("https",   false, "Allow HTTPS requests (port 443) on the new IP")
-	var ftp      = flag.Bool("ftp",     false, "Allow FTP requests (port 21) on the new IP")
-	var ftps     = flag.Bool("ftps",    false, "Allow FTPS requests (port 990) on the new IP")
-	var ssh      = flag.Bool("ssh",     true,  "Allow SSH requests (port 22) on the new IP")
-	var sftp     = flag.Bool("sftp",    true,  "Allow SFTP requests (port 22) on the new IP")
-	var rdp      = flag.Bool("rdp",     false, "Allow RDP requests (port 3389) on the new IP")
-	var src      = flag.String("src",   "",    "Restrict source traffic to this CIDR range")
+	var srcRes clcv2.SrcRestrictions
+	var portSp clcv2.PortSpecs
+	flag.Var(&srcRes, "src", "Restrict source traffic to given CIDR range(s)")
+	flag.Var(&portSp, "p", "Port spec(s), number(s) or service name(s)\n"+
+		"        - ping:      use ping or icmp\n"+
+		"        - full spec: tcp/20081-20083, udp/554, udp/6080-7000, ...\n"+
+		"        - tcp names: rdp, http, https, http-alt, ssh, ftp, ftps, ...\n"+
+		"        - tcp ports: 22, 443, 80, 20081-20083, ...")
+	var keep = flag.Bool("k", true, "Keep the existing settings")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <server-name> <public-IP>\n", path.Base(os.Args[0]))
@@ -29,7 +30,7 @@ func main() {
 	}
 
 	flag.Parse()
-	if flag.NArg() != 2 {
+	if flag.NArg() != 2 || len(portSp) == 0 {
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -39,37 +40,22 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	req := clcv2.PublicIPAddress{}
-	if *http {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 80, 0 })
-	}
-	if *http8080 {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 8080, 0 })
-	}
-	if *https {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 443, 0 })
-	}
-	if *ftp {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 21, 0 })
-	}
-	if *ftps {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 990, 0 })
-	}
-	if *ssh || *sftp {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 22, 0 })
-	}
-	if *rdp {
-		req.Ports = append(req.Ports, clcv2.PublicPort{ "tcp", 3389, 0 })
+	if *keep {
+		fmt.Printf("Looking up existing configuration of %s on %s ...\n", flag.Arg(1), flag.Arg(0))
+		old, err := client.GetPublicIPAddress(flag.Arg(0), flag.Arg(1))
+		if err != nil {
+			exit.Fatalf("Failed to get existing configuration for %s: %s", flag.Arg(1), err)
+		}
+		fmt.Printf("EXISTING settings: %+v\n", old.Ports)
+		portSp = append(portSp, old.Ports...)
+		fmt.Println(portSp)
 	}
 
-	if *src != "" {
-		req.SourceRestrictions = append(req.SourceRestrictions, clcv2.SourceCIDR{*src})
-	}
-
+	req := clcv2.PublicIPAddress{Ports: portSp, SourceRestrictions: srcRes}
 	reqId, err := client.UpdatePublicIPAddress(flag.Arg(0), flag.Arg(1), &req)
 	if err != nil {
-		exit.Fatalf("Failed to update public IP address on %q: %s", flag.Arg(0), err)
+		exit.Fatalf("Failed to update public IP address %s on %q: %s", flag.Arg(1), flag.Arg(0), err)
 	}
 
-	fmt.Println("Request ID for adding public IP:", reqId)
+	fmt.Printf("Request ID for modifying public IP: %s\n", reqId)
 }

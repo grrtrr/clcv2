@@ -14,17 +14,17 @@ import (
 )
 
 func main() {
-	var ipAddr = flag.String("i", "", "Use this existing internal IP on the server")
 	var srcRes clcv2.SrcRestrictions
 	var portSp clcv2.PortSpecs
 
-	flag.Var(&srcRes, "src", "Restrict source traffic to CIDR range(s)")
+	flag.Var(&srcRes, "src", "Restrict source traffic to given CIDR range(s)")
 	flag.Var(&portSp, "p", "Port spec(s), number(s) or service name(s)\n"+
 		"        - ping:      use ping or icmp\n"+
 		"        - full spec: tcp/20081-20083, udp/554, udp/6080-7000, ...\n"+
 		"        - tcp names: rdp, http, https, http-alt, ssh, ftp, ftps, ...\n"+
 		"        - tcp ports: 22, 443, 80, 20081-20083, ...\n"+
 		"        - DEFAULTS:  ping, ssh, http")
+	var ipAddr = flag.String("i", "", "Use this existing internal IP on the server")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <server-name>\n", path.Base(os.Args[0]))
@@ -35,7 +35,7 @@ func main() {
 	if flag.NArg() != 1 {
 		flag.Usage()
 		os.Exit(1)
-	} else if len(portSp) == 0 { /* default ports */
+	} else if len(portSp) == 0 { /* default port settings */
 		portSp.Set("ping")
 		portSp.Set("ssh")
 		portSp.Set("http")
