@@ -87,9 +87,6 @@ func main() {
 		/* If the first argument decodes as a hex value, assume it is a Hardware Group UUID */
 	} else if utils.LooksLikeServerName(where) { /* Starts with a location identifier and is not hex ... */
 		handlingServer = true
-		if *location != "" {
-			fmt.Fprintf(os.Stderr, "WARNING: location (%s) ignored for %s\n", *location, where)
-		}
 	} else if *location != "" && where != "" {
 		if group, err := client.GetGroupByName(where, *location); err != nil {
 			exit.Errorf("Failed to resolve group name %q: %s", where, err)
