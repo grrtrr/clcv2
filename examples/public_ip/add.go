@@ -15,21 +15,18 @@ import (
 
 func main() {
 	var ipAddr = flag.String("i", "", "Use this existing internal IP on the server")
+	var srcRes clcv2.SrcRestrictions
+	var portSp clcv2.PortSpecs
 
-	var http = flag.Bool("http", false, "Allow HTTP requests (port 80) on the new IP")
-	var http8080 = flag.Bool("httpAlt", false, "Allow HTTP requests (port 8080) on the new IP")
-	var https = flag.Bool("https", false, "Allow HTTPS requests (port 443) on the new IP")
-	var ftp = flag.Bool("ftp", false, "Allow FTP requests (port 21) on the new IP")
-	var ftps = flag.Bool("ftps", false, "Allow FTPS requests (port 990) on the new IP")
-	var ssh = flag.Bool("ssh", true, "Allow SSH requests (port 22) on the new IP")
-	var sftp = flag.Bool("sftp", true, "Allow SFTP requests (port 22) on the new IP")
-	var rdp = flag.Bool("rdp", false, "Allow RDP requests (port 3389) on the new IP")
-
-	var srcRes clcv2.SourceRestriction
 	flag.Var(&srcRes, "src", "Restrict source traffic to CIDR range(s)")
+	flag.Var(&portSp, "p", "Port spec(s), number(s) or service name(s)\n"+
+		"        - ping:      use ping or icmp\n"+
+		"        - full spec: tcp/20081-20083, udp/554, udp/6080-7000, ...\n"+
+		"        - tcp names: rdp, http, https, http-alt, ssh, ftp, ftps, ...\n"+
+		"        - tcp ports: 22, 443, 80, 20081-20083, ...\n"+
+		"        - DEFAULTS:  ping, ssh, http")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "%s: Add a public IP to a server\n", path.Base(os.Args[0]))
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <server-name>\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
@@ -38,6 +35,10 @@ func main() {
 	if flag.NArg() != 1 {
 		flag.Usage()
 		os.Exit(1)
+	} else if len(portSp) == 0 { /* default ports */
+		portSp.Set("ping")
+		portSp.Set("ssh")
+		portSp.Set("http")
 	}
 
 	client, err := clcv2.NewClient()
@@ -47,32 +48,8 @@ func main() {
 
 	req := clcv2.PublicIPAddress{
 		InternalIPAddress:  *ipAddr,
-		SourceRestrictions: make([]clcv2.SourceCIDR, len(srcRes)),
-	}
-	if *http {
-		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 80, 0})
-	}
-	if *http8080 {
-		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 8080, 0})
-	}
-	if *https {
-		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 443, 0})
-	}
-	if *ftp {
-		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 21, 0})
-	}
-	if *ftps {
-		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 990, 0})
-	}
-	if *ssh || *sftp {
-		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 22, 0})
-	}
-	if *rdp {
-		req.Ports = append(req.Ports, clcv2.PublicPort{"tcp", 3389, 0})
-	}
-
-	for i := range srcRes {
-		req.SourceRestrictions[i] = clcv2.SourceCIDR{srcRes[i].String()}
+		Ports:              portSp,
+		SourceRestrictions: srcRes,
 	}
 
 	reqId, err := client.AddPublicIPAddress(flag.Arg(0), &req)

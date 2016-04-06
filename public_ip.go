@@ -3,6 +3,7 @@ package clcv2
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 )
 
@@ -17,12 +18,15 @@ type PublicIPAddress struct {
 	// The set of ports and protocols to allow access to for the new public IP address.
 	// Only these specified ports on the respective protocols will be accessible when
 	// accessing the server using the public IP address claimed here.
-	Ports []PublicPort `json:"ports"`
+	Ports PortSpecs `json:"ports"`
 
 	// The source IP address range allowed to access the new public IP address.
 	// Used to restrict access to only the specified range of source IPs.
-	SourceRestrictions []SourceCIDR `json:"sourceRestrictions"`
+	SourceRestrictions SrcRestrictions `json:"sourceRestrictions"`
 }
+
+// PortSpecs implenents the flag.Value interface for PublicPort
+type PortSpecs []PublicPort
 
 // PublicPort specifies a port mapping associated with a given PublicIPAddress.
 type PublicPort struct {
@@ -38,6 +42,27 @@ type PublicPort struct {
 	PortTo int `json:"portTo"`
 }
 
+// String implements the flag.Value String method for PortSpecs.
+func (p *PortSpecs) String() string {
+	var specs = make([]string, len(*p))
+
+	for i := range *p {
+		specs[i] = fmt.Sprint((*p)[i])
+	}
+	return strings.Join(specs, ", ")
+}
+
+// Set implements the flag.Value Set method for SourceRestriction.
+func (p *PortSpecs) Set(val string) error {
+	ps, err := ParsePortSpec(val)
+	if err != nil {
+		return fmt.Errorf("invalid port specifier %q: %s", val, err)
+	}
+	*p = append(*p, ps)
+	return nil
+}
+
+// String implements the Stringer interface for PublicPort
 func (p PublicPort) String() string {
 	// Note: v2 documentation specifies lower case, reality and examples use upper case
 	var portSpec = fmt.Sprintf("%s/%d", strings.ToLower(p.Protocol), p.Port)
@@ -48,31 +73,86 @@ func (p PublicPort) String() string {
 	return portSpec
 }
 
+// ParsePortSpec parses a string satisfying one of the following formats into a PublicPort:
+// a) <proto>:<servicename>         - single port referenced via an /etc/services name
+// b) <servicename>                 - abbreviation for tcp:<servicename>
+//    <number>                      - abbreviation for tcp:<number>
+// c) ping or icmp                  - an abbreviation for icmp:0
+// c) <proto>/<portNumber>          - single numeric port
+// d) <proto>/<startPort>-<endPort> - numeric port range
+func ParsePortSpec(ps string) (p PublicPort, err error) {
+	var el = strings.Split(ps, "/")
+
+	if len(el) != 2 {
+		if ps == "ping" || ps == "icmp" {
+			p.Protocol = "icmp"
+			return
+		} else if ps == "rdp" {
+			/* RDP may not be listed in /etc/services */
+			p.Protocol, p.Port = "tcp", 3389
+			return
+		}
+		/* Otherwise assume it's a tcp Service Name */
+		return ParsePortSpec("tcp/" + ps)
+	}
+
+	switch proto := strings.ToLower(el[0]); proto {
+	case "udp", "tcp", "icmp": /* only supported formats */
+		p.Protocol = proto
+	default:
+		return p, fmt.Errorf("unsupported protocol type %q", proto)
+	}
+
+	if idx := strings.Index(el[1], "-"); idx > 0 {
+		/* port range */
+		if p.Port, err = strconv.Atoi(el[1][:idx]); err != nil || p.Port < 0 || p.Port > 65535 {
+			return p, fmt.Errorf("invalid start port %q", el[1][:idx])
+		} else if p.PortTo, err = strconv.Atoi(el[1][idx+1:]); err != nil || p.PortTo < 0 || p.PortTo > 65535 {
+			return p, fmt.Errorf("invalid end port %q", el[1][idx+1:])
+		} else if p.PortTo < p.Port {
+			return p, fmt.Errorf("invalid port range %q", el[1])
+		}
+	} else if p.Port, err = strconv.Atoi(el[1]); err == nil {
+		/* numeric port */
+		if p.Port < 0 || p.Port > 65535 {
+			return p, fmt.Errorf("invalid port %q", el[1])
+		}
+	} else {
+		/* service name, as defined in /etc/services */
+		if p.Protocol != "udp" && p.Protocol != "tcp" {
+			return p, fmt.Errorf("invalid service specification %q for %s", el[1], p.Protocol)
+		}
+		/* CLCv2 uses IPv4 addresses exclusively - look up v4 port names only */
+		p.Port, err = net.LookupPort(p.Protocol+"4", el[1])
+	}
+	return
+}
+
+// SrcRestrictions implements the flag.Value interface - for populating SourceCIDR fields.
+type SrcRestrictions []SourceCIDR
+
 // SourceCIDR wraps the IP range allowed to access a public IP, specified using CIDR notation.
 type SourceCIDR struct {
 	Cidr string `json:"cidr"`
 }
 
-// SourceRestriction implements the flag.Value interface, to populate SourceCIDR fields.
-type SourceRestriction []*net.IPNet
-
-// String implements the flag.Value String method for SourceRestriction.
-func (s *SourceRestriction) String() string {
+// String implements the flag.Value String method for SrcRestrictions.
+func (s *SrcRestrictions) String() string {
 	var cidrs = make([]string, len(*s))
 
 	for i := range *s {
-		cidrs[i] = fmt.Sprint((*s)[i])
+		cidrs[i] = (*s)[i].Cidr
 	}
 	return fmt.Sprintf("[%s]", strings.Join(cidrs, ", "))
 }
 
-// Set implements the flag.Value Set method for SourceRestriction.
-func (s *SourceRestriction) Set(val string) error {
+// Set implements the flag.Value Set method for SrcRestrictions.
+func (s *SrcRestrictions) Set(val string) error {
 	_, net, err := net.ParseCIDR(val)
 	if err != nil {
-		return fmt.Errorf("invalid source restriction format format %q: %s", val, err)
+		return fmt.Errorf("invalid source restriction format %q: %s", val, err)
 	}
-	*s = append(*s, net)
+	*s = append(*s, SourceCIDR{net.String()})
 	return nil
 }
 
