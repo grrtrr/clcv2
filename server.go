@@ -147,15 +147,17 @@ func (c *Client) GetServer(serverId string) (res Server, err error) {
 	return c.GetServerByURI(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId))
 }
 
-// GetPublicIPs returns the public IP addresses associated with @serverID
-func (c *Client) GetPublicIPs(serverId string) (res []ServerIPAddress, err error) {
+// GetIPs returns the (private, public) IP addresses associated with @serverID
+func (c *Client) GetServerIPs(serverId string) (ips []string, err error) {
 	srv, err := c.GetServer(serverId)
 	if err != nil {
 		return nil, err
 	}
 	for _, ip := range srv.Details.IpAddresses {
-		if ip.IsPublic() {
-			res = append(res, ip)
+		if ip.Public != "" {
+			ips = append(ips, ip.Public)
+		} else if ip.Internal != "" {
+			ips = append(ips, ip.Internal)
 		}
 	}
 	return

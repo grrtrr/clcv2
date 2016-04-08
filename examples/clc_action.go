@@ -151,6 +151,18 @@ func main() {
 	client.PollStatus(reqID, *intvl)
 }
 
+// Print server IP(s)
+// @client:    authenticated CLCv2 Client
+// @servname:  server name
+func printServerIP(client *clcv2.Client, servname string) {
+	ips, err := client.GetServerIPs(servname)
+	if err != nil {
+		exit.Fatalf("Failed to list details of server %q: %s", servname, err)
+	}
+
+	fmt.Printf("%-20s %s\n", servname+":", strings.Join(ips, ", "))
+}
+
 // Show server details
 // @client:    authenticated CLCv2 Client
 // @servname:  server name

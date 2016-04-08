@@ -39,15 +39,20 @@ func main() {
 	}
 
 	if len(publicIPs) == 0 {
-		srvIPs, err := client.GetPublicIPs(server)
+		srv, err := client.GetServer(server)
 		if err != nil {
 			exit.Fatalf("Failed to query the public IPs of %s: %s", server, err)
-		} else if len(srvIPs) == 0 {
-			fmt.Printf("%s is not associated with a public IP address.\n", server)
-			os.Exit(0)
 		}
-		for _, ip := range srvIPs {
-			publicIPs = append(publicIPs, ip.Public)
+
+		for _, ip := range srv.Details.IpAddresses {
+			if ip.IsPublic() {
+				publicIPs = append(publicIPs, ip.Public)
+			}
+		}
+
+		if len(publicIPs) == 0 {
+			fmt.Printf("%s is not associated with any public IP address.\n", server)
+			os.Exit(0)
 		}
 	}
 
