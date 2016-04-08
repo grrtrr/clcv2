@@ -149,6 +149,8 @@ func (c *Client) GetServer(serverId string) (res Server, err error) {
 
 // GetIPs returns the (private, public) IP addresses associated with @serverID
 func (c *Client) GetServerIPs(serverId string) (ips []string, err error) {
+	var seen = make(map[string]bool) /* track private IPs, they can be mapped to public ones */
+
 	srv, err := c.GetServer(serverId)
 	if err != nil {
 		return nil, err
@@ -156,8 +158,10 @@ func (c *Client) GetServerIPs(serverId string) (ips []string, err error) {
 	for _, ip := range srv.Details.IpAddresses {
 		if ip.Public != "" {
 			ips = append(ips, ip.Public)
-		} else if ip.Internal != "" {
+		}
+		if !seen[ip.Internal] {
 			ips = append(ips, ip.Internal)
+			seen[ip.Internal] = true
 		}
 	}
 	return
