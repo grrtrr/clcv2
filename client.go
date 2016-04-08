@@ -39,10 +39,10 @@ var (
 )
 
 func init() {
-	flag.BoolVar(&g_debug, "d", false, "Produce debug output")
 	flag.StringVar(&g_user, "username", "", "CLC Login Username")
 	flag.StringVar(&g_pass, "password", "", "CLC Login Password")
-	flag.StringVar(&g_acct, "account",  "", "CLC Account Alias to use (instead of default)")
+	flag.BoolVar(&g_debug,  "d", false, "Produce debug output")
+	flag.StringVar(&g_acct, "a",  "", "CLC Account Alias to use (instead of default)")
 	/*
 	 * Caveat: keep the timeout value high, at least a few minutes.
 	 *         Some operations, such as querying details of a new server immediately
