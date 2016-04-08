@@ -198,26 +198,15 @@ func (c *Client) RestoreGroup(groupId, targetGroupId string) (statusId string, e
 	}{targetGroupId})
 }
 
-// Print group hierarchy starting at @g, using initial indentation @indent.
-func PrintGroupHierarchy(g *Group, indent string) {
-	var groupLine string
+// VisitGroupHierarchy calls @f with initial argument @arg recursively for all groups underneath @root.
+// @root: root of the group tree to visit
+// @fn:   function that consumes a group and @arg, returning the (modified) @arg value
+// @arg:  initial argument to pass to @fn
+func VisitGroupHierarchy(root *Group, fn func(*Group, interface{}) interface{}, arg interface{}) {
+	arg = fn(root, arg)
 
-	if g.Type == "default" {
-		groupLine = fmt.Sprintf("%s%s/", indent, g.Name)
-	} else {
-		groupLine = fmt.Sprintf("%s[%s]/", indent, g.Name)
-	}
-	fmt.Printf("%-70s %s\n", groupLine, g.Id)
-
-	for _, l := range g.Links {
-		if l.Rel == "server" {
-			fmt.Printf("%s", indent+"    ")
-			fmt.Printf("%s\n", l.Id)
-		}
-	}
-
-	for idx := range g.Groups {
-		PrintGroupHierarchy(&g.Groups[idx], indent+"    ")
+	for idx := range root.Groups {
+		VisitGroupHierarchy(&root.Groups[idx], fn, arg)
 	}
 }
 

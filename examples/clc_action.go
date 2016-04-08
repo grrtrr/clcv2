@@ -24,6 +24,7 @@ func usage() {
 
 	for _, r := range [][]string{
 		{"show", "show current status of server/group (group requires -l to be set)"},
+		{"ip", "print IP addresses of a server, or of all servers in a group"},
 		{"on", "power on server (or resume from paused state)"},
 		{"off", "power off server"},
 		{"shutdown", "OS-level shutdown followed by power-off for server"},
@@ -68,6 +69,10 @@ func main() {
 			}
 		case "help":
 			usage()
+		case "ip", "on", "off", "shutdown", "pause", "reset", "reboot", "snapshot",
+			"delsnapshot", "revert", "archive", "delete":
+			/* FIXME: use map for usage, and use keys here, i.e. _, ok := map[action] */
+			exit.Errorf("Action %q reaquires an argument (try -h).", action)
 		default:
 			exit.Errorf("Unsupported action %q", action)
 		}
@@ -95,12 +100,17 @@ func main() {
 		} else {
 			where = group.Id
 		}
+	} else if *location == "" {
+		exit.Errorf("%q looks like a group name - need a location (-l argument) to resolve it.", where)
 	} else {
 		exit.Errorf("Unable to determine whether %q is a server or a group", where)
 	}
 
 	if handlingServer { /* Server Action */
 		switch action {
+		case "ip":
+			printServerIP(client, where)
+			os.Exit(0)
 		case "show":
 			showServer(client, where)
 			os.Exit(0)
@@ -122,7 +132,7 @@ func main() {
 		/* Long-running commands that return a RequestID */
 		handler, ok := serverAction[action]
 		if !ok {
-			exit.Fatalf("Unsupported action %s", action)
+			exit.Fatalf("Unsupported server action %s", action)
 		}
 
 		reqID, err = handler(where)
@@ -131,10 +141,40 @@ func main() {
 		}
 
 	} else { /* Group Action */
-		switch action {
-		case "show":
-			showGroup(client, where, *location)
+
+		if action == "show" || action == "ip" {
+			/* Printing of group trees requires to resolve the root first. */
+			var start *clcv2.Group
+
+			if *location == "" {
+				exit.Errorf("Location argument (-l) is required in order to traverse nested groups.")
+			}
+
+			root, err := client.GetGroups(*location)
+			if err != nil {
+				exit.Fatalf("Failed to look up groups at %s: %s", *location, err)
+			}
+
+			start = &root
+			if where != "" {
+				start = clcv2.FindGroupNode(start, func(g *clcv2.Group) bool {
+					return g.Id == where
+				})
+				if start == nil {
+					exit.Fatalf("Failed to look up UUID %s at %s", where, location)
+				}
+			}
+
+			switch action {
+			case "show":
+				showGroup(client, start)
+			case "ip":
+				printGroupIPs(client, start)
+			}
 			os.Exit(0)
+		}
+		switch action {
+
 		case "archive":
 			reqID, err = client.ArchiveGroup(where)
 		case "delete":
@@ -157,10 +197,37 @@ func main() {
 func printServerIP(client *clcv2.Client, servname string) {
 	ips, err := client.GetServerIPs(servname)
 	if err != nil {
-		exit.Fatalf("Failed to list details of server %q: %s", servname, err)
+		exit.Fatalf("Failed get server %q IPs: %s", servname, err)
 	}
 
 	fmt.Printf("%-20s %s\n", servname+":", strings.Join(ips, ", "))
+}
+
+// Print group hierarchy starting at @g, using initial indentation @indent.
+func printGroupIPs(client *clcv2.Client, root *clcv2.Group) {
+	var serverPrinter = func(g *clcv2.Group, arg interface{}) interface{} {
+		var indent = arg.(string)
+
+		if g.Type == "default" {
+			fmt.Printf("%s%s/\n", indent, g.Name)
+		} else {
+			fmt.Printf("%s[%s]/\n", indent, g.Name)
+		}
+
+		for _, l := range g.Links {
+			if l.Rel == "server" {
+				ips, err := client.GetServerIPs(l.Id)
+				if err != nil {
+					exit.Fatalf("Failed to get IPs of %q in %s: %s", l.Id, g.Name, err)
+				}
+
+				servLine := fmt.Sprintf("%s%s", indent+"    ", l.Id)
+				fmt.Printf("%-50s %s\n", servLine, strings.Join(ips, ", "))
+			}
+		}
+		return indent + "    "
+	}
+	clcv2.VisitGroupHierarchy(root, serverPrinter, "")
 }
 
 // Show server details
@@ -267,27 +334,29 @@ func showServer(client *clcv2.Client, servname string) {
 	}
 }
 
-// Show group details
-// @client:    authenticated CLCv2 Client
-// @uuid:      hardware group UUID to use
-// @location:  data centre location (needed to resolve @uuid)
-func showGroup(client *clcv2.Client, uuid, location string) {
-	if location == "" {
-		exit.Errorf("Location is required in order to show the group hierarchy starting at %s", uuid)
-	}
+// Show nested group details
+// @client: authenticated CLCv2 Client
+// @root:   root group node to start at
+func showGroup(client *clcv2.Client, root *clcv2.Group) {
+	var groupPrinter = func(g *clcv2.Group, arg interface{}) interface{} {
+		var indent = arg.(string)
+		var groupLine string
 
-	root, err := client.GetGroups(location)
-	if err != nil {
-		exit.Fatalf("Failed to look up groups at %s: %s", location, err)
-	}
-	start := &root
-	if uuid != "" {
-		start = clcv2.FindGroupNode(start, func(g *clcv2.Group) bool {
-			return g.Id == uuid
-		})
-		if start == nil {
-			exit.Fatalf("Failed to look up UUID %s at %s", uuid, location)
+		if g.Type == "default" {
+			groupLine = fmt.Sprintf("%s%s/", indent, g.Name)
+		} else {
+			groupLine = fmt.Sprintf("%s[%s]/", indent, g.Name)
 		}
+		fmt.Printf("%-70s %s\n", groupLine, g.Id)
+
+		/* Nested entries: */
+		for _, l := range g.Links {
+			if l.Rel == "server" {
+				fmt.Printf("%s", indent+"    ")
+				fmt.Printf("%s\n", l.Id)
+			}
+		}
+		return indent + "    "
 	}
-	clcv2.PrintGroupHierarchy(start, "")
+	clcv2.VisitGroupHierarchy(root, groupPrinter, "")
 }
