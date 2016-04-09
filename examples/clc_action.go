@@ -112,7 +112,8 @@ func main() {
 			printServerIP(client, where)
 			os.Exit(0)
 		case "show":
-			showServer(client, where)
+			// FIXME: deal with multiple servers
+			showServers(client, flag.Args()[1:]...)
 			os.Exit(0)
 		}
 		var serverAction = map[string]func(string) (string, error){
@@ -140,39 +141,38 @@ func main() {
 			exit.Fatalf("Server command %q failed: %s", action, err)
 		}
 
-	} else { /* Group Action */
+	} else if action == "show" || action == "ip" {
+		/* Printing group trees: requires to resolve the root first. */
+		var start *clcv2.Group
 
-		if action == "show" || action == "ip" {
-			/* Printing of group trees requires to resolve the root first. */
-			var start *clcv2.Group
-
-			if *location == "" {
-				exit.Errorf("Location argument (-l) is required in order to traverse nested groups.")
-			}
-
-			root, err := client.GetGroups(*location)
-			if err != nil {
-				exit.Fatalf("Failed to look up groups at %s: %s", *location, err)
-			}
-
-			start = &root
-			if where != "" {
-				start = clcv2.FindGroupNode(start, func(g *clcv2.Group) bool {
-					return g.Id == where
-				})
-				if start == nil {
-					exit.Fatalf("Failed to look up UUID %s at %s", where, location)
-				}
-			}
-
-			switch action {
-			case "show":
-				showGroup(client, start)
-			case "ip":
-				printGroupIPs(client, start)
-			}
-			os.Exit(0)
+		if *location == "" {
+			exit.Errorf("Location argument (-l) is required in order to traverse nested groups.")
 		}
+
+		root, err := client.GetGroups(*location)
+		if err != nil {
+			exit.Fatalf("Failed to look up groups at %s: %s", *location, err)
+		}
+
+		start = &root
+		if where != "" {
+			start = clcv2.FindGroupNode(start, func(g *clcv2.Group) bool {
+				return g.Id == where
+			})
+			if start == nil {
+				exit.Fatalf("Failed to look up UUID %s at %s", where, location)
+			}
+		}
+
+		switch action {
+		case "show":
+			showGroup(client, start)
+		case "ip":
+			printGroupIPs(client, start)
+		}
+		os.Exit(0)
+	} else {
+		/* Other Group Action */
 		switch action {
 
 		case "archive":
@@ -232,8 +232,10 @@ func printGroupIPs(client *clcv2.Client, root *clcv2.Group) {
 
 // Show server details
 // @client:    authenticated CLCv2 Client
-// @servname:  server name
-func showServer(client *clcv2.Client, servname string) {
+// @servname:  server names
+func showServers(client *clcv2.Client, servnames ...string) {
+	// FIXME: simplified output for group of servers
+	servname := servnames[0]
 	server, err := client.GetServer(servname)
 	if err != nil {
 		exit.Fatalf("Failed to list details of server %q: %s", servname, err)
