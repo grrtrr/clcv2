@@ -41,8 +41,8 @@ var (
 func init() {
 	flag.StringVar(&g_user, "username", "", "CLC Login Username")
 	flag.StringVar(&g_pass, "password", "", "CLC Login Password")
-	flag.BoolVar(&g_debug,  "d", false, "Produce debug output")
-	flag.StringVar(&g_acct, "a",  "", "CLC Account Alias to use (instead of default)")
+	flag.BoolVar(&g_debug, "d", false, "Produce debug output")
+	flag.StringVar(&g_acct, "a", "", "CLC Account Alias to use (instead of default)")
 	/*
 	 * Caveat: keep the timeout value high, at least a few minutes.
 	 *         Some operations, such as querying details of a new server immediately
@@ -68,24 +68,26 @@ type Client struct {
 // - CLC_ALIAS:   takes precedence over default LocationAlias
 // - CLC_ACCOUNT: takes precedence over default AccountAlias
 func NewClient() (client *Client, err error) {
+	var logger *log.Logger
+
+	if g_debug {
+		logger = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
+	} else {
+		logger = log.New(ioutil.Discard, "", 0)
+	}
 	client = &Client{
 		requestor: &http.Client{
 			Transport: rehttp.NewTransport(nil, // default transport
-				retryer(client, MaxRetries),
+				retryer(logger, MaxRetries),
 				// Note: using g_timeout as upper bound for the exponential backoff.
 				//       This means g_timeout has to be large enough to run MaxRetries
 				//       requests with individual retries.
 				rehttp.ExpJitterDelay(StepDelay, g_timeout),
 			),
 		},
+		Log: logger,
 	}
 	client.SetTimeout(g_timeout)
-
-	if g_debug {
-		client.Log = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
-	} else {
-		client.Log = log.New(ioutil.Discard, "", 0)
-	}
 
 	if err = client.loadCredentials(); err != nil {
 		return
@@ -106,17 +108,17 @@ func NewClient() (client *Client, err error) {
 }
 
 // retryer implements the retry policy: (a) any failure, (b) temporary failure status codes
-func retryer(client *Client, maxRetries int) rehttp.RetryFn {
+func retryer(logger *log.Logger, maxRetries int) rehttp.RetryFn {
 	return rehttp.RetryFn(func(at rehttp.Attempt) bool {
 		if at.Index < maxRetries {
 			if at.Response == nil {
-				client.Log.Printf("request failed - retry #%d", at.Index+1)
+				logger.Printf("request failed - retry #%d", at.Index+1)
 				return true
 			}
 			/* Request timeout, server error, bad gateway, service unavailable, gateway timeout */
 			switch at.Response.StatusCode {
 			case 408, 500, 502, 503, 504:
-				client.Log.Printf("request returned %q - retry #%d", at.Response.Status, at.Index+1)
+				logger.Printf("request returned %q - retry #%d", at.Response.Status, at.Index+1)
 				return true
 			}
 		}
