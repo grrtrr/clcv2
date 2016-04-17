@@ -34,13 +34,16 @@ func (c *Client) GetStatus(statusId string) (status QueueStatus, err error) {
 // @statusId:     queue ID to query
 // @pollInterval: wait interval between poll attemps, use 0 for one-shot operation
 func (c *Client) PollStatus(statusId string, pollInterval time.Duration) error {
+	var prevStatus QueueStatus = Unknown
 	for {
 		status, err := c.GetStatus(statusId)
 		if err != nil {
 			return fmt.Errorf("Failed to query status of status ID %d: %s", statusId, err)
 		}
-
-		fmt.Printf("%s %s: %s\n", time.Now().Format("15:04:05"), statusId, status)
+		if status != prevStatus {
+			fmt.Printf("%s %s: %s\n", time.Now().Format("15:04:05"), statusId, status)
+			prevStatus = status
+		}
 		if pollInterval == 0 || status == Succeeded || status == Failed {
 			break
 		}

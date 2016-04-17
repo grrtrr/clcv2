@@ -49,7 +49,7 @@ func usage() {
 func main() {
 	var (
 		location       = flag.String("l", "", "Location to use for <Group-Name>")
-		intvl          = flag.Duration("i", 20*time.Second, "Poll interval for status updates (use 0 to disable)")
+		intvl          = flag.Duration("i", 1*time.Second, "Poll interval for status updates (use 0 to disable)")
 		handlingServer bool   // what to act on
 		action, where  string // what to do and where
 		reqID          string // request ID of the action
