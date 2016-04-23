@@ -52,6 +52,21 @@ func (c *Client) PollStatus(statusId string, pollInterval time.Duration) error {
 	return nil
 }
 
+// AwaitCompletion waits until @statusId completes.
+// @statusId: queue ID to query
+func (c *Client) AwaitCompletion(statusId string) (QueueStatus, error) {
+	for {
+		status, err := c.GetStatus(statusId)
+		if err != nil {
+			return Unknown, fmt.Errorf("unable to query status of %s: %s", statusId, err)
+		}
+		if status == Succeeded || status == Failed {
+			return status, nil
+		}
+		time.Sleep(1 * time.Second)
+	}
+}
+
 // Status struct returned by operations such as 'Delete Group' and similar.
 type StatusLink struct {
 	// The identifier of the job in queue.

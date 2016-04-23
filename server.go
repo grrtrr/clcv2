@@ -458,7 +458,18 @@ func (c *Client) GetServerSnapshot(serverId string) (sn *ServerSnapshot, err err
 }
 
 // SnapshotServer wraps CreateSnapshot, using the maximum allowed expiration period.
+// If a snapshot already exists, it will be overwritten by the new one.
 func (c *Client) SnapshotServer(serverId string) (statusId string, err error) {
+	// CLC does not allow incremental snapshots, so delete any old ones first.
+	if statusId, err := c.DeleteSnapshot(serverId); err != nil && err != ErrNoSnapshot {
+		return "", err
+	} else if statusId != "" {
+		if status, err := c.AwaitCompletion(statusId); err != nil {
+			return "", fmt.Errorf("failed to query %s snapshot status: %s", serverId, err)
+		} else if status != Succeeded {
+			return "", fmt.Errorf("failed to delete %s snapshot (status: %s)", serverId, status)
+		}
+	}
 	return c.CreateSnapshot(serverId, 10)
 }
 
