@@ -72,7 +72,7 @@ func main() {
 		table.SetHeader([]string{
 			"Name", "Group", "Description", "OS",
 			"CPU", "Mem",
-			"IP", "Power", "Last Change",
+			"IP", "Power", "Owner", "Last Change",
 		})
 
 		modifiedStr := humanize.Time(server.ChangeInfo.ModifiedDate)
@@ -89,7 +89,7 @@ func main() {
 			server.Name, grp.Name, server.Description, server.OsType,
 			fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024),
 			strings.Join(IPs, " "),
-			server.Details.PowerState, modifiedStr,
+			server.Details.PowerState, server.ChangeInfo.CreatedBy, modifiedStr,
 		})
 		table.Render()
 
