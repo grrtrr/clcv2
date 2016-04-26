@@ -39,7 +39,7 @@ func usage() {
 		{"delete", "delete server/group (CAUTION)"},
 		{"help", "print this help screen"},
 	} {
-		fmt.Fprintf(os.Stderr, "\t%-10s %s\n", r[0], r[1])
+		fmt.Fprintf(os.Stderr, "\t%-15s %s\n", r[0], r[1])
 	}
 	fmt.Fprintf(os.Stderr, "\n")
 
