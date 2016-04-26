@@ -24,6 +24,7 @@ func usage() {
 
 	for _, r := range [][]string{
 		{"show", "show current status of server/group (group requires -l to be set)"},
+		{"templates", "show the templates for a given region (requires -l to be set)"},
 		{"ip", "print IP addresses of a server, or of all servers in a group"},
 		{"on", "power on server (or resume from paused state)"},
 		{"off", "power off server"},
@@ -63,12 +64,12 @@ func main() {
 	} else if flag.NArg() == 1 {
 		action = flag.Arg(0)
 		switch action {
-		case "show":
-			if *location == "" {
-				exit.Errorf("Showing group details requires location (-l) argument.")
-			}
 		case "help":
 			usage()
+		case "show", "templates":
+			if *location == "" {
+				exit.Errorf("Action %s details requires location (-l argument).", action)
+			}
 		case "ip", "on", "off", "shutdown", "pause", "reset", "reboot", "snapshot",
 			"delsnapshot", "revert", "archive", "delete":
 			/* FIXME: use map for usage, and use keys here, i.e. _, ok := map[action] */
@@ -106,7 +107,10 @@ func main() {
 		exit.Errorf("Unable to determine whether %q is a server or a group", where)
 	}
 
-	if handlingServer { /* Server Action */
+	if action == "templates" { /* where="" - neither server nor group action; print regional templates */
+		showTemplates(client, *location)
+		os.Exit(0)
+	} else if handlingServer { /* Server Action */
 		switch action {
 		case "ip":
 			printServerIP(client, where)
@@ -193,6 +197,28 @@ func main() {
 
 	fmt.Printf("Request ID for %q action: %s\n", action, reqID)
 	client.PollStatus(reqID, *intvl)
+}
+
+// showTemplates prints the templates available in @region
+func showTemplates(client *clcv2.Client, region string) {
+	capa, err := client.GetDeploymentCapabilities(region)
+	if err != nil {
+		exit.Fatalf("Failed to query deployment capabilities of %s: %s", region, err)
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetAutoFormatHeaders(false)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAutoWrapText(false)
+
+	/* Note: not displaying ReservedDrivePaths and DrivePathLength here, I don't understand their use. */
+	/* Note: not listing Capabilities here, since the table gets too large for a single screen */
+	table.SetHeader([]string{"Template Name", "Description", "OS", "Storage"})
+
+	for _, tpl := range capa.Templates {
+		table.Append([]string{tpl.Name, tpl.Description, tpl.OsType, fmt.Sprintf("%d GB", tpl.StorageSizeGB)})
+	}
+	table.Render()
 }
 
 // Print server IP(s)

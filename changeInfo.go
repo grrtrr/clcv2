@@ -4,14 +4,14 @@ import "time"
 
 type ChangeInfo struct {
 	// Date/time of resource creation
-	CreatedDate	time.Time
+	CreatedDate time.Time
 
 	// Who created the resource
-	CreatedBy	string
+	CreatedBy string
 
 	// Date/time the resource was last updated
-	ModifiedDate	time.Time
+	ModifiedDate time.Time
 
 	// Who modified the resource last
-	ModifiedBy	string
+	ModifiedBy string
 }
