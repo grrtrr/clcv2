@@ -56,29 +56,37 @@ func main() {
 		reqID          string // request ID of the action
 	)
 
+	/*
+	 * Argument Validation
+	 */
 	flag.Usage = usage
 	flag.Parse()
 
-	if flag.NArg() >= 2 {
-		action, where = flag.Arg(0), flag.Arg(1)
-	} else if flag.NArg() == 1 {
+	if flag.NArg() >= 1 {
 		action = flag.Arg(0)
-		switch action {
-		case "help":
-			usage()
-		case "show", "templates":
-			if *location == "" {
-				exit.Errorf("Action %s details requires location (-l argument).", action)
-			}
-		case "ip", "on", "off", "shutdown", "pause", "reset", "reboot", "snapshot",
-			"delsnapshot", "revert", "archive", "delete":
-			/* FIXME: use map for usage, and use keys here, i.e. _, ok := map[action] */
-			exit.Errorf("Action %q reaquires an argument (try -h).", action)
-		default:
-			exit.Errorf("Unsupported action %q", action)
+		if flag.NArg() >= 2 {
+			where = flag.Arg(1)
 		}
 	} else {
 		usage()
+	}
+
+	switch action {
+	case "help":
+		usage()
+	case "show", "templates":
+		if flag.NArg() == 1 && *location == "" {
+			exit.Errorf("Action %s requires location (-l argument).", action)
+		}
+	case "ip", "on", "off", "shutdown", "pause", "reset", "reboot", "snapshot",
+		"delsnapshot", "revert", "archive", "delete":
+		/* FIXME: use map for usage, and use keys here, i.e. _, ok := map[action] */
+		fmt.Println("WHERE", where)
+		if where == "" {
+			exit.Errorf("Action %q requires an argument (try -h).", action)
+		}
+	default:
+		exit.Errorf("Unsupported action %q", action)
 	}
 
 	client, err := clcv2.NewClient()
@@ -86,25 +94,27 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	/*
-	 * Decide if arguments refer to a server or a hardware group.
-	 */
-	if _, err := hex.DecodeString(where); err == nil {
-		/* If the first argument decodes as a hex value, assume it is a Hardware Group UUID */
-	} else if utils.LooksLikeServerName(where) { /* Starts with a location identifier and is not hex ... */
-		handlingServer = true
-	} else if *location != "" && where != "" {
-		if group, err := client.GetGroupByName(where, *location); err != nil {
-			exit.Errorf("Failed to resolve group name %q: %s", where, err)
-		} else if group == nil {
-			exit.Errorf("No group named %q was found on %s", where, *location)
+	if !handlingServer {
+		/*
+		 * Decide if arguments refer to a server or a hardware group.
+		 */
+		if _, err := hex.DecodeString(where); err == nil {
+			/* If the first argument decodes as a hex value, assume it is a Hardware Group UUID */
+		} else if utils.LooksLikeServerName(where) { /* Starts with a location identifier and is not hex ... */
+			handlingServer = true
+		} else if *location != "" && where != "" {
+			if group, err := client.GetGroupByName(where, *location); err != nil {
+				exit.Errorf("Failed to resolve group name %q: %s", where, err)
+			} else if group == nil {
+				exit.Errorf("No group named %q was found on %s", where, *location)
+			} else {
+				where = group.Id
+			}
+		} else if *location == "" {
+			exit.Errorf("%q looks like a group name - need a location (-l argument) to resolve it.", where)
 		} else {
-			where = group.Id
+			exit.Errorf("Unable to determine whether %q is a server or a group", where)
 		}
-	} else if *location == "" {
-		exit.Errorf("%q looks like a group name - need a location (-l argument) to resolve it.", where)
-	} else {
-		exit.Errorf("Unable to determine whether %q is a server or a group", where)
 	}
 
 	if action == "templates" { /* where="" - neither server nor group action; print regional templates */
