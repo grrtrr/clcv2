@@ -23,7 +23,7 @@ func main() {
 	}
 
 	flag.Parse()
-	if flag.NArg() != 1 || *size == 0 {
+	if flag.NArg() != 1 || *size <= 0 {
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -48,7 +48,7 @@ func main() {
 	}
 
 	/* Add disk at end - if path is specified, type must be set to 'partitioned'. */
-	newDisk := clcv2.ServerAdditionalDisk{SizeGB: *size, Type: "raw"}
+	newDisk := clcv2.ServerAdditionalDisk{SizeGB: uint32(*size), Type: "raw"}
 	if *mount != "" {
 		newDisk.Path = *mount
 		newDisk.Type = "partitioned"

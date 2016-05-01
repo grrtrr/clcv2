@@ -80,7 +80,7 @@ type Server struct {
 			Id string
 
 			// Size of the disk in GB
-			SizeGB int
+			SizeGB uint32
 
 			// List of partition paths on the disk (seems to always be empty)
 			PartitionPaths []string
@@ -280,7 +280,7 @@ type ServerAdditionalDisk struct {
 	Path string `json:"path"`
 
 	// Amount in GB to allocate for disk, up to 1024 GB
-	SizeGB int `json:"sizeGB"`
+	SizeGB uint32 `json:"sizeGB"`
 
 	// Whether the disk should be "raw" or "partitioned"
 	Type string `json:"type"`
