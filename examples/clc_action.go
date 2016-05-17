@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -32,6 +33,7 @@ func usage() {
 		{"pause", "pause server"},
 		{"reset", "perform forced power-cycle on server"},
 		{"reboot", "reboot server"},
+		{"rawdisk", "<sizeGB> - add storage to server"},
 		{"snapshot", "snapshot server"},
 		{"delsnapshot", "delete server snapshot"},
 		{"revert", "revert server to snapshot state"},
@@ -77,6 +79,11 @@ func main() {
 	case "show", "templates":
 		if flag.NArg() == 1 && *location == "" {
 			exit.Errorf("Action %s requires location (-l argument).", action)
+		}
+	case "rawdisk":
+		handlingServer = true
+		if flag.NArg() != 3 {
+			exit.Errorf("usage: rawdisk <serverName> <diskGB>")
 		}
 	case "ip", "on", "off", "shutdown", "pause", "reset", "reboot", "snapshot",
 		"delsnapshot", "revert", "archive", "delete":
@@ -133,32 +140,38 @@ func main() {
 				showServers(client, flag.Args()[1:]...)
 			}
 			os.Exit(0)
-		}
-		var serverAction = map[string]func(string) (string, error){
-			"on":          client.PowerOnServer,
-			"off":         client.PowerOffServer,
-			"pause":       client.PauseServer,
-			"reset":       client.ResetServer,
-			"reboot":      client.RebootServer,
-			"shutdown":    client.ShutdownServer,
-			"archive":     client.ArchiveServer,
-			"delete":      client.DeleteServer,
-			"snapshot":    client.SnapshotServer,
-			"delsnapshot": client.DeleteSnapshot,
-			"revert":      client.RevertToSnapshot,
-		}
+		case "rawdisk":
+			diskGB, err := strconv.ParseUint(flag.Arg(2), 10, 32)
+			if err != nil {
+				exit.Errorf("rawdisk: invalid disk size in GB %q for %s", flag.Arg(2), where)
+			}
+			reqID = addRawDisk(client, where, uint32(diskGB))
+		default:
+			var serverAction = map[string]func(string) (string, error){
+				"on":          client.PowerOnServer,
+				"off":         client.PowerOffServer,
+				"pause":       client.PauseServer,
+				"reset":       client.ResetServer,
+				"reboot":      client.RebootServer,
+				"shutdown":    client.ShutdownServer,
+				"archive":     client.ArchiveServer,
+				"delete":      client.DeleteServer,
+				"snapshot":    client.SnapshotServer,
+				"delsnapshot": client.DeleteSnapshot,
+				"revert":      client.RevertToSnapshot,
+			}
 
-		/* Long-running commands that return a RequestID */
-		handler, ok := serverAction[action]
-		if !ok {
-			exit.Fatalf("Unsupported server action %s", action)
-		}
+			/* Long-running commands that return a RequestID */
+			handler, ok := serverAction[action]
+			if !ok {
+				exit.Fatalf("Unsupported server action %s", action)
+			}
 
-		reqID, err = handler(where)
-		if err != nil {
-			exit.Fatalf("Server command %q failed: %s", action, err)
+			reqID, err = handler(where)
+			if err != nil {
+				exit.Fatalf("Server command %q failed: %s", action, err)
+			}
 		}
-
 	} else if action == "show" || action == "ip" {
 		/* Printing group trees: requires to resolve the root first. */
 		var start *clcv2.Group
@@ -192,7 +205,6 @@ func main() {
 	} else {
 		/* Other Group Action */
 		switch action {
-
 		case "archive":
 			reqID, err = client.ArchiveGroup(where)
 		case "delete":
@@ -467,4 +479,34 @@ func showGroup(client *clcv2.Client, root *clcv2.Group) {
 		return indent + "    "
 	}
 	clcv2.VisitGroupHierarchy(root, groupPrinter, "")
+}
+
+// addRawDisk adds storage in form of a raw disk to a server
+// @client:   authenticated CLCv2 client
+// @servname: server name
+// @diskGB:   amount of storage in GB to add to @servname
+func addRawDisk(client *clcv2.Client, servname string, diskGB uint32) (statusId string) {
+	/* First get the list of disks */
+	server, err := client.GetServer(servname)
+	if err != nil {
+		exit.Fatalf("Failed to list details of server %q: %s", servname, err)
+	}
+
+	disks := make([]clcv2.ServerAdditionalDisk, len(server.Details.Disks))
+	for i := range server.Details.Disks {
+		disks[i] = clcv2.ServerAdditionalDisk{
+			Id:     server.Details.Disks[i].Id,
+			SizeGB: server.Details.Disks[i].SizeGB,
+		}
+	}
+
+	statusId, err = client.ServerSetDisks(servname, append(disks,
+		clcv2.ServerAdditionalDisk{
+			SizeGB: diskGB,
+			Type:   "raw",
+		}))
+	if err != nil {
+		exit.Fatalf("Failed to update the disk configuration on %q: %s", servname, err)
+	}
+	return statusId
 }
