@@ -88,7 +88,6 @@ func main() {
 	case "ip", "on", "off", "shutdown", "pause", "reset", "reboot", "snapshot",
 		"delsnapshot", "revert", "archive", "delete":
 		/* FIXME: use map for usage, and use keys here, i.e. _, ok := map[action] */
-		fmt.Println("WHERE", where)
 		if where == "" {
 			exit.Errorf("Action %q requires an argument (try -h).", action)
 		}
