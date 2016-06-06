@@ -216,7 +216,6 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Request ID for %q action: %s\n", action, reqID)
 	client.PollStatus(reqID, *intvl)
 }
 
