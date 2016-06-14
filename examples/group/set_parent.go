@@ -42,7 +42,7 @@ func main() {
 		if grp, err := client.GetGroupByName(flag.Arg(0), *location); err != nil {
 			exit.Errorf("Failed to resolve group name %q: %s", flag.Arg(0), err)
 		} else if grp == nil {
-			exit.Errorf("No group named %q was found on %s", flag.Arg(0), *location)
+			exit.Errorf("No group named %q was found in %s", flag.Arg(0), *location)
 		} else {
 			child = grp.Id
 		}
@@ -56,7 +56,7 @@ func main() {
 		if grp, err := client.GetGroupByName(*parent, *location); err != nil {
 			exit.Errorf("Failed to resolve group name %q: %s", *parent, err)
 		} else if grp == nil {
-			exit.Errorf("No group named %q was found on %s", *parent, *location)
+			exit.Errorf("No group named %q was found in %s", *parent, *location)
 		} else {
 			*parent = grp.Id
 		}

@@ -41,7 +41,7 @@ func main() {
 		if grp, err := client.GetGroupByName(*group, *location); err != nil {
 			exit.Errorf("Failed to resolve group name %q: %s", *group, err)
 		} else if grp == nil {
-			exit.Errorf("No group named %q was found on %s", *group, *location)
+			exit.Errorf("No group named %q was found in %s", *group, *location)
 		} else {
 			*group = grp.Id
 		}

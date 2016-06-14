@@ -51,7 +51,7 @@ func main() {
 		if network, err := client.GetNetworkIdByCIDR(flag.Arg(0), *location); err != nil {
 			exit.Errorf("Failed to resolve network %s: %s", flag.Arg(0), err)
 		} else if network == nil {
-			exit.Errorf("No network of type %s was found on %s", flag.Arg(0), *location)
+			exit.Errorf("No network of type %s was found in %s", flag.Arg(0), *location)
 		} else {
 			netw = network.Id
 		}
@@ -59,7 +59,7 @@ func main() {
 		if network, err := client.GetNetworkIdByName(flag.Arg(0), *location); err != nil {
 			exit.Errorf("Failed to resolve network name %q: %s", flag.Arg(0), err)
 		} else if network == nil {
-			exit.Errorf("No network named %q was found on %s", flag.Arg(0), *location)
+			exit.Errorf("No network named %q was found in %s", flag.Arg(0), *location)
 		} else {
 			netw = network.Id
 		}

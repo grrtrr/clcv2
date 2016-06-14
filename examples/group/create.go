@@ -47,7 +47,7 @@ func main() {
 		if group, err = client.GetGroupByName(*parentGroup, *location); err != nil {
 			exit.Errorf("Failed to resolve group name %q: %s", *parentGroup, err)
 		} else if group == nil {
-			exit.Errorf("No group named %q was found on %s", *parentGroup, *location)
+			exit.Errorf("No group named %q was found in %s", *parentGroup, *location)
 		} else {
 			parentUUID = group.Id
 		}

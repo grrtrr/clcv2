@@ -59,7 +59,7 @@ func main() {
 		if group, err := client.GetGroupByName(*hwGroup, *location); err != nil {
 			exit.Errorf("Failed to resolve group name %q: %s", *hwGroup, err)
 		} else if group == nil {
-			exit.Errorf("No group named %q was found on %s", *hwGroup, *location)
+			exit.Errorf("No group named %q was found in %s", *hwGroup, *location)
 		} else {
 			*hwGroup = group.Id
 		}
@@ -77,7 +77,7 @@ func main() {
 			if netw, err := client.GetNetworkIdByName(*net, *location); err != nil {
 				exit.Errorf("Failed to resolve network name %q: %s", *net, err)
 			} else if netw == nil {
-				exit.Errorf("No network named %q was found on %s", *net, *location)
+				exit.Errorf("No network named %q was found in %s", *net, *location)
 			} else {
 				*net = netw.Id
 			}
@@ -140,7 +140,7 @@ func main() {
 
 	if *extraDrv != 0 {
 		req.AdditionalDisks = append(req.AdditionalDisks,
-			clcv2.ServerAdditionalDisk{SizeGB: *extraDrv, Type: "raw"})
+			clcv2.ServerAdditionalDisk{SizeGB: uint32(*extraDrv), Type: "raw"})
 	}
 
 	/* Date/time that the server should be deleted. */

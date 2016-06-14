@@ -51,7 +51,7 @@ func main() {
 			if netw, err := client.GetNetworkIdByName(*net, *location); err != nil {
 				exit.Errorf("Failed to resolve network name %q: %s", *net, err)
 			} else if netw == nil {
-				exit.Errorf("No network named %q was found on %s", *net, *location)
+				exit.Errorf("No network named %q was found in %s", *net, *location)
 			} else {
 				*net = netw.Id
 			}

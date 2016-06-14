@@ -50,7 +50,7 @@ func main() {
 		if grp, err := client.GetGroupByName(flag.Arg(0), *location); err != nil {
 			exit.Errorf("Failed to resolve group name %q: %s", flag.Arg(0), err)
 		} else if grp == nil {
-			exit.Errorf("No group named %q was found on %s", flag.Arg(0), *location)
+			exit.Errorf("No group named %q was found in %s", flag.Arg(0), *location)
 		} else {
 			group = grp.Id
 		}
@@ -66,7 +66,7 @@ func main() {
 			if netw, err := client.GetNetworkIdByName(*net, *location); err != nil {
 				exit.Errorf("Failed to resolve network name %q: %s", *net, err)
 			} else if netw == nil {
-				exit.Errorf("No network named %q was found on %s", *net, *location)
+				exit.Errorf("No network named %q was found in %s", *net, *location)
 			} else {
 				*net = netw.Id
 			}
