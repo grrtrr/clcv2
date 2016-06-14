@@ -26,6 +26,7 @@ func usage() {
 	for _, r := range [][]string{
 		{"show", "show current status of server/group (group requires -l to be set)"},
 		{"templates", "show the templates for a given region (requires -l to be set)"},
+		{"networks", "show the networks available in a given region (requires -l to be set)"},
 		{"ip", "print IP addresses of a server, or of all servers in a group"},
 		{"on", "power on server (or resume from paused state)"},
 		{"off", "power off server"},
@@ -76,9 +77,9 @@ func main() {
 	switch action {
 	case "help":
 		usage()
-	case "show", "templates":
+	case "networks", "show", "templates":
 		if flag.NArg() == 1 && *location == "" {
-			exit.Errorf("Action %s requires location (-l argument).", action)
+			exit.Errorf("Action %q requires location (-l argument).", action)
 		}
 	case "rawdisk":
 		handlingServer = true
@@ -112,7 +113,7 @@ func main() {
 			if group, err := client.GetGroupByName(where, *location); err != nil {
 				exit.Errorf("Failed to resolve group name %q: %s", where, err)
 			} else if group == nil {
-				exit.Errorf("No group named %q was found on %s", where, *location)
+				exit.Errorf("No group named %q was found in %s", where, *location)
 			} else {
 				where = group.Id
 			}
@@ -125,6 +126,9 @@ func main() {
 
 	if action == "templates" { /* where="" - neither server nor group action; print regional templates */
 		showTemplates(client, *location)
+		os.Exit(0)
+	} else if action == "networks" { /* similar, neither server nor group action; print regional networks */
+		showNetworks(client, *location)
 		os.Exit(0)
 	} else if handlingServer { /* Server Action */
 		switch action {
@@ -507,4 +511,27 @@ func addRawDisk(client *clcv2.Client, servname string, diskGB uint32) (statusId 
 		exit.Fatalf("Failed to update the disk configuration on %q: %s", servname, err)
 	}
 	return statusId
+}
+
+// showNetworks shows available networks in data centre location @location.
+func showNetworks(client *clcv2.Client, location string) {
+	networks, err := client.GetNetworks(location)
+	if err != nil {
+		exit.Fatalf("Failed to list networks in %s: %s", location, err)
+	}
+
+	if len(networks) == 0 {
+		println("Empty result.")
+	} else {
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetAutoFormatHeaders(false)
+		table.SetAlignment(tablewriter.ALIGN_RIGHT)
+		table.SetAutoWrapText(false)
+
+		table.SetHeader([]string{"CIDR", "Gateway", "VLAN", "Name", "Description", "Type", "ID"})
+		for _, l := range networks {
+			table.Append([]string{l.Cidr, l.Gateway, fmt.Sprint(l.Vlan), l.Name, l.Description, l.Type, l.Id})
+		}
+		table.Render()
+	}
 }
