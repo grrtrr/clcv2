@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/rehttp"
+	"github.com/Sirupsen/logrus"
 )
 
 const (
@@ -58,8 +59,8 @@ type Client struct {
 	// Authentication information
 	*LoginRes
 
-	// Logger to use by this package
-	Log *log.Logger
+	// Logger to use by this package - conforming to logrus standard logger.
+	Log logrus.StdLogger
 }
 
 // Return authenticated client.
