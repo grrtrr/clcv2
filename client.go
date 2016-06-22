@@ -33,10 +33,10 @@ const (
 
 /* Global variables */
 var (
-	g_user, g_pass string        /* Command-line username/password */
-	g_acct         string        /* Account Alias to use instead of the default */
-	g_timeout      time.Duration /* Client default timeout */
-	g_debug        bool          /* Command-line debug flag */
+	g_user, g_pass string              /* Command-line username/password */
+	g_acct         string              /* Account Alias to use instead of the default */
+	g_timeout      = 180 * time.Second /* Client default timeout */
+	g_debug        bool                /* Command-line debug flag */
 )
 
 func init() {
@@ -59,7 +59,7 @@ type Client struct {
 	// Authentication information
 	*LoginRes
 
-	// Logger to use by this package - conforming to logrus standard logger.
+	// Logger used for printing debugging output.
 	Log logrus.StdLogger
 }
 
@@ -69,24 +69,18 @@ type Client struct {
 // - CLC_ALIAS:   takes precedence over default LocationAlias
 // - CLC_ACCOUNT: takes precedence over default AccountAlias
 func NewClient() (client *Client, err error) {
-	var logger *log.Logger
-
+	client = &Client{}
 	if g_debug {
-		logger = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
-	} else {
-		logger = log.New(ioutil.Discard, "", 0)
+		client.Log = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
 	}
-	client = &Client{
-		requestor: &http.Client{
-			Transport: rehttp.NewTransport(nil, // default transport
-				retryer(logger, MaxRetries),
-				// Note: using g_timeout as upper bound for the exponential backoff.
-				//       This means g_timeout has to be large enough to run MaxRetries
-				//       requests with individual retries.
-				rehttp.ExpJitterDelay(StepDelay, g_timeout),
-			),
-		},
-		Log: logger,
+	client.requestor = &http.Client{
+		Transport: rehttp.NewTransport(nil, // default transport
+			retryer(client.Log, MaxRetries),
+			// Note: using g_timeout as upper bound for the exponential backoff.
+			//       This means g_timeout has to be large enough to run MaxRetries
+			//       requests with individual retries.
+			rehttp.ExpJitterDelay(StepDelay, g_timeout),
+		),
 	}
 	client.SetTimeout(g_timeout)
 
@@ -109,17 +103,21 @@ func NewClient() (client *Client, err error) {
 }
 
 // retryer implements the retry policy: (a) any failure, (b) temporary failure status codes
-func retryer(logger *log.Logger, maxRetries int) rehttp.RetryFn {
+func retryer(logger logrus.StdLogger, maxRetries int) rehttp.RetryFn {
 	return rehttp.RetryFn(func(at rehttp.Attempt) bool {
 		if at.Index < maxRetries {
 			if at.Response == nil {
-				logger.Printf("request failed - retry #%d", at.Index+1)
+				if logger != nil {
+					logger.Printf("request failed - retry #%d", at.Index+1)
+				}
 				return true
 			}
 			/* Request timeout, server error, bad gateway, service unavailable, gateway timeout */
 			switch at.Response.StatusCode {
 			case 408, 500, 502, 503, 504:
-				logger.Printf("request returned %q - retry #%d", at.Response.Status, at.Index+1)
+				if logger != nil {
+					logger.Printf("request returned %q - retry #%d", at.Response.Status, at.Index+1)
+				}
 				return true
 			}
 		}
@@ -154,7 +152,7 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 		if resType := reflect.TypeOf(resModel); resType.Kind() != reflect.Ptr {
 			return fmt.Errorf("Expecting pointer to result model %T", resModel)
 		} else if g_debug {
-			c.Log.Printf("resModel %T %+v\n", resModel, resModel)
+			c.Log.Printf("resModel %T %+v", resModel, resModel)
 		}
 	}
 
