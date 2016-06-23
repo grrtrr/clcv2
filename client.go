@@ -4,16 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"mime"
 	"net/http"
 	"net/http/httputil"
-	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/rehttp"
@@ -31,26 +29,10 @@ const (
 	StepDelay = time.Second * 10
 )
 
-/* Global variables */
+// Errors returned by the Client
 var (
-	g_user, g_pass string              /* Command-line username/password */
-	g_acct         string              /* Account Alias to use instead of the default */
-	g_timeout      = 180 * time.Second /* Client default timeout */
-	g_debug        bool                /* Command-line debug flag */
+	ErrUnauthencicated = errors.New("authentication error: credentials are stale or invalid.")
 )
-
-func init() {
-	flag.StringVar(&g_user, "username", "", "CLC Login Username")
-	flag.StringVar(&g_pass, "password", "", "CLC Login Password")
-	flag.BoolVar(&g_debug, "d", false, "Produce debug output")
-	flag.StringVar(&g_acct, "a", "", "CLC Account Alias to use (instead of default)")
-	/*
-	 * Caveat: keep the timeout value high, at least a few minutes.
-	 *         Some operations, such as querying details of a new server immediately
-	 *         after launching a CreateServer request, can take up to circa a minute.
-	 */
-	flag.DurationVar(&g_timeout, "timeout", 180*time.Second, "Client default timeout")
-}
 
 // Client wraps a http.Client, along with credentials and logging information.
 type Client struct {
@@ -63,16 +45,33 @@ type Client struct {
 	Log logrus.StdLogger
 }
 
-// Return authenticated client.
-// This will use the default values for AccountAlias  and LocationAlias.
-// It will respect the following environment variables to override the defaults:
-// - CLC_ALIAS:   takes precedence over default LocationAlias
-// - CLC_ACCOUNT: takes precedence over default AccountAlias
-func NewClient() (client *Client, err error) {
-	client = &Client{}
-	if g_debug {
-		client.Log = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
-	}
+// LoginRes is the data returned by the CLCv2 endpoint after successful authentication.
+type LoginRes struct {
+	// Control Portal user name value
+	UserName string `json: "userName"`
+
+	// Account that contains this user record
+	AccountAlias string `json: "accountAlias"`
+
+	// Default data center of the user
+	LocationAlias string `json: "locationAlias"`
+
+	// Permission roles associated with this user
+	Roles []string `json: "roles"`
+
+	// Security token for this user that is included in the Authorization header
+	// for all other API requests as "Bearer [LONG TOKEN VALUE]".
+	BearerToken string `json: "bearerToken"`
+}
+
+func (l LoginRes) String() string {
+	return fmt.Sprintf("User=%s, Account=%s, Location=%s, Roles=%s", l.UserName,
+		l.AccountAlias, strings.Join(l.Roles, ", "))
+}
+
+// NewClient initializes the parts common to both Client and CLIClient
+func NewClient() *Client {
+	client := &Client{}
 	client.requestor = &http.Client{
 		Transport: rehttp.NewTransport(nil, // default transport
 			client.retryer(MaxRetries),
@@ -84,22 +83,18 @@ func NewClient() (client *Client, err error) {
 	}
 	client.SetTimeout(g_timeout)
 
-	if err = client.loadCredentials(); err != nil {
-		return
-	}
+	return client
+}
 
-	if alias := os.Getenv("CLC_ALIAS"); alias != "" {
-		client.LoginRes.LocationAlias = alias
-	}
-	if account := os.Getenv("CLC_ACCOUNT"); account != "" {
-		client.LoginRes.AccountAlias = account
-	}
-
-	/* Commandline flags take precedence over environment variables. */
-	if g_acct != "" {
-		client.LoginRes.AccountAlias = g_acct
-	}
-	return client, nil
+// Log in and update credentials if successful. Requires c.LoginRes.BearerToken to be empty.
+// @user: CLCv2 control portal username
+// @pass: CLCv2 control portal password
+func (c *Client) login(user, pass string) error {
+	var LoginReq = struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}{user, pass}
+	return c.getResponse("POST", "/v2/authentication/login", &LoginReq, &c.LoginRes)
 }
 
 // retryer implements the retry policy: (a) any failure, (b) temporary failure status codes
@@ -134,7 +129,7 @@ func (c *Client) retryer(maxRetries int) rehttp.RetryFn {
 // If @err == nil, fills in @resModel, else returns error.
 func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) (err error) {
 	var reqBody io.Reader
-
+	fmt.Println("client base getResponse", verb, path)
 	if reqModel != nil {
 		if g_debug {
 			c.Log.Printf("reqModel %T %+v\n", reqModel, reqModel)
@@ -196,9 +191,7 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 		}
 		return nil
 	case 401:
-		/* Unauthorized: only destroy credentials, resist temptation to re-authenticate here for now. */
-		c.destroyCredentials()
-		return fmt.Errorf("Credentials are stale, please try again to re-authenticate.")
+		return ErrUnauthencicated
 	}
 
 	/* Remaining error cases: */

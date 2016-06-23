@@ -96,7 +96,7 @@ func main() {
 		exit.Errorf("Unsupported action %q", action)
 	}
 
-	client, err := clcv2.NewClient()
+	client, err := clcv2.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
@@ -224,7 +224,7 @@ func main() {
 }
 
 // showTemplates prints the templates available in @region
-func showTemplates(client *clcv2.Client, region string) {
+func showTemplates(client *clcv2.CLIClient, region string) {
 	capa, err := client.GetDeploymentCapabilities(region)
 	if err != nil {
 		exit.Fatalf("Failed to query deployment capabilities of %s: %s", region, err)
@@ -248,7 +248,7 @@ func showTemplates(client *clcv2.Client, region string) {
 // Print server IP(s)
 // @client:    authenticated CLCv2 Client
 // @servname:  server name
-func printServerIP(client *clcv2.Client, servname string) {
+func printServerIP(client *clcv2.CLIClient, servname string) {
 	ips, err := client.GetServerIPs(servname)
 	if err != nil {
 		exit.Fatalf("Failed get server %q IPs: %s", servname, err)
@@ -258,7 +258,7 @@ func printServerIP(client *clcv2.Client, servname string) {
 }
 
 // Print group hierarchy starting at @g, using initial indentation @indent.
-func printGroupIPs(client *clcv2.Client, root *clcv2.Group) {
+func printGroupIPs(client *clcv2.CLIClient, root *clcv2.Group) {
 	var serverPrinter = func(g *clcv2.Group, arg interface{}) interface{} {
 		var indent = arg.(string)
 
@@ -287,7 +287,7 @@ func printGroupIPs(client *clcv2.Client, root *clcv2.Group) {
 // Condensed details of multiple servers
 // @client:    authenticated CLCv2 Client
 // @servnames: server names
-func showServers(client *clcv2.Client, servnames ...string) {
+func showServers(client *clcv2.CLIClient, servnames ...string) {
 
 	truncate := func(s string, maxlen int) string {
 		if len(s) >= maxlen {
@@ -356,7 +356,7 @@ func showServers(client *clcv2.Client, servnames ...string) {
 // Show details of a single server
 // @client:    authenticated CLCv2 Client
 // @servname:  server name
-func showServer(client *clcv2.Client, servname string) {
+func showServer(client *clcv2.CLIClient, servname string) {
 	server, err := client.GetServer(servname)
 	if err != nil {
 		exit.Fatalf("Failed to list details of server %q: %s", servname, err)
@@ -459,7 +459,7 @@ func showServer(client *clcv2.Client, servname string) {
 // Show nested group details
 // @client: authenticated CLCv2 Client
 // @root:   root group node to start at
-func showGroup(client *clcv2.Client, root *clcv2.Group) {
+func showGroup(client *clcv2.CLIClient, root *clcv2.Group) {
 	var groupPrinter = func(g *clcv2.Group, arg interface{}) interface{} {
 		var indent = arg.(string)
 		var groupLine string
@@ -487,7 +487,7 @@ func showGroup(client *clcv2.Client, root *clcv2.Group) {
 // @client:   authenticated CLCv2 client
 // @servname: server name
 // @diskGB:   amount of storage in GB to add to @servname
-func addRawDisk(client *clcv2.Client, servname string, diskGB uint32) (statusId string) {
+func addRawDisk(client *clcv2.CLIClient, servname string, diskGB uint32) (statusId string) {
 	/* First get the list of disks */
 	server, err := client.GetServer(servname)
 	if err != nil {
@@ -514,7 +514,7 @@ func addRawDisk(client *clcv2.Client, servname string, diskGB uint32) (statusId 
 }
 
 // showNetworks shows available networks in data centre location @location.
-func showNetworks(client *clcv2.Client, location string) {
+func showNetworks(client *clcv2.CLIClient, location string) {
 	networks, err := client.GetNetworks(location)
 	if err != nil {
 		exit.Fatalf("Failed to list networks in %s: %s", location, err)

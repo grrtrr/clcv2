@@ -39,7 +39,7 @@ func main() {
 		exit.Errorf("invalid disk ID %q", flag.Arg(1))
 	}
 
-	client, err := clcv2.NewClient()
+	client, err := clcv2.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}

@@ -28,7 +28,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	client, err := clcv2.NewClient()
+	client, err := clcv2.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
