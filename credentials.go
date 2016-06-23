@@ -1,14 +1,15 @@
 package clcv2
 
 import (
-	"github.com/grrtrr/clcv2/utils"
 	"encoding/json"
-	"io/ioutil"
-	"os/user"
-	"strings"
-	"path"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"os/user"
+	"path"
+	"strings"
+
+	"github.com/grrtrr/clcv2/utils"
 )
 
 /*
@@ -16,38 +17,38 @@ import (
  */
 type LoginReq struct {
 	// Control Portal user name value.
-	Username	string	`json:"username"`
+	Username string `json:"username"`
 
 	// Control Portal password value.
-	Password	string	`json:"password"`
+	Password string `json:"password"`
 }
 
 type LoginRes struct {
 	// Control Portal user name value
-	UserName      string	`json: "userName"`
+	UserName string `json: "userName"`
 
 	// Account that contains this user record
-	AccountAlias  string	`json: "accountAlias"`
+	AccountAlias string `json: "accountAlias"`
 
 	// Default data center of the user
-	LocationAlias string	`json: "locationAlias"`
+	LocationAlias string `json: "locationAlias"`
 
 	// Permission roles associated with this user
-	Roles         []string	`json: "roles"`
+	Roles []string `json: "roles"`
 
 	// Security token for this user that is included in the Authorization header
 	// for all other API requests as "Bearer [LONG TOKEN VALUE]".
-	BearerToken   string	`json: "bearerToken"`
+	BearerToken string `json: "bearerToken"`
 }
 
 // Log in and save credentials if successful. Requires c.LoginRes.BearerToken to be empty.
 func (c *Client) login(user, pass string) error {
 	err := c.getResponse("POST", "/v2/authentication/login",
-			     &LoginReq{ user, pass }, c.LoginRes)
+		&LoginReq{user, pass}, &c.LoginRes)
 	if err != nil {
 		return err
 	}
-	return c.LoginRes.saveCredentials()
+	return c.saveCredentials()
 }
 
 // Remove (stale) credentials
@@ -64,7 +65,6 @@ func (c *Client) loadCredentials() error {
 		return err
 	}
 
-	c.LoginRes = new(LoginRes)
 	if _, err := os.Stat(path); err == nil {
 		fd, err := os.Open(path)
 		if err != nil {
@@ -72,7 +72,7 @@ func (c *Client) loadCredentials() error {
 		}
 		defer fd.Close()
 
-		err = json.NewDecoder(fd).Decode(c.LoginRes)
+		err = json.NewDecoder(fd).Decode(&c.LoginRes)
 		if err != nil {
 			return err
 		}
@@ -83,7 +83,7 @@ func (c *Client) loadCredentials() error {
 		/* User switch - clear all related environment variables */
 		os.Unsetenv("CLC_ALIAS")
 		os.Unsetenv("CLC_ACCOUNT")
-		os.Rename(path, path + ".bak")
+		os.Rename(path, path+".bak")
 	} else if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -91,8 +91,8 @@ func (c *Client) loadCredentials() error {
 }
 
 // Save credentials to default file path. Return error on failure.
-func (l *LoginRes) saveCredentials() error {
-	enc, err := json.MarshalIndent(l, "", "\t")
+func (c *Client) saveCredentials() error {
+	enc, err := json.MarshalIndent(&c.LoginRes, "", "\t")
 	if err != nil {
 		return err
 	}

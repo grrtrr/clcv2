@@ -24,10 +24,10 @@ const (
 	// CenturyLink Cloud API url
 	BaseURL = "https://api.ctl.io"
 
-	// Maximum number of retries per request
+	// Maximum number of retries per request.
 	MaxRetries = 3
 
-	// Per request retry delay
+	// Per-request retry delay for the retryer.
 	StepDelay = time.Second * 10
 )
 
@@ -57,9 +57,9 @@ type Client struct {
 	requestor *http.Client
 
 	// Authentication information
-	*LoginRes
+	LoginRes
 
-	// Logger used for printing debugging output.
+	// Logger used for (debugging) output.
 	Log logrus.StdLogger
 }
 
@@ -75,7 +75,7 @@ func NewClient() (client *Client, err error) {
 	}
 	client.requestor = &http.Client{
 		Transport: rehttp.NewTransport(nil, // default transport
-			retryer(client.Log, MaxRetries),
+			client.retryer(MaxRetries),
 			// Note: using g_timeout as upper bound for the exponential backoff.
 			//       This means g_timeout has to be large enough to run MaxRetries
 			//       requests with individual retries.
@@ -103,20 +103,20 @@ func NewClient() (client *Client, err error) {
 }
 
 // retryer implements the retry policy: (a) any failure, (b) temporary failure status codes
-func retryer(logger logrus.StdLogger, maxRetries int) rehttp.RetryFn {
+func (c *Client) retryer(maxRetries int) rehttp.RetryFn {
 	return rehttp.RetryFn(func(at rehttp.Attempt) bool {
 		if at.Index < maxRetries {
 			if at.Response == nil {
-				if logger != nil {
-					logger.Printf("request failed - retry #%d", at.Index+1)
+				if c.Log != nil {
+					c.Log.Printf("request failed - retry #%d", at.Index+1)
 				}
 				return true
 			}
 			/* Request timeout, server error, bad gateway, service unavailable, gateway timeout */
 			switch at.Response.StatusCode {
 			case 408, 500, 502, 503, 504:
-				if logger != nil {
-					logger.Printf("request returned %q - retry #%d", at.Response.Status, at.Index+1)
+				if c.Log != nil {
+					c.Log.Printf("request returned %q - retry #%d", at.Response.Status, at.Index+1)
 				}
 				return true
 			}
