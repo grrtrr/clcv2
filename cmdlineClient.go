@@ -1,7 +1,7 @@
 package clcv2
 
 /*
- * Methods and declarations pertaining to commandline clients.
+ * Methods and data pertaining to commandline clients.
  */
 import (
 	"encoding/json"
@@ -50,13 +50,20 @@ type CLIClient struct {
 // - CLC_ALIAS:   takes precedence over default LocationAlias
 // - CLC_ACCOUNT: takes precedence over default AccountAlias
 func NewCLIClient() (client *CLIClient, err error) {
-	client = &CLIClient{NewClient()}
+	username, password, err := resolveUserAndPass()
+	if err != nil {
+		return nil, err
+	}
+	client = &CLIClient{initClient(username, password)}
+
+	client.credentialsChanged = client.saveCredentials
+
 	if g_debug {
 		client.Log = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
 	}
 
 	if err = client.loadCredentials(); err != nil {
-		return
+		return nil, err
 	}
 
 	if alias := os.Getenv("CLC_ALIAS"); alias != "" {
@@ -73,33 +80,10 @@ func NewCLIClient() (client *CLIClient, err error) {
 	return client, nil
 }
 
-// getResponse overrides Client.getResponse to deal with stale credentials (401 error).
-func (c *CLIClient) getResponse(verb, path string, reqModel, resModel interface{}) (err error) {
-	fmt.Println("CLI getResponse", verb, path)
-	err = c.Client.getResponse(verb, path, reqModel, resModel)
-	if err == ErrUnauthencicated {
-		/* Unauthorized: only destroy credentials, resist temptation to re-authenticate here for now. */
-		c.destroyCredentials()
-		return fmt.Errorf("Credentials are stale, please try again to re-authenticate.")
-	}
-	return
-}
-
-// Remove (stale) credentials
-func (c *CLIClient) destroyCredentials() {
-	fmt.Println("CLI CLIENT DESTROY CREDENTIALS")
-	os.Remove(defaultCredentialsPath())
-}
-
-// Try to load credentials from file at default path, or do a fresh login.
-// Save (updated) credentials if succsefful.
+// Load credentials from file at default path, do a fresh login otherwise.
+// Save (updated) credentials if successful.
 func (c *CLIClient) loadCredentials() error {
 	var path = defaultCredentialsPath()
-
-	username, password, err := resolveUserAndPass()
-	if err != nil {
-		return err
-	}
 
 	if _, err := os.Stat(path); err == nil {
 		fd, err := os.Open(path)
@@ -113,7 +97,8 @@ func (c *CLIClient) loadCredentials() error {
 			return err
 		}
 
-		if strings.ToLower(username) == strings.ToLower(c.LoginRes.UserName) {
+		if strings.ToLower(c.LoginReq.Username) == strings.ToLower(c.LoginRes.User) {
+			/* Found credentials and user has not changed. No login required. */
 			return nil
 		}
 		/* User switch - clear all related environment variables */
@@ -124,10 +109,7 @@ func (c *CLIClient) loadCredentials() error {
 		return err
 	}
 
-	if err := c.login(username, password); err != nil {
-		return err
-	}
-	return c.saveCredentials()
+	return c.login()
 }
 
 // Save credentials to default file path. Return error on failure.
@@ -139,7 +121,16 @@ func (c *CLIClient) saveCredentials() error {
 	return ioutil.WriteFile(defaultCredentialsPath(), append(enc, '\n'), 0600)
 }
 
-// Return the default path for file credentials
+// Remove (stale) credentials
+func (c *CLIClient) destroyCredentials() {
+	os.Remove(defaultCredentialsPath())
+}
+
+/*
+ * Auxiliary Functions
+ */
+
+// Return the default path for commandline-client credentials file.
 func defaultCredentialsPath() string {
 	if env := os.Getenv("CLC_CREDENTIALS"); env != "" {
 		return env

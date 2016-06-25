@@ -4,20 +4,21 @@
 package main
 
 import (
-	"github.com/olekukonko/tablewriter"
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"github.com/kr/pretty"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
+	"github.com/kr/pretty"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
-	var query    = flag.String("q", "none",   "Filter IP addresses; one of 'none', 'claimed', 'free', or 'all'")
-	var location = flag.String("l", "",       "Data centre alias of the network")
-	var simple   = flag.Bool("simple", false, "Use simple (debugging) output format")
+	var query = flag.String("q", "none", "Filter IP addresses; one of 'none', 'claimed', 'free', or 'all'")
+	var location = flag.String("l", "", "Data centre alias of the network")
+	var simple = flag.Bool("simple", false, "Use simple (debugging) output format")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Network-ID (hex)>\n", path.Base(os.Args[0]))
@@ -58,9 +59,9 @@ func main() {
 			table.SetAlignment(tablewriter.ALIGN_RIGHT)
 			table.SetAutoWrapText(false)
 
-			table.SetHeader([]string{ "Address", "Claimed", "Server", "Type" })
+			table.SetHeader([]string{"Address", "Claimed", "Server", "Type"})
 			for _, i := range details.IpAddresses {
-				table.Append([]string{ i.Address, fmt.Sprint(i.Claimed), i.Server, i.Type })
+				table.Append([]string{i.Address, fmt.Sprint(i.Claimed), i.Server, i.Type})
 			}
 			table.Render()
 		}
