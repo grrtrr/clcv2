@@ -4,16 +4,17 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
-	var location = flag.String("l", "",  "Alias of the data centre the server resides in")
+	var location = flag.String("l", "", "Alias of the data centre the server resides in")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <IP Address>\n", path.Base(os.Args[0]))
@@ -38,5 +39,10 @@ func main() {
 		exit.Errorf("No match found for %s in %s", flag.Arg(0), *location)
 	}
 
-	fmt.Printf("%s is used by %s\n", iad.Address, iad.Server)
+	// The 'Server' field is not necessarily filled in, hence we need to test here.
+	if iad.Server != "" {
+		fmt.Printf("%s is used by %s.\n", iad.Address, iad.Server)
+	} else {
+		fmt.Printf("%s is in %s use in %s, but the server name is not disclosed.\n", iad.Address, iad.Type, *location)
+	}
 }
