@@ -40,6 +40,7 @@ func usage() {
 		{"revert", "revert server to snapshot state"},
 		{"archive", "archive the server/group"},
 		{"delete", "delete server/group (CAUTION)"},
+		{"rename", "<newName> - rename group"},
 		{"help", "print this help screen"},
 	} {
 		fmt.Fprintf(os.Stderr, "\t%-15s %s\n", r[0], r[1])
@@ -85,6 +86,10 @@ func main() {
 		handlingServer = true
 		if flag.NArg() != 3 {
 			exit.Errorf("usage: rawdisk <serverName> <diskGB>")
+		}
+	case "rename":
+		if flag.NArg() != 3 {
+			exit.Errorf("usage: rename <oldGroupName> <newGroupName>")
 		}
 	case "ip", "on", "off", "shutdown", "pause", "reset", "reboot", "snapshot",
 		"delsnapshot", "revert", "archive", "delete":
@@ -212,6 +217,8 @@ func main() {
 			reqID, err = client.ArchiveGroup(where)
 		case "delete":
 			reqID, err = client.DeleteGroup(where)
+		case "rename":
+			err = client.GroupSetName(where, flag.Arg(2))
 		default:
 			exit.Errorf("Unsupported group action %q", action)
 		}
