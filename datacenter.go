@@ -4,23 +4,21 @@ import (
 	"fmt"
 )
 
-/*
- * Datacenter Locations
- */
+// DataCenter represents the information about a single data centre.
 type DataCenter struct {
 	// Short value representing the data center code
-	Id	string
+	Id string
 
 	// Full, friendly name of the data center
-	Name	string
+	Name string
 
 	// Collection of entity links that point to resources related to this data center
-	Links	[]Link
+	Links []Link
 }
 
 // Get the list of data centers that a given account has access to.
 func (c *Client) GetLocations() (loc []DataCenter, err error) {
-	err = c.getResponse("GET", "/v2/datacenters/" + c.AccountAlias, nil, &loc)
+	err = c.getResponse("GET", "/v2/datacenters/"+c.AccountAlias, nil, &loc)
 	return
 }
 
@@ -33,71 +31,102 @@ func (c *Client) GetDatacenter(location string, groupLinks bool) (res DataCenter
 	return
 }
 
+type IntResourceValue struct {
+	Value     uint64 `json:"value"`
+	Inherited bool   `json:"inherited"`
+}
+
+// ComputeLimits represents the computational resource limits of a data centre.
+type ComputeLimits struct {
+	CPU       IntResourceValue `json:"cpu"`
+	MemoryGB  IntResourceValue `json:"memoryGB"`
+	StorageGB IntResourceValue `json:"storageGB"`
+}
+
+// Get the compute limits for the given data centre.
+func (c *Client) GetDatacenterComputeLimits(location string) (*ComputeLimits, error) {
+	path := fmt.Sprintf("/v2/datacenters/%s/%s/computeLimits", c.AccountAlias, location)
+	res := new(ComputeLimits)
+	return res, c.getResponse("GET", path, nil, res)
+}
+
+// NetLimits represents the maximum number of networks allowed in a data centre.
+type NetLimits struct {
+	Networks IntResourceValue `json:"networks"`
+}
+
+// Get the networking limits for the given data centre.
+func (c *Client) GetDatacenterNetworkLimits(location string) (*NetLimits, error) {
+	path := fmt.Sprintf("/v2/datacenters/%s/%s/networkLimits", c.AccountAlias, location)
+	res := new(NetLimits)
+	return res, c.getResponse("GET", path, nil, res)
+}
+
 /*
  * Deployment Capabilities
  */
 type DeploymentCapabilities struct {
 	// Whether or not this data center provides support for servers with premium storage
-	SupportsPremiumStorage		bool
+	SupportsPremiumStorage bool
 
 	// Whether or not this data center provides support for shared load balancer configuration
-	SupportsSharedLoadBalancer	bool
+	SupportsSharedLoadBalancer bool
 
 	// Whether or not this data center provides support for provisioning bare metal servers
-	SupportsBareMetalServers	bool
+	SupportsBareMetalServers bool
 
 	// FIXME: the following appear in the output, but are not documented
-	DataCenterEnabled		bool
-	ImportVMEnabled			bool
+	DataCenterEnabled bool
+	ImportVMEnabled   bool
 
 	// Collection of networks that can be used for deploying servers
-	DeployableNetworks		[]struct{
+	DeployableNetworks []struct {
 		// User-defined name of the network
-		Name		string
+		Name string
 
 		// Unique identifier of the network
-		NetworkId	string
+		NetworkId string
 
 		// Network type, usually "private" for networks created by the user
-		Type		string
+		Type string
 
 		// Account alias for the account in which the network exists
-		AccountID	string
+		AccountID string
 	}
 
 	// Collection of available templates in the data center that can be used to create servers
-	Templates			[]struct{
+	Templates []struct {
 		// Underlying unique name for the template
-		Name			string
+		Name string
 
 		// Description of the template at it appears in the Control Portal UI
-		Description		string
+		Description string
 
 		// FIXME: the following appears in the output, but is not documented
-		OsType			string
+		OsType string
 
 		// The amount of storage allocated for the primary OS root drive
-		StorageSizeGB		int
+		StorageSizeGB int
 
 		// List of capabilities supported by this specific OS template
 		// (example: whether adding CPU or memory requires a reboot or not)
-		Capabilities		[]string
+		Capabilities []string
 
 		// List of drive path names reserved by the OS that can't be used to name user-defined drives
-		ReservedDrivePaths	[]string
+		ReservedDrivePaths []string
 
 		// Length of the string for naming a drive path, if applicable
-		DrivePathLength		int
+		DrivePathLength int
 	}
 
 	// Collection of available OS types that can be imported as virtual machines.
-	ImportableOsTypes		[]struct{
+	ImportableOsTypes []struct {
 		// FIXME: no online description for this as yet
-		Id			int
-		Type			string
-		Description		string
-		LabProductCode		string
-		PremiumProductCode	string
+		Id                 int
+		Type               string
+		Description        string
+		LabProductCode     string
+		PremiumProductCode string
 	}
 }
 
@@ -117,57 +146,57 @@ func (c *Client) GetDeploymentCapabilities(location string) (res DeploymentCapab
 type BareMetalCapabilities struct {
 	// Collection of available bare metal configuration types to pass in as
 	// configurationId when creating a bare-metal server
-	Skus		[]struct {
+	Skus []struct {
 		// The configurationId to pass to the Create Server API operation when creating a bare metal server.
-		Id		string
+		Id string
 
 		// Price per hour for the given configuration.
-		HourlyRate	float64
+		HourlyRate float64
 
 		// The level of availability for the given configuration: either high, low, or none.
-		Availability	string
+		Availability string
 
 		// Information about the memory on the server.
-		memory		[]struct {
+		memory []struct {
 			// Memory capacity in gigabytes
-			CapacityGB	int
+			CapacityGB int
 		}
 
 		// Information about the physical processors on the server.
-		Processor	struct {
+		Processor struct {
 			// Description of the processor including model and clock speed
-			Description	string
+			Description string
 
 			// Number of cores for each processor socket
-			CoresPerSocket	int
+			CoresPerSocket int
 
 			// Number of sockets
-			Sockets		int
+			Sockets int
 		}
 
 		// Collection of disk information, each item representing one physical disk on the server.
-		Storage		[]struct {
+		Storage []struct {
 			// Underlying unique name for the OS type
-			CapacityGB	int
+			CapacityGB int
 
 			// RPM (revolutions per minutes) speed of the disk
-			SpeedRpm	int
+			SpeedRpm int
 
 			// Disk type. Only Hdd currently supported.
-			Type		string
+			Type string
 		}
 	}
 
 	// Collection of available operating systems when creating a bare metal server
-	OperatingSystems	[]struct {
+	OperatingSystems []struct {
 		// Underlying unique name for the OS type
-		Type			string
+		Type string
 
 		// Friendly description for the OS type
-		Description		string
+		Description string
 
 		// Price per hour per socket for the OS type.
-		HourlyRatePerSocket	float64
+		HourlyRatePerSocket float64
 	}
 }
 
