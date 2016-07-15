@@ -199,7 +199,7 @@ func main() {
 				return g.Id == where
 			})
 			if start == nil {
-				exit.Fatalf("Failed to look up UUID %s at %s", where, location)
+				exit.Fatalf("Failed to look up UUID %s in %s - is this the correct value?", where, *location)
 			}
 		}
 
