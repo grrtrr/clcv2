@@ -33,7 +33,6 @@ func main() {
 	var numCpu = flag.Int("cpu", 1, "Number of Cpus to use")
 	var memGB = flag.Int("memory", 4, "Amount of memory in GB")
 	var serverType = flag.String("type", "standard", "The type of server to create (standard, hyperscale, or bareMetal)")
-	var storType = flag.String("level", "premium", "Data storage service level (standard or premium)")
 	var ttl = flag.Duration("ttl", 0, "Time span (counting from time of creation) until server gets deleted")
 
 	flag.Usage = func() {
@@ -120,9 +119,6 @@ func main() {
 
 		// Whether to create a 'standard', 'hyperscale', or 'bareMetal' server
 		Type: *serverType,
-
-		// For standard servers, whether to use standard or premium storage.
-		StorageType: *storType,
 
 		// FIXME: the following are not populated in this request:
 		// - IpAddress
