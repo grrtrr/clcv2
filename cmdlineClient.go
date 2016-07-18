@@ -65,11 +65,11 @@ func NewCLIClient() (client *CLIClient, err error) {
 		client.Log = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
 	}
 
-	if err = client.loadCredentials(); err != nil {
+	if err = setBaseURL(); err != nil {
 		return nil, err
 	}
 
-	if err = setBaseURL(); err != nil {
+	if err = client.loadCredentials(); err != nil {
 		return nil, err
 	}
 
