@@ -30,6 +30,9 @@ const (
 	StepDelay = time.Second * 10
 )
 
+// GLOBAL VARIABLES
+var baseURL = BaseURL
+
 // Client wraps a http.Client, along with credentials and logging information.
 type Client struct {
 	// Login credentials
@@ -178,7 +181,7 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 		}
 	}
 
-	req, err := http.NewRequest(verb, BaseURL+path, reqBody)
+	req, err := http.NewRequest(verb, baseURL+path, reqBody)
 	if err != nil {
 		return
 	}
