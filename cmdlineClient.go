@@ -127,9 +127,7 @@ func (c *CLIClient) loadCredentials() error {
 			/* Found credentials and user has not changed. No login required. */
 			return nil
 		}
-		/* User switch - clear all related environment variables */
-		os.Unsetenv("CLC_ALIAS")
-		os.Unsetenv("CLC_ACCOUNT")
+		/* User switch: move the original credentials file to a backup extension. */
 		os.Rename(path, path+".bak")
 	} else if err != nil && !os.IsNotExist(err) {
 		return err
