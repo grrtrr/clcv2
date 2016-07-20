@@ -39,6 +39,7 @@ func usage() {
 		{"delsnapshot", "delete server snapshot"},
 		{"revert", "revert server to snapshot state"},
 		{"archive", "archive the server/group"},
+		{"credentials", "show server credentials"},
 		{"delete", "delete server/group (CAUTION)"},
 		{"rename", "<newName> - rename group"},
 		{"help", "print this help screen"},
@@ -82,6 +83,8 @@ func main() {
 		if flag.NArg() == 1 && *location == "" {
 			exit.Errorf("Action %q requires location (-l argument).", action)
 		}
+	case "credentials":
+		handlingServer = true
 	case "rawdisk":
 		handlingServer = true
 		if flag.NArg() != 3 {
@@ -147,6 +150,16 @@ func main() {
 			} else {
 				showServers(client, flag.Args()[1:]...)
 			}
+			os.Exit(0)
+		case "credentials":
+			credentials, err := client.GetServerCredentials(where)
+			if err != nil {
+				exit.Fatalf("Failed to obtain the credentials of server %q: %s", where, err)
+			}
+
+			fmt.Printf("Credentials for %s:\n", where)
+			fmt.Printf("User:     %s\n", credentials.Username)
+			fmt.Printf("Password: \"%s\"\n", credentials.Password)
 			os.Exit(0)
 		case "rawdisk":
 			diskGB, err := strconv.ParseUint(flag.Arg(2), 10, 32)
