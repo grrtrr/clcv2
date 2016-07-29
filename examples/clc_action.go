@@ -42,6 +42,7 @@ func usage() {
 		{"credentials", "show server credentials"},
 		{"delete", "delete server/group (CAUTION)"},
 		{"rename", "<newName> - rename group"},
+		{"create", "<parentGroup> <newGroupName> - create new group under @parentGroup"},
 		{"help", "print this help screen"},
 	} {
 		fmt.Fprintf(os.Stderr, "\t%-15s %s\n", r[0], r[1])
@@ -89,6 +90,10 @@ func main() {
 		handlingServer = true
 		if flag.NArg() != 3 {
 			exit.Errorf("usage: rawdisk <serverName> <diskGB>")
+		}
+	case "create":
+		if flag.NArg() != 3 {
+			exit.Errorf("usage: create <parentGroup> <newGroupName>")
 		}
 	case "rename":
 		if flag.NArg() != 3 {
@@ -228,10 +233,18 @@ func main() {
 		switch action {
 		case "archive":
 			reqID, err = client.ArchiveGroup(where)
+		case "create":
+			g, err := client.CreateGroup(flag.Arg(2), where, flag.Arg(2), []clcv2.SimpleCustomField{})
+			if err == nil {
+				fmt.Println("New Group: ", g.Name)
+				fmt.Println("UUID:      ", g.Id)
+			}
 		case "delete":
 			reqID, err = client.DeleteGroup(where)
 		case "rename":
-			err = client.GroupSetName(where, flag.Arg(2))
+			if err = client.GroupSetName(where, flag.Arg(2)); err == nil {
+				fmt.Println("OK")
+			}
 		default:
 			exit.Errorf("Unsupported group action %q", action)
 		}
@@ -240,7 +253,9 @@ func main() {
 		}
 	}
 
-	client.PollStatus(reqID, *intvl)
+	if reqID != "" {
+		client.PollStatus(reqID, *intvl)
+	}
 }
 
 // showTemplates prints the templates available in @region
