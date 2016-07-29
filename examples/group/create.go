@@ -4,19 +4,20 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
 	"encoding/hex"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
 	var parentGroup = flag.String("g", "", "UUID or Name (if unique and -l present) of the parent Hardware Group")
-	var location    = flag.String("l", "", "Data centre location to use for resolving -g <Group-Name>")
-	var desc        = flag.String("t", "", "Textual description of the new group")
+	var location = flag.String("l", "", "Data centre location to use for resolving -g <Group-Name>")
+	var desc = flag.String("t", "", "Textual description of the new group")
 	var parentUUID string
 
 	flag.Usage = func() {
@@ -41,10 +42,8 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	if parentUUID == "" {
-		var group *clcv2.Group
-
-		if group, err = client.GetGroupByName(*parentGroup, *location); err != nil {
+	if parentUUID == "" { /* resolve group name */
+		if group, err := client.GetGroupByName(*parentGroup, *location); err != nil {
 			exit.Errorf("Failed to resolve group name %q: %s", *parentGroup, err)
 		} else if group == nil {
 			exit.Errorf("No group named %q was found in %s", *parentGroup, *location)
