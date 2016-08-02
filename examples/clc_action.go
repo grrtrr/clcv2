@@ -41,6 +41,7 @@ func usage() {
 		{"archive", "archive the server/group"},
 		{"credentials", "show server credentials"},
 		{"delete", "delete server/group (CAUTION)"},
+		{"remove", "alias for 'delete'"},
 		{"rename", "<newName> - rename group"},
 		{"create", "<parentGroup> <newGroupName> - create new group under @parentGroup"},
 		{"help", "print this help screen"},
@@ -100,7 +101,7 @@ func main() {
 			exit.Errorf("usage: rename <oldGroupName> <newGroupName>")
 		}
 	case "ip", "on", "off", "shutdown", "pause", "reset", "reboot", "snapshot",
-		"delsnapshot", "revert", "archive", "delete":
+		"delsnapshot", "revert", "archive", "delete", "remove":
 		/* FIXME: use map for usage, and use keys here, i.e. _, ok := map[action] */
 		if where == "" {
 			exit.Errorf("Action %q requires an argument (try -h).", action)
@@ -182,6 +183,7 @@ func main() {
 				"shutdown":    client.ShutdownServer,
 				"archive":     client.ArchiveServer,
 				"delete":      client.DeleteServer,
+				"remove":      client.DeleteServer,
 				"snapshot":    client.SnapshotServer,
 				"delsnapshot": client.DeleteSnapshot,
 				"revert":      client.RevertToSnapshot,
@@ -239,7 +241,7 @@ func main() {
 				fmt.Println("New Group: ", g.Name)
 				fmt.Println("UUID:      ", g.Id)
 			}
-		case "delete":
+		case "delete", "remove":
 			reqID, err = client.DeleteGroup(where)
 		case "rename":
 			if err = client.GroupSetName(where, flag.Arg(2)); err == nil {
