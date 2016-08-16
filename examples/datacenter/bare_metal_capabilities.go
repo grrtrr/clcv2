@@ -14,8 +14,6 @@ import (
 )
 
 func main() {
-//	var short = flag.Bool("s", false, "produce short output (names only)")
-
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  Location-Alias\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
