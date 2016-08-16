@@ -34,21 +34,19 @@ func main() {
 	}
 
 	/* net is supposed to be a (hex) ID, but allow network names, too */
-	if *net != "" {
-		if _, err := hex.DecodeString(*net); err == nil {
-			/* already looks like a HEX ID */
-		} else if  *location == "" {
-			exit.Errorf("Need a location argument (-l) if not using a network ID (%s)", *net)
-		} else {
-			fmt.Printf("Resolving network id of %q ...\n", *net)
+	if _, err := hex.DecodeString(*net); err == nil {
+		/* already looks like a HEX ID */
+	} else if  *location == "" {
+		exit.Errorf("Need a location argument (-l) if not using a network ID (%s)", *net)
+	} else {
+		fmt.Printf("Resolving network id of %q ...\n", *net)
 
-			if netw, err := client.GetNetworkIdByName(*net, *location); err != nil {
-				exit.Errorf("Failed to resolve network name %q: %s", *net, err)
-			} else if netw == nil {
-				exit.Errorf("No network named %q was found in %s", *net, *location)
-			} else {
-				*net = netw.Id
-			}
+		if netw, err := client.GetNetworkIdByName(*net, *location); err != nil {
+			exit.Errorf("Failed to resolve network name %q: %s", *net, err)
+		} else if netw == nil {
+			exit.Errorf("No network named %q was found in %s", *net, *location)
+		} else {
+			*net = netw.Id
 		}
 	}
 
