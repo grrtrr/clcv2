@@ -153,9 +153,9 @@ func (c *Client) retryer(maxRetries int) rehttp.RetryFn {
 	})
 }
 
-// Perform a v2 main API request
-// @verb:     Http verb to use
-// @path:     relative to BaseURL (includes the 'v2' version).
+// getCLCResponse performs a CLC v2 main API request
+// @verb: Http verb to use
+// @path: relative to BaseURL (includes the 'v2' version).
 func (c *Client) getCLCResponse(verb, path string, reqModel, resModel interface{}) (err error) {
 	return c.getResponse(baseURL+path, verb, reqModel, resModel)
 }
