@@ -37,7 +37,7 @@ func GetPass(prompt string) (pass string, err error) {
 	/* Store current terminal state in case the call gets interrupted by signal */
 	oldState, err := terminal.GetState(fd)
 	if err != nil {
-		err = fmt.Errorf("Failed to get terminal state: %s\n", err)
+		err = fmt.Errorf("failed to get terminal state: %s\n", err)
 		return
 	}
 
@@ -116,7 +116,7 @@ func PromptInput(msg string, choices ...string) (resp string, err error) {
 
 	oldState, err := terminal.MakeRaw(fd)
 	if err != nil {
-		err = fmt.Errorf("Failed to set terminal into raw mode: %s", err)
+		err = fmt.Errorf("failed to set terminal into raw mode: %s", err)
 		return
 	}
 	defer terminal.Restore(fd, oldState)

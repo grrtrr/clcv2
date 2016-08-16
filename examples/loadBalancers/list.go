@@ -38,7 +38,7 @@ func main() {
 
 	lbl, err := client.GetSharedLoadBalancers(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to list load balancers in %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to list load balancers in %s: %s", flag.Arg(0), err)
 	}
 
 	if len(lbl) == 0 {

@@ -34,7 +34,7 @@ func main() {
 
 	iad, err := client.GetNetworkDetailsByIp(flag.Arg(0), *location)
 	if err != nil {
-		exit.Fatalf("Failed to look up %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to look up %s: %s", flag.Arg(0), err)
 	} else if iad == nil {
 		exit.Errorf("No match found for %s in %s", flag.Arg(0), *location)
 	}

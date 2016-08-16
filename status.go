@@ -38,7 +38,7 @@ func (c *Client) PollStatus(statusId string, pollInterval time.Duration) error {
 	for {
 		status, err := c.GetStatus(statusId)
 		if err != nil {
-			return fmt.Errorf("Failed to query status of status ID %d: %s", statusId, err)
+			return fmt.Errorf("failed to query status of status ID %d: %s", statusId, err)
 		}
 		if status != prevStatus {
 			fmt.Printf("%s %s: %s\n", time.Now().Format("15:04:05"), statusId, status)

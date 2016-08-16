@@ -49,7 +49,7 @@ func main() {
 			fmt.Printf("Resolving network id of %q ...\n", *net)
 
 			if netw, err := client.GetNetworkIdByName(*net, *location); err != nil {
-				exit.Errorf("Failed to resolve network name %q: %s", *net, err)
+				exit.Errorf("failed to resolve network name %q: %s", *net, err)
 			} else if netw == nil {
 				exit.Errorf("No network named %q was found in %s", *net, *location)
 			} else {
@@ -59,7 +59,7 @@ func main() {
 	}
 
 	if err = client.ServerAddNic(flag.Arg(0), *net, *ip); err != nil {
-		exit.Fatalf("Failed to add NIC to %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to add NIC to %s: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Successfully added a secondary NIC to %s.\n", flag.Arg(0))

@@ -21,7 +21,7 @@ func main() {
 
 	customFields, err := client.GetCustomFields()
 	if err != nil {
-		exit.Fatalf("Failed to obtain Custom Fields: %s", err)
+		exit.Fatalf("failed to obtain Custom Fields: %s", err)
 	}
 
 	if len(customFields) == 0 {

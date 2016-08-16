@@ -33,7 +33,7 @@ func main() {
 
 	statusId, err := client.ServerSetMaintenance(flag.Arg(0), *maintenance)
 	if err != nil {
-		exit.Fatalf("Failed to modify maintenance mode on server %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to modify maintenance mode on server %s: %s", flag.Arg(0), err)
 	}
 
 	fmt.Println("Request ID for maintenance mode status change:", statusId)

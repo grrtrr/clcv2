@@ -41,7 +41,7 @@ func main() {
 	if len(publicIPs) == 0 {
 		srv, err := client.GetServer(server)
 		if err != nil {
-			exit.Fatalf("Failed to query the public IPs of %s: %s", server, err)
+			exit.Fatalf("failed to query the public IPs of %s: %s", server, err)
 		}
 
 		for _, ip := range srv.Details.IpAddresses {
@@ -59,7 +59,7 @@ func main() {
 	for _, ip := range publicIPs {
 		p, err := client.GetPublicIPAddress(server, ip)
 		if err != nil {
-			exit.Fatalf("Failed to query public IP address %s of %s: %s", ip, server, err)
+			exit.Fatalf("failed to query public IP address %s of %s: %s", ip, server, err)
 		}
 
 		fmt.Printf("%s:\n", server)

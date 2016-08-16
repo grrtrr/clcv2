@@ -125,7 +125,7 @@ func main() {
 			handlingServer = true
 		} else if *location != "" && where != "" {
 			if group, err := client.GetGroupByName(where, *location); err != nil {
-				exit.Errorf("Failed to resolve group name %q: %s", where, err)
+				exit.Errorf("failed to resolve group name %q: %s", where, err)
 			} else if group == nil {
 				exit.Errorf("No group named %q was found in %s", where, *location)
 			} else {
@@ -160,7 +160,7 @@ func main() {
 		case "credentials":
 			credentials, err := client.GetServerCredentials(where)
 			if err != nil {
-				exit.Fatalf("Failed to obtain the credentials of server %q: %s", where, err)
+				exit.Fatalf("failed to obtain the credentials of server %q: %s", where, err)
 			}
 
 			fmt.Printf("Credentials for %s:\n", where)
@@ -210,7 +210,7 @@ func main() {
 
 		root, err := client.GetGroups(*location)
 		if err != nil {
-			exit.Fatalf("Failed to look up groups at %s: %s", *location, err)
+			exit.Fatalf("failed to look up groups at %s: %s", *location, err)
 		}
 
 		start = &root
@@ -219,7 +219,7 @@ func main() {
 				return g.Id == where
 			})
 			if start == nil {
-				exit.Fatalf("Failed to look up UUID %s in %s - is this the correct value?", where, *location)
+				exit.Fatalf("failed to look up UUID %s in %s - is this the correct value?", where, *location)
 			}
 		}
 
@@ -264,7 +264,7 @@ func main() {
 func showTemplates(client *clcv2.CLIClient, region string) {
 	capa, err := client.GetDeploymentCapabilities(region)
 	if err != nil {
-		exit.Fatalf("Failed to query deployment capabilities of %s: %s", region, err)
+		exit.Fatalf("failed to query deployment capabilities of %s: %s", region, err)
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
@@ -288,7 +288,7 @@ func showTemplates(client *clcv2.CLIClient, region string) {
 func printServerIP(client *clcv2.CLIClient, servname string) {
 	ips, err := client.GetServerIPs(servname)
 	if err != nil {
-		exit.Fatalf("Failed get server %q IPs: %s", servname, err)
+		exit.Fatalf("failed get server %q IPs: %s", servname, err)
 	}
 
 	fmt.Printf("%-20s %s\n", servname+":", strings.Join(ips, ", "))
@@ -309,7 +309,7 @@ func printGroupIPs(client *clcv2.CLIClient, root *clcv2.Group) {
 			if l.Rel == "server" {
 				ips, err := client.GetServerIPs(l.Id)
 				if err != nil {
-					exit.Fatalf("Failed to get IPs of %q in %s: %s", l.Id, g.Name, err)
+					exit.Fatalf("failed to get IPs of %q in %s: %s", l.Id, g.Name, err)
 				}
 
 				servLine := fmt.Sprintf("%s%s", indent+"    ", l.Id)
@@ -396,12 +396,12 @@ func showServers(client *clcv2.CLIClient, servnames ...string) {
 func showServer(client *clcv2.CLIClient, servname string) {
 	server, err := client.GetServer(servname)
 	if err != nil {
-		exit.Fatalf("Failed to list details of server %q: %s", servname, err)
+		exit.Fatalf("failed to list details of server %q: %s", servname, err)
 	}
 
 	grp, err := client.GetGroup(server.GroupId)
 	if err != nil {
-		exit.Fatalf("Failed to resolve group UUID: %s", err)
+		exit.Fatalf("failed to resolve group UUID: %s", err)
 	}
 
 	/* First public, then private */
@@ -528,7 +528,7 @@ func addRawDisk(client *clcv2.CLIClient, servname string, diskGB uint32) (status
 	/* First get the list of disks */
 	server, err := client.GetServer(servname)
 	if err != nil {
-		exit.Fatalf("Failed to list details of server %q: %s", servname, err)
+		exit.Fatalf("failed to list details of server %q: %s", servname, err)
 	}
 
 	disks := make([]clcv2.ServerAdditionalDisk, len(server.Details.Disks))
@@ -545,7 +545,7 @@ func addRawDisk(client *clcv2.CLIClient, servname string, diskGB uint32) (status
 			Type:   "raw",
 		}))
 	if err != nil {
-		exit.Fatalf("Failed to update the disk configuration on %q: %s", servname, err)
+		exit.Fatalf("failed to update the disk configuration on %q: %s", servname, err)
 	}
 	return statusId
 }
@@ -554,7 +554,7 @@ func addRawDisk(client *clcv2.CLIClient, servname string, diskGB uint32) (status
 func showNetworks(client *clcv2.CLIClient, location string) {
 	networks, err := client.GetNetworks(location)
 	if err != nil {
-		exit.Fatalf("Failed to list networks in %s: %s", location, err)
+		exit.Fatalf("failed to list networks in %s: %s", location, err)
 	}
 
 	if len(networks) == 0 {

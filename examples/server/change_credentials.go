@@ -37,7 +37,7 @@ func main() {
 
 		credentials, err := client.GetServerCredentials(flag.Arg(0))
 		if err != nil {
-			exit.Fatalf("Failed to obtain the credentials of server %q: %s", flag.Arg(0), err)
+			exit.Fatalf("failed to obtain the credentials of server %q: %s", flag.Arg(0), err)
 		}
 
 		fmt.Printf("Existing %q password on %s: %q\n", credentials.Username,
@@ -47,7 +47,7 @@ func main() {
 
 	statusId, err := client.ServerChangePassword(flag.Arg(0), *oldPasswd, *newPasswd)
 	if err != nil {
-		exit.Fatalf("Failed to change the password on %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to change the password on %q: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Status Id for changing the password on %s to %q: %s\n", flag.Arg(0), *newPasswd, statusId)

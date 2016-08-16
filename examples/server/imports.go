@@ -36,7 +36,7 @@ func main() {
 
 	imports, err := client.GetServerImports(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to list server imports available at %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to list server imports available at %q: %s", flag.Arg(0), err)
 	}
 
 	if len(imports) == 0 {

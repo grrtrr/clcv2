@@ -34,7 +34,7 @@ func main() {
 
 	statusId, err := client.RebootServer(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to reboot server %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to reboot server %s: %s", flag.Arg(0), err)
 	}
 
 	fmt.Println("Request ID for server reboot:", statusId)

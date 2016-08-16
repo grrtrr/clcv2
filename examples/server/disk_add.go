@@ -36,7 +36,7 @@ func main() {
 	/* First get the list of disks */
 	server, err := client.GetServer(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to list details of server %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to list details of server %q: %s", flag.Arg(0), err)
 	}
 
 	disks := make([]clcv2.ServerAdditionalDisk, len(server.Details.Disks))
@@ -56,7 +56,7 @@ func main() {
 
 	statusId, err := client.ServerSetDisks(flag.Arg(0), append(disks, newDisk))
 	if err != nil {
-		exit.Fatalf("Failed to update the disk configuration on %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to update the disk configuration on %q: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Status Id for adding disk to %s: %s\n", flag.Arg(0), statusId)

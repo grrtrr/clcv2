@@ -32,7 +32,7 @@ func main() {
 
 	statusId, err := client.RevertToSnapshot(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to revert %s to snapshot: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to revert %s to snapshot: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Request ID for reverting %s to snapshot: %s\n", flag.Arg(0), statusId)

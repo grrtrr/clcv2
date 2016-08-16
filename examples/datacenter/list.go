@@ -25,7 +25,7 @@ func main() {
 
 	datacenters, err := client.GetLocations()
 	if err != nil {
-		exit.Fatalf("Failed to get datacenter information: %s", err)
+		exit.Fatalf("failed to get datacenter information: %s", err)
 	}
 
 	if *links {

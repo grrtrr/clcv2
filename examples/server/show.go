@@ -39,7 +39,7 @@ func main() {
 
 	server, err := client.GetServer(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to list details of server %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to list details of server %q: %s", flag.Arg(0), err)
 	}
 
 	if *simple {
@@ -47,7 +47,7 @@ func main() {
 	} else {
 		grp, err := client.GetGroup(server.GroupId)
 		if err != nil {
-			exit.Fatalf("Failed to resolve group UUID: %s", err)
+			exit.Fatalf("failed to resolve group UUID: %s", err)
 		}
 
 		/* First public, then private */

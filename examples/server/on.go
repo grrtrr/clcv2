@@ -34,7 +34,7 @@ func main() {
 
 	statusId, err := client.PowerOnServer(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to power server %s on: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to power server %s on: %s", flag.Arg(0), err)
 	}
 
 	fmt.Println("Request ID for powering on server:", statusId)

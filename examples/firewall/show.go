@@ -38,7 +38,7 @@ func main() {
 
 	fwp, err := client.GetFWPolicy(*location, flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to list firewall policy %s at %s: %s", *location, flag.Arg(0), err)
+		exit.Fatalf("failed to list firewall policy %s at %s: %s", *location, flag.Arg(0), err)
 	}
 
 	if *simple {

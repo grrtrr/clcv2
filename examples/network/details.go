@@ -41,7 +41,7 @@ func main() {
 
 	details, err := client.GetNetworkDetails(*location, flag.Arg(0), *query)
 	if err != nil {
-		exit.Fatalf("Failed to query network details of %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to query network details of %s: %s", flag.Arg(0), err)
 	}
 
 	if *simple {

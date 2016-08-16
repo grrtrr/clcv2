@@ -33,7 +33,7 @@ func main() {
 
 	statusId, err := client.ServerSetCpus(flag.Arg(0), fmt.Sprint(*cpus))
 	if err != nil {
-		exit.Fatalf("Failed to change the number of CPUs on %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to change the number of CPUs on %q: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Status Id for changing the #CPUs on %s: %s\n", flag.Arg(0), statusId)

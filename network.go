@@ -81,7 +81,7 @@ func NetworkByIP(ips string, networks []Network) (*Network, error) {
 	}
 	for i := range networks {
 		if _, net, err := net.ParseCIDR(networks[i].Cidr); err != nil {
-			return nil, fmt.Errorf("Failed to parse CIDR %s: %s", networks[i].Cidr, err)
+			return nil, fmt.Errorf("failed to parse CIDR %s: %s", networks[i].Cidr, err)
 		} else if net.Contains(ip) {
 			return &networks[i], nil
 		}

@@ -32,7 +32,7 @@ func main() {
 
 	statusId, err := client.DeleteSnapshot(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to delete snapshot on %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to delete snapshot on %s: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Request ID for deleting %s snapshot: %s\n", flag.Arg(0), statusId)

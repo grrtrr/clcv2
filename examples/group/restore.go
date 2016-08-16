@@ -42,7 +42,7 @@ func main() {
 		fmt.Printf("Resolving ID of Hardware Group %q ...\n", *hwGroup)
 
 		if group, err := client.GetGroupByName(*hwGroup, *location); err != nil {
-			exit.Errorf("Failed to resolve group name %q: %s", *hwGroup, err)
+			exit.Errorf("failed to resolve group name %q: %s", *hwGroup, err)
 		} else if group == nil {
 			exit.Errorf("No group named %q was found in %s", *hwGroup, *location)
 		} else {
@@ -52,7 +52,7 @@ func main() {
 
 	statusId, err := client.RestoreGroup(flag.Arg(0), *hwGroup)
 	if err != nil {
-		exit.Fatalf("Failed to restore group %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to restore group %s: %s", flag.Arg(0), err)
 	}
 
 	fmt.Println("Request ID for restoring group:", statusId)

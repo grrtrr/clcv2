@@ -31,7 +31,7 @@ func main() {
 
 	statusId, err := client.DeleteServer(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to delete server %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to delete server %s: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Status Id for deleting %s: %s\n", flag.Arg(0), statusId)

@@ -35,7 +35,7 @@ func main() {
 
 	err = client.UpdateNetwork(*location, flag.Arg(0), *name, *desc)
 	if err != nil {
-		exit.Fatalf("Failed to update the name/description on %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to update the name/description on %q: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Successfully changed the name/description of network %s.\n", flag.Arg(0))

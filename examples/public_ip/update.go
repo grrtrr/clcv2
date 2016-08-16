@@ -44,7 +44,7 @@ func main() {
 		fmt.Printf("Looking up existing configuration of %s on %s ...\n", flag.Arg(1), flag.Arg(0))
 		old, err := client.GetPublicIPAddress(flag.Arg(0), flag.Arg(1))
 		if err != nil {
-			exit.Fatalf("Failed to get existing configuration for %s: %s", flag.Arg(1), err)
+			exit.Fatalf("failed to get existing configuration for %s: %s", flag.Arg(1), err)
 		}
 		fmt.Printf("EXISTING settings: %+v\n", old.Ports)
 		portSp = append(portSp, old.Ports...)
@@ -54,7 +54,7 @@ func main() {
 	req := clcv2.PublicIPAddress{Ports: portSp, SourceRestrictions: srcRes}
 	reqId, err := client.UpdatePublicIPAddress(flag.Arg(0), flag.Arg(1), &req)
 	if err != nil {
-		exit.Fatalf("Failed to update public IP address %s on %q: %s", flag.Arg(1), flag.Arg(0), err)
+		exit.Fatalf("failed to update public IP address %s on %q: %s", flag.Arg(1), flag.Arg(0), err)
 	}
 
 	fmt.Printf("Request ID for modifying public IP: %s\n", reqId)

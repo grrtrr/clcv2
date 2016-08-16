@@ -49,7 +49,7 @@ func main() {
 		exit.Errorf("Need a location argument (-l) if not using a network ID (%s)", flag.Arg(0))
 	} else if _, _, err := net.ParseCIDR(flag.Arg(0)); err == nil {
 		if network, err := client.GetNetworkIdByCIDR(flag.Arg(0), *location); err != nil {
-			exit.Errorf("Failed to resolve network %s: %s", flag.Arg(0), err)
+			exit.Errorf("failed to resolve network %s: %s", flag.Arg(0), err)
 		} else if network == nil {
 			exit.Errorf("No network of type %s was found in %s", flag.Arg(0), *location)
 		} else {
@@ -57,7 +57,7 @@ func main() {
 		}
 	} else {
 		if network, err := client.GetNetworkIdByName(flag.Arg(0), *location); err != nil {
-			exit.Errorf("Failed to resolve network name %q: %s", flag.Arg(0), err)
+			exit.Errorf("failed to resolve network name %q: %s", flag.Arg(0), err)
 		} else if network == nil {
 			exit.Errorf("No network named %q was found in %s", flag.Arg(0), *location)
 		} else {
@@ -68,7 +68,7 @@ func main() {
 	// Note: re-using the 'Get Network' call here. There seems to be no dedicated 'Get IP Address List' call.
 	details, err := client.GetNetworkDetails(*location, netw, *query)
 	if err != nil {
-		exit.Fatalf("Failed to query network details of %s: %s", netw, err)
+		exit.Fatalf("failed to query network details of %s: %s", netw, err)
 	}
 
 	if len(details.IpAddresses) == 0 {

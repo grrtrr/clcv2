@@ -32,7 +32,7 @@ func main() {
 	}
 
 	if err := client.DeleteSharedLoadBalancer(flag.Arg(0), *location); err != nil {
-		exit.Fatalf("Failed to delete load balancer: %s", err)
+		exit.Fatalf("failed to delete load balancer: %s", err)
 	}
 
 	fmt.Printf("Successfully deleted load balancer %s.\n", flag.Arg(0))

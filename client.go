@@ -176,7 +176,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 
 		jsonReq, err := json.Marshal(reqModel)
 		if err != nil {
-			return fmt.Errorf("Failed to encode request model %T %+v: %s", reqModel, reqModel, err)
+			return fmt.Errorf("failed to encode request model %T %+v: %s", reqModel, reqModel, err)
 		}
 		reqBody = bytes.NewBuffer(jsonReq)
 	}
@@ -262,7 +262,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 		var body []byte
 
 		if body, err = ioutil.ReadAll(res.Body); err != nil {
-			return fmt.Errorf("Failed to read error response %d body: %s", res.StatusCode, err)
+			return fmt.Errorf("failed to read error response %d body: %s", res.StatusCode, err)
 		}
 
 		// Currently 3 different types of response have been observed:

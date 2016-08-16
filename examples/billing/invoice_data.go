@@ -30,7 +30,7 @@ func main() {
 
 	id, err := client.GetInvoiceData(*invoiceYear, *invoiceMonth, *pricingAcct)
 	if err != nil {
-		exit.Fatalf("Failed to obtain invoice data: %s", err)
+		exit.Fatalf("failed to obtain invoice data: %s", err)
 	}
 
 	fmt.Printf("Details of invoice %q for %s (%s):\n", id.Id, id.PricingAccountAlias, id.CompanyName)

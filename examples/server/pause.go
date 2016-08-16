@@ -36,7 +36,7 @@ func main() {
 
 	statusId, err := client.PauseServer(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to pause server %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to pause server %s: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Request ID for pausing server: %s\n", statusId)

@@ -39,7 +39,7 @@ func main() {
 		exit.Errorf("Need a location argument (-l) if -g (%s) is not a UUID", *group)
 	} else {
 		if grp, err := client.GetGroupByName(*group, *location); err != nil {
-			exit.Errorf("Failed to resolve group name %q: %s", *group, err)
+			exit.Errorf("failed to resolve group name %q: %s", *group, err)
 		} else if grp == nil {
 			exit.Errorf("No group named %q was found in %s", *group, *location)
 		} else {
@@ -49,7 +49,7 @@ func main() {
 
 	err = client.ServerSetGroup(flag.Arg(0), *group)
 	if err != nil {
-		exit.Fatalf("Failed to change the parent group on %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to change the parent group on %q: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Successfully changed the parent group of %s to %s.\n", flag.Arg(0), *group)

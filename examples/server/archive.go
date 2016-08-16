@@ -32,7 +32,7 @@ func main() {
 
 	statusId, err := client.ArchiveServer(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to archive server %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to archive server %s: %s", flag.Arg(0), err)
 	}
 
 	fmt.Println("Request ID for archiving server:", statusId)

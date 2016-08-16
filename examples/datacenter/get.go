@@ -38,19 +38,19 @@ func main() {
 	/* Basic data center information */
 	ctr, err := client.GetDatacenter(flag.Arg(0), *links)
 	if err != nil {
-		exit.Fatalf("Failed to get datacenter information: %s", err)
+		exit.Fatalf("failed to get datacenter information: %s", err)
 	}
 	fmt.Printf("%s\n", ctr.Name)
 
 	/* Data centre compute limits */
 	compLimits, err := client.GetDatacenterComputeLimits(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to get %s compute limits: %s", ctr.Name, err)
+		exit.Fatalf("failed to get %s compute limits: %s", ctr.Name, err)
 	}
 	/* Maximum number of networks */
 	netLimits, err := client.GetDatacenterNetworkLimits(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to get %s network limits: %s", ctr.Name, err)
+		exit.Fatalf("failed to get %s network limits: %s", ctr.Name, err)
 	}
 
 	fmt.Printf("Limits: CPU: %d, Memory: %s, Storage: %s, Networks: %d\n",

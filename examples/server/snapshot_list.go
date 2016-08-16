@@ -32,7 +32,7 @@ func main() {
 
 	snapshot, err := client.GetServerSnapshot(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to query snapshots of %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to query snapshots of %s: %s", flag.Arg(0), err)
 	}
 
 	if snapshot == nil {

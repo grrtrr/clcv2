@@ -54,7 +54,7 @@ func main() {
 
 	reqId, err := client.AddPublicIPAddress(flag.Arg(0), &req)
 	if err != nil {
-		exit.Fatalf("Failed to add a public IP address to %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to add a public IP address to %q: %s", flag.Arg(0), err)
 	}
 
 	fmt.Println("Request ID for adding public IP:", reqId)

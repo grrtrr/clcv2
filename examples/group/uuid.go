@@ -34,7 +34,7 @@ func main() {
 
 	g, err := client.GetGroupByName(flag.Arg(0), *location)
 	if err != nil {
-		exit.Fatalf("Failed to look up %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to look up %s: %s", flag.Arg(0), err)
 	} else if g == nil {
 		exit.Fatalf("No such group %s", flag.Arg(0))
 	}

@@ -33,13 +33,13 @@ func main() {
 
 	server, err := client.GetServer(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to list details of server %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to list details of server %q: %s", flag.Arg(0), err)
 	}
 
 	// Get networks for the location the server resides in
 	networks, err := client.GetNetworks(server.LocationId)
 	if err != nil {
-		exit.Fatalf("Failed to list networks: %s", err)
+		exit.Fatalf("failed to list networks: %s", err)
 	}
 
 	var private_ips []string
@@ -82,7 +82,7 @@ func main() {
 	for _, ip_string := range private_ips {
 		n, err := clcv2.NetworkByIP(ip_string, networks)
 		if err != nil {
-			exit.Fatalf("Failed to identify network for %s: %s", ip_string, err)
+			exit.Fatalf("failed to identify network for %s: %s", ip_string, err)
 		} else if n == nil {
 			exit.Fatalf("No matching network found for %s in %s", ip_string, server.LocationId)
 		}

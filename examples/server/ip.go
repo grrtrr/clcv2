@@ -34,7 +34,7 @@ func main() {
 	for _, srv := range flag.Args() {
 		ips, err := client.GetServerIPs(srv)
 		if err != nil {
-			exit.Fatalf("Failed to list details of server %q: %s", srv, err)
+			exit.Fatalf("failed to list details of server %q: %s", srv, err)
 		}
 
 		fmt.Printf("%-20s %s\n", srv+":", strings.Join(ips, ", "))

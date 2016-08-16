@@ -56,7 +56,7 @@ func main() {
 		fmt.Printf("Resolving ID of Hardware Group %q ...\n", *hwGroup)
 
 		if group, err := client.GetGroupByName(*hwGroup, *location); err != nil {
-			exit.Errorf("Failed to resolve group name %q: %s", *hwGroup, err)
+			exit.Errorf("failed to resolve group name %q: %s", *hwGroup, err)
 		} else if group == nil {
 			exit.Errorf("No group named %q was found in %s", *hwGroup, *location)
 		} else {
@@ -74,7 +74,7 @@ func main() {
 			fmt.Printf("Resolving network id of %q ...\n", *net)
 
 			if netw, err := client.GetNetworkIdByName(*net, *location); err != nil {
-				exit.Errorf("Failed to resolve network name %q: %s", *net, err)
+				exit.Errorf("failed to resolve network name %q: %s", *net, err)
 			} else if netw == nil {
 				exit.Errorf("No network named %q was found in %s", *net, *location)
 			} else {
@@ -147,7 +147,7 @@ func main() {
 
 	name, status, err := client.CreateServer(&req)
 	if err != nil {
-		exit.Fatalf("Failed to create server: %s", err)
+		exit.Fatalf("failed to create server: %s", err)
 	}
 
 	fmt.Printf("New server name: %s\n", name)

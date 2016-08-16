@@ -31,7 +31,7 @@ func main() {
 
 	statusId, err := client.ServerStartMaintenance(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to enable maintenance mode on server %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to enable maintenance mode on server %s: %s", flag.Arg(0), err)
 	}
 
 	fmt.Println("Request ID for enabling maintenance mode:", statusId)

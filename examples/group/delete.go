@@ -41,7 +41,7 @@ func main() {
 	} else {
 		fmt.Printf("Resolving group UUID of %s in %s ...\n", flag.Arg(0), *location)
 		if grp, err := client.GetGroupByName(flag.Arg(0), *location); err != nil {
-			exit.Errorf("Failed to resolve group name %q: %s", flag.Arg(0), err)
+			exit.Errorf("failed to resolve group name %q: %s", flag.Arg(0), err)
 		} else if grp == nil {
 			exit.Errorf("No group named %q was found in %s", flag.Arg(0), *location)
 		} else {
@@ -51,7 +51,7 @@ func main() {
 
 	reqId, err := client.DeleteGroup(uuid)
 	if err != nil {
-		exit.Fatalf("Failed to delete hardware group: %s", err)
+		exit.Fatalf("failed to delete hardware group: %s", err)
 	}
 
 	fmt.Printf("Status ID for group deletion: %s\n", reqId)

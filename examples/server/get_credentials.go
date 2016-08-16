@@ -32,7 +32,7 @@ func main() {
 
 	credentials, err := client.GetServerCredentials(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to obtain the credentials of server %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to obtain the credentials of server %q: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Credentials for %s:\n", flag.Arg(0))

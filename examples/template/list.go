@@ -38,7 +38,7 @@ func main() {
 func showTemplates(client *clcv2.Client, region string) {
 	capa, err := client.GetDeploymentCapabilities(region)
 	if err != nil {
-		exit.Fatalf("Failed to query deployment capabilities of %s: %s", region, err)
+		exit.Fatalf("failed to query deployment capabilities of %s: %s", region, err)
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)

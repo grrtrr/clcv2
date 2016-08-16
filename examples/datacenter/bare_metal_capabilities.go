@@ -35,7 +35,7 @@ func main() {
 
 	capa, err := client.GetBareMetalCapabilities(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to query bare-metal capabilities of %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to query bare-metal capabilities of %s: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Datacenter %s:\n", flag.Arg(0))

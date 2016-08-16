@@ -37,7 +37,7 @@ func main() {
 
 	lb, err := client.CreateSharedLoadBalancer(flag.Arg(0), *desc, *status, *location)
 	if err != nil {
-		exit.Fatalf("Failed to create shared load balancer %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to create shared load balancer %q: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Created %s load balancer %s, %q with IP %s\n", *location, lb.ID, lb.Name, lb.IpAddress)

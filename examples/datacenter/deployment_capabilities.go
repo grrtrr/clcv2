@@ -35,7 +35,7 @@ func main() {
 
 	capa, err := client.GetDeploymentCapabilities(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to query deployment capabilities of %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to query deployment capabilities of %s: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Datacenter %s:\n", flag.Arg(0))

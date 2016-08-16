@@ -40,7 +40,7 @@ func main() {
 		exit.Errorf("Need a location argument (-l) if not using Group UUID (%s)", flag.Arg(0))
 	} else {
 		if grp, err := client.GetGroupByName(flag.Arg(0), *location); err != nil {
-			exit.Errorf("Failed to resolve group name %q: %s", flag.Arg(0), err)
+			exit.Errorf("failed to resolve group name %q: %s", flag.Arg(0), err)
 		} else if grp == nil {
 			exit.Errorf("No group named %q was found in %s", flag.Arg(0), *location)
 		} else {
@@ -49,7 +49,7 @@ func main() {
 	}
 
 	if err = client.GroupSetDescription(group, *newDesc); err != nil {
-		exit.Fatalf("Failed to change the description of %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to change the description of %q: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Successfully changed the description of %s to %q.\n", flag.Arg(0), *newDesc)

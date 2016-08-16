@@ -44,7 +44,7 @@ func main() {
 
 	if parentUUID == "" { /* resolve group name */
 		if group, err := client.GetGroupByName(*parentGroup, *location); err != nil {
-			exit.Errorf("Failed to resolve group name %q: %s", *parentGroup, err)
+			exit.Errorf("failed to resolve group name %q: %s", *parentGroup, err)
 		} else if group == nil {
 			exit.Errorf("No group named %q was found in %s", *parentGroup, *location)
 		} else {
@@ -54,7 +54,7 @@ func main() {
 
 	g, err := client.CreateGroup(flag.Arg(0), parentUUID, *desc, []clcv2.SimpleCustomField{})
 	if err != nil {
-		exit.Fatalf("Failed to create hardware group %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to create hardware group %q: %s", flag.Arg(0), err)
 	}
 
 	fmt.Println("New Group: ", g.Name)

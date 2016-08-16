@@ -33,7 +33,7 @@ func main() {
 
 	err = client.ServerSetDescription(flag.Arg(0), *description)
 	if err != nil {
-		exit.Fatalf("Failed to change the description on %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to change the description on %q: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Successfully changed the description on %s.\n", flag.Arg(0))

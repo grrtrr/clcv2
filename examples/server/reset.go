@@ -35,7 +35,7 @@ func main() {
 
 	statusId, err := client.ResetServer(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to reset server %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to reset server %s: %s", flag.Arg(0), err)
 	}
 
 	fmt.Println("Request ID for server reset:", statusId)

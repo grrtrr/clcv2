@@ -310,7 +310,7 @@ func (c *Client) CreateServer(req *CreateServerReq) (name, statusId string, err 
 
 	/* Note: the following call can take long, at least circa a minute. Use appropriate timeout. */
 	if server, err = c.GetServerByURI(link.Href); err != nil {
-		err = fmt.Errorf("Failed to query details of server %s: %s", name, err)
+		err = fmt.Errorf("failed to query details of server %s: %s", name, err)
 	}
 	name = server.Name
 	return

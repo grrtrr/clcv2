@@ -48,7 +48,7 @@ func main() {
 	} else {
 		fmt.Printf("Resolving group id of %q ...\n", flag.Arg(0))
 		if grp, err := client.GetGroupByName(flag.Arg(0), *location); err != nil {
-			exit.Errorf("Failed to resolve group name %q: %s", flag.Arg(0), err)
+			exit.Errorf("failed to resolve group name %q: %s", flag.Arg(0), err)
 		} else if grp == nil {
 			exit.Errorf("No group named %q was found in %s", flag.Arg(0), *location)
 		} else {
@@ -64,7 +64,7 @@ func main() {
 			fmt.Printf("Resolving network id of %q ...\n", *net)
 
 			if netw, err := client.GetNetworkIdByName(*net, *location); err != nil {
-				exit.Errorf("Failed to resolve network name %q: %s", *net, err)
+				exit.Errorf("failed to resolve network name %q: %s", *net, err)
 			} else if netw == nil {
 				exit.Errorf("No network named %q was found in %s", *net, *location)
 			} else {
@@ -84,7 +84,7 @@ func main() {
 
 	settings, err := client.SetGroupDefaults(group, &req)
 	if err != nil {
-		exit.Fatalf("Failed to set group defaults of %s: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to set group defaults of %s: %s", flag.Arg(0), err)
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)

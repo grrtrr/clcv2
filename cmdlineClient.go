@@ -161,7 +161,7 @@ func defaultCredentialsPath() string {
 	}
 	u, err := user.Current()
 	if err != nil {
-		panic(fmt.Errorf("Failed to look up current user: %s", err))
+		panic(fmt.Errorf("failed to look up current user: %s", err))
 	}
 	return path.Join(u.HomeDir, ".clc_credentials.json")
 }

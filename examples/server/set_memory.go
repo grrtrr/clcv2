@@ -33,7 +33,7 @@ func main() {
 
 	statusId, err := client.ServerSetMemory(flag.Arg(0), fmt.Sprint(*memory))
 	if err != nil {
-		exit.Fatalf("Failed to change the amount of Memory on %q: %s", flag.Arg(0), err)
+		exit.Fatalf("failed to change the amount of Memory on %q: %s", flag.Arg(0), err)
 	}
 
 	fmt.Printf("Status Id for changing the memory on %s: %s\n", flag.Arg(0), statusId)

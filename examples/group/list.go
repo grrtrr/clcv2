@@ -36,7 +36,7 @@ func main() {
 
 	rootNode, err := client.GetGroups(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("Failed to list hardware groups: %s", err)
+		exit.Fatalf("failed to list hardware groups: %s", err)
 	}
 
 	if *simple {
