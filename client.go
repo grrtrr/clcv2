@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	// CenturyLink Cloud API url
+	// CenturyLink Cloud main v2 API url
 	BaseURL = "https://api.ctl.io"
 
 	// Maximum number of retries per request.
@@ -31,7 +31,10 @@ const (
 )
 
 // GLOBAL VARIABLES
-var baseURL = BaseURL
+var (
+	// allow overriding of the %BaseURL default
+	baseURL = BaseURL
+)
 
 // Client wraps a http.Client, along with credentials and logging information.
 type Client struct {
@@ -118,7 +121,7 @@ func (c *Client) login() error {
 		return fmt.Errorf("invalid CLC credentials %q/%q", c.LoginReq.Username, c.LoginReq.Password)
 	}
 	c.LoginRes.BearerToken = ""
-	if err := c.getResponse("POST", "/v2/authentication/login", &c.LoginReq, &c.LoginRes); err != nil {
+	if err := c.getCLCResponse("POST", "/v2/authentication/login", &c.LoginReq, &c.LoginRes); err != nil {
 		return err
 	}
 	if c.credentialsChanged != nil {
@@ -150,14 +153,20 @@ func (c *Client) retryer(maxRetries int) rehttp.RetryFn {
 	})
 }
 
-// Perform a v2 API request
+// Perform a v2 main API request
 // @verb:     Http verb to use
 // @path:     relative to BaseURL (includes the 'v2' version).
-// @reqModel: request model to serialize, or nil.
+func (c *Client) getCLCResponse(verb, path string, reqModel, resModel interface{}) (err error) {
+	return c.getResponse(baseURL+path, verb, reqModel, resModel)
+}
+
+// getResponse performs a generic request
+// @url:  request URL
+// @verb: request verb// @reqModel: request model to serialize, or nil.
 // @resModel: result model to deserialize, must be a pointer to the expected result, or nil.
 // Evaluates the StatusCode of the BaseResponse (embedded) in @inModel and sets @err accordingly.
 // If @err == nil, fills in @resModel, else returns error.
-func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) (err error) {
+func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (err error) {
 	var reqBody io.Reader
 
 	if reqModel != nil {
@@ -181,7 +190,7 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 		}
 	}
 
-	req, err := http.NewRequest(verb, baseURL+path, reqBody)
+	req, err := http.NewRequest(verb, url, reqBody)
 	if err != nil {
 		return
 	}
@@ -238,7 +247,7 @@ func (c *Client) getResponse(verb, path string, reqModel, resModel interface{}) 
 			if g_debug && c.Log != nil {
 				log.Printf("re-authentication worked, retrying request ...")
 			}
-			if err = c.getResponse(verb, path, reqModel, resModel); err != nil {
+			if err = c.getResponse(url, verb, reqModel, resModel); err != nil {
 				return err
 			}
 			c.retryingLogin = false

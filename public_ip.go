@@ -171,7 +171,7 @@ func (c *Client) AddPublicIPAddress(serverId string, req *PublicIPAddress) (stat
 // @publicIp: The specific public IP to return details about.
 func (c *Client) GetPublicIPAddress(serverId, publicIp string) (res PublicIPAddress, err error) {
 	path := fmt.Sprintf("/v2/servers/%s/%s/publicIPAddresses/%s", c.AccountAlias, serverId, publicIp)
-	err = c.getResponse("GET", path, nil, &res)
+	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
 

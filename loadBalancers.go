@@ -82,7 +82,7 @@ type LoadBalancerNode struct {
 // @dc: location alias of data centre to query
 func (c *Client) GetSharedLoadBalancers(dc string) (lb []LoadBalancer, err error) {
 	path := fmt.Sprintf("/v2/sharedLoadBalancers/%s/%s", c.AccountAlias, dc)
-	err = c.getResponse("GET", path, nil, &lb)
+	err = c.getCLCResponse("GET", path, nil, &lb)
 	return
 }
 
@@ -93,7 +93,7 @@ func (c *Client) GetSharedLoadBalancers(dc string) (lb []LoadBalancer, err error
 // @dc:     location alias of the data centre in which to create the load balancer
 func (c *Client) CreateSharedLoadBalancer(name, desc, active, dc string) (lb LoadBalancer, err error) {
 	path := fmt.Sprintf("/v2/sharedLoadBalancers/%s/%s", c.AccountAlias, dc)
-	err = c.getResponse("POST", path, struct {
+	err = c.getCLCResponse("POST", path, struct {
 		Name        string `json:"name"`
 		Description string `json:"description"`
 		Status      string `json:"status"`
@@ -106,5 +106,5 @@ func (c *Client) CreateSharedLoadBalancer(name, desc, active, dc string) (lb Loa
 // @dc: location alias of the data centre the load balancer resides in
 func (c *Client) DeleteSharedLoadBalancer(id, dc string) error {
 	path := fmt.Sprintf("/v2/sharedLoadBalancers/%s/%s/%s", c.AccountAlias, dc, id)
-	return c.getResponse("DELETE", path, nil, nil)
+	return c.getCLCResponse("DELETE", path, nil, nil)
 }

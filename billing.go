@@ -95,7 +95,7 @@ func (c *Client) GetInvoiceData(year, month int, pricingAccount string) (res Inv
 	if pricingAccount != "" {
 		path += "?pricingAccount=" + pricingAccount
 	}
-	err = c.getResponse("GET", path, nil, &res)
+	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
 

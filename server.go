@@ -137,7 +137,7 @@ func (s ServerIPAddress) IsPublic() bool {
 // Query Server details by URI path.
 // @path: relative path of the server, as e.g. returned via 'self' link in CreateServer
 func (c *Client) GetServerByURI(path string) (res Server, err error) {
-	err = c.getResponse("GET", path, nil, &res)
+	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
 
@@ -347,7 +347,7 @@ type ImportOVF struct {
 // Get the list of available servers that can be imported.
 // @locationId: Data center location identifier
 func (c *Client) GetServerImports(locationId string) (res []ImportOVF, err error) {
-	err = c.getResponse("GET", fmt.Sprintf("/v2/vmImport/%s/%s/available", c.AccountAlias, locationId), nil, &res)
+	err = c.getCLCResponse("GET", fmt.Sprintf("/v2/vmImport/%s/%s/available", c.AccountAlias, locationId), nil, &res)
 	return
 }
 
@@ -366,7 +366,7 @@ type ServerCredentials struct {
 // Retrieve the administrator/root password on an existing server.
 // @serverId: ID of the server with the credentials to return.
 func (c *Client) GetServerCredentials(serverId string) (res ServerCredentials, err error) {
-	err = c.getResponse("GET", fmt.Sprintf("/v2/servers/%s/%s/credentials", c.AccountAlias, serverId), nil, &res)
+	err = c.getCLCResponse("GET", fmt.Sprintf("/v2/servers/%s/%s/credentials", c.AccountAlias, serverId), nil, &res)
 	return
 }
 
@@ -654,9 +654,9 @@ func (c *Client) changeNic(verb, path string, reqModel interface{}) (err error) 
 	var res ChangeNicResponse
 	var s ChangeNicStatus
 
-	if err = c.getResponse(verb, path, reqModel, &res); err == nil {
+	if err = c.getCLCResponse(verb, path, reqModel, &res); err == nil {
 		for start := time.Now(); s.Status != Succeeded; time.Sleep(change_nic_poll) {
-			if err = c.getResponse("GET", res.Uri, nil, &s); err != nil {
+			if err = c.getCLCResponse("GET", res.Uri, nil, &s); err != nil {
 				break
 			} else if s.Status == Failed {
 				return fmt.Errorf("request %s %s failed", verb, path)

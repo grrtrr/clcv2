@@ -19,5 +19,5 @@ func (c *Client) patchStatus(path string, ops ...*PatchOperation) (statusId stri
 
 // Like patchStatus(), but without statusId. For those patch operations that return '204 No Content'.
 func (c *Client) patch(path string, ops ...*PatchOperation) error {
-	return c.getResponse("PATCH", path, ops, nil)
+	return c.getCLCResponse("PATCH", path, ops, nil)
 }

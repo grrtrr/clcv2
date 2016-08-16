@@ -26,7 +26,7 @@ const (
 // @statusId: queue ID to query (contains location ID in the format of "wa1-<number>")
 func (c *Client) GetStatus(statusId string) (status QueueStatus, err error) {
 	path := fmt.Sprintf("/v2/operations/%s/status/%s", c.AccountAlias, statusId)
-	err = c.getResponse("GET", path, nil, &struct{ Status *QueueStatus }{&status})
+	err = c.getCLCResponse("GET", path, nil, &struct{ Status *QueueStatus }{&status})
 	return
 }
 
@@ -80,12 +80,12 @@ type StatusLink struct {
 	Href string
 }
 
-// Like getResponse, but extract the Status Id from the Links array contained in the response.
+// Like getCLCResponse, but extract the Status Id from the Links array contained in the response.
 // Accordingly, since only the status Id is returned, this function does not take a @resModel.
 func (c *Client) getStatus(verb, path string, reqModel interface{}) (statusId string, err error) {
 	var sl StatusLink
 
-	if err = c.getResponse(verb, path, reqModel, &sl); err == nil {
+	if err = c.getCLCResponse(verb, path, reqModel, &sl); err == nil {
 		if sl.Rel != "status" {
 			err = fmt.Errorf("Link information Rel-type not set to 'status' in %+v", sl)
 		} else {
@@ -114,13 +114,13 @@ type StatusResponse struct {
 }
 
 // Run an Http request and evaluate the returned %StatusResponse, return links
-// @verb, @path, @reqModel: as in getResponse()
+// @verb, @path, @reqModel: as in getCLCResponse()
 // @useArray:               whether to expect a singleton StatusResponse, or an array with one such element
 func (c *Client) getStatusResponse(verb, path string, useArray bool, reqModel interface{}) (res StatusResponse, err error) {
 	if useArray {
 		var status []StatusResponse
 
-		if err = c.getResponse(verb, path, reqModel, &status); err != nil {
+		if err = c.getCLCResponse(verb, path, reqModel, &status); err != nil {
 			return
 		} else if len(status) == 0 {
 			err = fmt.Errorf("empty status response from server")
@@ -130,7 +130,7 @@ func (c *Client) getStatusResponse(verb, path string, useArray bool, reqModel in
 			res = status[0]
 		}
 	} else {
-		err = c.getResponse(verb, path, reqModel, &res)
+		err = c.getCLCResponse(verb, path, reqModel, &res)
 	}
 
 	if err == nil {

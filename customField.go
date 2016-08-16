@@ -41,7 +41,7 @@ type AccountCustomField struct {
 
 // Retrieve the custom field(s) defined for a given account.
 func (c *Client) GetCustomFields() (res []AccountCustomField, err error) {
-	err = c.getResponse("GET", fmt.Sprintf("/v2/accounts/%s/customFields", c.AccountAlias), nil, &res)
+	err = c.getCLCResponse("GET", fmt.Sprintf("/v2/accounts/%s/customFields", c.AccountAlias), nil, &res)
 	return
 }
 

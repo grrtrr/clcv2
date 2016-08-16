@@ -40,7 +40,7 @@ type Network struct {
 // Get the list of networks available for a given account in a given data center.
 // @location:  The Network's home datacenter alias.
 func (c *Client) GetNetworks(location string) (nets []Network, err error) {
-	err = c.getResponse("GET", fmt.Sprintf("/v2-experimental/networks/%s/%s", c.AccountAlias, location), nil, &nets)
+	err = c.getCLCResponse("GET", fmt.Sprintf("/v2-experimental/networks/%s/%s", c.AccountAlias, location), nil, &nets)
 	return
 }
 
@@ -120,7 +120,7 @@ type NetworkDetails struct {
 //              - "all"     (returns details of the network as well as information about all IP addresses).
 func (c *Client) GetNetworkDetails(datacentre, network, ipQuery string) (det NetworkDetails, err error) {
 	path := fmt.Sprintf("/v2-experimental/networks/%s/%s/%s?ipAddresses=%s", c.AccountAlias, datacentre, network, ipQuery)
-	err = c.getResponse("GET", path, nil, &det)
+	err = c.getCLCResponse("GET", path, nil, &det)
 	return
 }
 
@@ -182,7 +182,7 @@ func (c *Client) GetNetworkDetailsByIp(ip, location string) (iad *IpAddressDetai
 // @description: Description of VLAN, a free text field that defaults to the VLAN number plus network address.
 func (c *Client) UpdateNetwork(datacentre, network, name, description string) error {
 	path := fmt.Sprintf("/v2-experimental/networks/%s/%s/%s", c.AccountAlias, datacentre, network)
-	return c.getResponse("PUT", path, &struct {
+	return c.getCLCResponse("PUT", path, &struct {
 		Name        string `json:"name"`
 		Description string `json:"description"`
 	}{name, description}, nil)

@@ -18,7 +18,7 @@ type DataCenter struct {
 
 // Get the list of data centers that a given account has access to.
 func (c *Client) GetLocations() (loc []DataCenter, err error) {
-	err = c.getResponse("GET", "/v2/datacenters/"+c.AccountAlias, nil, &loc)
+	err = c.getCLCResponse("GET", "/v2/datacenters/"+c.AccountAlias, nil, &loc)
 	return
 }
 
@@ -27,7 +27,7 @@ func (c *Client) GetLocations() (loc []DataCenter, err error) {
 // @groupLinks: whether to include 'group' type of links
 func (c *Client) GetDatacenter(location string, groupLinks bool) (res DataCenter, err error) {
 	path := fmt.Sprintf("/v2/datacenters/%s/%s?groupLinks=%t", c.AccountAlias, location, groupLinks)
-	err = c.getResponse("GET", path, nil, &res)
+	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
 
@@ -47,7 +47,7 @@ type ComputeLimits struct {
 func (c *Client) GetDatacenterComputeLimits(location string) (*ComputeLimits, error) {
 	path := fmt.Sprintf("/v2/datacenters/%s/%s/computeLimits", c.AccountAlias, location)
 	res := new(ComputeLimits)
-	return res, c.getResponse("GET", path, nil, res)
+	return res, c.getCLCResponse("GET", path, nil, res)
 }
 
 // NetLimits represents the maximum number of networks allowed in a data centre.
@@ -59,7 +59,7 @@ type NetLimits struct {
 func (c *Client) GetDatacenterNetworkLimits(location string) (*NetLimits, error) {
 	path := fmt.Sprintf("/v2/datacenters/%s/%s/networkLimits", c.AccountAlias, location)
 	res := new(NetLimits)
-	return res, c.getResponse("GET", path, nil, res)
+	return res, c.getCLCResponse("GET", path, nil, res)
 }
 
 /*
@@ -136,7 +136,7 @@ type DeploymentCapabilities struct {
 // @location:   location alias of data centre to query
 func (c *Client) GetDeploymentCapabilities(location string) (res DeploymentCapabilities, err error) {
 	path := fmt.Sprintf("/v2/datacenters/%s/%s/deploymentCapabilities", c.AccountAlias, location)
-	err = c.getResponse("GET", path, nil, &res)
+	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
 
@@ -205,6 +205,6 @@ type BareMetalCapabilities struct {
 // @location:   location alias of data centre to query
 func (c *Client) GetBareMetalCapabilities(location string) (res BareMetalCapabilities, err error) {
 	path := fmt.Sprintf("/v2/datacenters/%s/%s/bareMetalCapabilities", c.AccountAlias, location)
-	err = c.getResponse("GET", path, nil, &res)
+	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }

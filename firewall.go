@@ -47,7 +47,7 @@ type FWPolicy struct {
 // @policyId: ID of the firewall policy to display.
 func (c *Client) GetFWPolicy(location, policyId string) (res FWPolicy, err error) {
 	path := fmt.Sprintf("/v2-experimental/firewallPolicies/%s/%s/%s", c.AccountAlias, location, policyId)
-	err = c.getResponse("GET", path, nil, &res)
+	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
 
@@ -61,6 +61,6 @@ func (c *Client) GetFWPolicyList(location, dstAccount string) (res []FWPolicy, e
 	if dstAccount != "" {
 		path += fmt.Sprintf("?destinationAccount=%s", dstAccount)
 	}
-	err = c.getResponse("GET", path, nil, &res)
+	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
