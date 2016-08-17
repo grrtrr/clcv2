@@ -1,6 +1,8 @@
-package main /*
+/*
  * Print details of a single Policy given its policy ID.
  */
+package main
+
 import (
 	"flag"
 	"fmt"

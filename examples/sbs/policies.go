@@ -1,6 +1,8 @@
-package main /*
+/*
  * Print the list of SBS policies associated with the user's account.
  */
+package main
+
 import (
 	"flag"
 	"fmt"

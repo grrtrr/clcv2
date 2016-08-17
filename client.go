@@ -256,24 +256,22 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 		return errors.New("authentication credentials are stale or invalid.")
 	}
 
-	/* Remaining error cases: */
-	if res.ContentLength > 0 {
-		var errMsg string
-		var body []byte
-
-		if body, err = ioutil.ReadAll(res.Body); err != nil {
-			return fmt.Errorf("failed to read error response %d body: %s", res.StatusCode, err)
-		}
-
-		// Currently 3 different types of response have been observed:
+	// Remaining error cases: res.ContentLength is not reliable - at least in the SBS case,
+	// it was not set, even though there was a non-empty body. Hence use len(body) instead.
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil && res.ContentLength > 0 {
+		return fmt.Errorf("failed to read error response %d body: %s", res.StatusCode, err)
+	} else if len(body) > 0 {
+		//
+		// Currently 4 different types of response have been observed:
 		// 1) bare JSON string
 		// 2) struct { message: "string" }
 		// 3) struct { message: "string", "modelState": map[string]interface{} }
 		//    E.g.:  {"":["The server must be in Active or Archived state."]}
 		//	      "modelState":{"body.networkId":["The network vlan_1249_10.81.149 is not valid."]}
 		//	      "modelState":{"":["The server must be in Active or Archived state."]}
-		//
-		errMsg = string(body)
+		// 4) struct { error: "string" }, e.g. { "error":"Missing required parameter: serverId"}
+		errMsg := string(body)
 		if ct, _, _ := mime.ParseMediaType(res.Header.Get("Content-Type")); ct == "application/json" {
 			/* Code thanks to & inspired by clc-go-cli */
 			var payload map[string]interface{}
@@ -290,6 +288,10 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 			} else if errors, ok := payload["message"]; ok {
 				if msg, ok := errors.(string); ok {
 					errMsg = msg
+				}
+			} else if error, ok := payload["error"]; ok {
+				if msg, ok := error.(string); ok {
+					errMsg = fmt.Sprintf("Error - %s", msg)
 				}
 			}
 		}
