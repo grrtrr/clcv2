@@ -38,5 +38,4 @@ func main() {
 			fmt.Sprint(p.RetentionDays), strings.Join(p.Paths, ", ")})
 	}
 	table.Render()
-
 }

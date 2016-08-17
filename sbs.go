@@ -1,6 +1,9 @@
 package clcv2
 
-import "fmt"
+import (
+	"fmt"
+	"net/url"
+)
 
 /*
  * Simple Backup API
@@ -38,6 +41,13 @@ func (c *Client) SBSgetAllRegions() (res []SBSregion, err error) {
 // SBSgetDatacenters returns a list of CLC data centres.
 func (c *Client) SBSgetDatacenters() (res []string, err error) {
 	err = c.getSBSResponse("GET", "datacenters", nil, &res)
+	return
+}
+
+// SBSgetServersByDatacenter returns a list of servers associated with data center @dc.
+func (c *Client) SBSgetServersByDatacenter(dc string) (res []string, err error) {
+	var u = url.URL{Path: fmt.Sprintf("datacenters/%s/servers", dc)}
+	err = c.getSBSResponse("GET", u.EscapedPath(), nil, &res)
 	return
 }
 
@@ -157,7 +167,7 @@ type SBSServerPolicy struct {
 // @server: server name (mandatory parameter)
 // @status: status of the backup policy, one of 'ACTIVE', 'INACTIVE', 'PROVISIONING', 'ERROR', 'DELETED'
 func (c *Client) SBSgetServerPolicy(server, status string) (res []SBSServerPolicy, err error) {
-	var path = "serverPolicyDetails?withStatus=ACTIVE"
+	var path = fmt.Sprintf("serverPolicyDetails?serverId=%s", server)
 
 	err = c.getSBSResponse("GET", path, nil, &res)
 	return
