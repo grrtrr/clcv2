@@ -190,12 +190,8 @@ func (c *Client) SBSgetServerPolicies(acPolicyId string) ([]SBSServerPolicy, err
 	return result.Results, err
 }
 
-// SBSgetServerPolicy returns SBS policy details associated with a single server.
-// @server: server name (mandatory parameter)
-// @status: status of the backup policy, one of 'ACTIVE', 'INACTIVE', 'PROVISIONING', 'ERROR', 'DELETED'
-func (c *Client) SBSgetServerPolicy(server, status string) (res []SBSServerPolicy, err error) {
-	var path = fmt.Sprintf("serverPolicyDetails?serverId=%s", server)
-
-	err = c.getSBSResponse("GET", path, nil, &res)
+// SBSgetServerPolicy returns SBS policy details associated with a single @server.
+func (c *Client) SBSgetServerPolicy(server string) (res []SBSServerPolicy, err error) {
+	err = c.getSBSResponse("GET", fmt.Sprintf("serverPolicyDetails?serverId=%s", server), nil, &res)
 	return
 }
