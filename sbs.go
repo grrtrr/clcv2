@@ -87,9 +87,6 @@ type SBSAccountPolicy struct {
 	Status string
 }
 
-// SBSgetEligiblePolicies returns the list of Account Policies eligible for the specified server
-//func (c *Client)  SBSgetEligiblePolicies(serverId string) (res SBSpolicy, err error) {
-
 // SBSgetPolicies returns the list of SBS backup policies associated with an account.
 func (c *Client) SBSgetPolicies() ([]SBSAccountPolicy, error) {
 	// Note: we do not paging for this API, so just wrap it in anonymous struct.
@@ -97,6 +94,15 @@ func (c *Client) SBSgetPolicies() ([]SBSAccountPolicy, error) {
 		Results []SBSAccountPolicy
 	}
 	err := c.getSBSResponse("GET", "accountPolicies", nil, &result)
+	return result.Results, err
+}
+
+// SBSgetEligiblePolicies returns the list of Account Policies eligible for the specified @server.
+func (c *Client) SBSgetEligiblePolicies(server string) ([]SBSAccountPolicy, error) {
+	var result struct {
+		Results []SBSAccountPolicy
+	}
+	err := c.getSBSResponse("GET", fmt.Sprintf("accountPolicies/servers/%s", server), nil, &result)
 	return result.Results, err
 }
 
