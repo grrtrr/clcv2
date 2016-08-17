@@ -19,6 +19,9 @@ import (
 )
 
 func main() {
+	// By default, the scripts outputs a space-separated list of servers on a single line (for scripting).
+	var pretty = flag.Bool("pretty", false, "Pretty-print the server list (uses tabular output)")
+
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  '<data centre name>'\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
@@ -43,16 +46,26 @@ func main() {
 	if len(servers) == 0 {
 		fmt.Printf("No servers found in %s.\n", flag.Arg(0))
 	} else {
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetAutoFormatHeaders(false)
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetAutoWrapText(false)
-		table.SetHeader([]string{"Server Name"})
 
 		// The query returns servers in lower-case format. Upper-case them for consistency with CLC naming.
-		for _, server := range servers {
-			table.Append([]string{strings.ToUpper(server)})
+		for i := range servers {
+			servers[i] = strings.ToUpper(servers[i])
 		}
-		table.Render()
+
+		if *pretty {
+			table := tablewriter.NewWriter(os.Stdout)
+			table.SetAutoFormatHeaders(false)
+			table.SetAlignment(tablewriter.ALIGN_LEFT)
+			table.SetAutoWrapText(false)
+			table.SetHeader([]string{"Server Name"})
+
+			for _, server := range servers {
+				table.Append([]string{server})
+			}
+			table.Render()
+		} else {
+			fmt.Println(strings.Join(servers, " "))
+		}
 	}
+
 }

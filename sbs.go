@@ -57,46 +57,28 @@ func (c *Client) SBSgetOsTypes() (res []string, err error) {
 	return
 }
 
-// SBSpolicy describes a single SBS policy.
-type SBSpolicy struct {
-	// The total number of Policies associated with the Account
-	TotalCount int
-
-	// The maximum number of results requested
-	Limit int
-
-	// The next position in the list of results for a subsequent call
-	NextOffset int
-
-	// The starting position in the list of results
-	Offset int
-
-	// An array of the Policies associated with the Account
-	Results []SBSAccountPolicy
-}
-
 // SBSAccountPolicy contains the actual SBS account policy information.
 type SBSAccountPolicy struct {
-	// The name of the Policy
-	Name string
+	// The backup frequency of the Policy (= duration between backups)
+	BackupIntervalHours int
 
 	// The account alias that the Policy belongs to
 	ClcAccountAlias string
 
-	// The unique Id associated with this Policy
-	PolicyID string
+	// A list of the directories that the Policy excludes from backup
+	ExcludedDirectoryPaths []string
+
+	// The name of the Policy
+	Name string
 
 	// The OS Type - 'Linux' or 'Windows'
 	OsType string
 
-	// The backup frequency of the Policy (= duration between backups)
-	BackupIntervalHours int
-
 	// A list of the directories that the Policy includes in each backup
 	Paths []string
 
-	// A list of the directories that the Policy excludes from backup
-	ExcludedDirectoryPaths []string
+	// The unique Id associated with this Policy
+	PolicyID string
 
 	// The number of days backup data will be retained
 	RetentionDays int
@@ -105,11 +87,17 @@ type SBSAccountPolicy struct {
 	Status string
 }
 
+// SBSgetEligiblePolicies returns the list of Account Policies eligible for the specified server
+//func (c *Client)  SBSgetEligiblePolicies(serverId string) (res SBSpolicy, err error) {
+
 // SBSgetPolicies returns the list of SBS backup policies associated with an account.
-// NOTE: currently ignoring the query parameters, which seem to be more useful for JavaScript rendering.
-func (c *Client) SBSgetPolicies() (res SBSpolicy, err error) {
-	err = c.getSBSResponse("GET", "accountPolicies", nil, &res)
-	return
+func (c *Client) SBSgetPolicies() ([]SBSAccountPolicy, error) {
+	// Note: we do not paging for this API, so just wrap it in anonymous struct.
+	var result struct {
+		Results []SBSAccountPolicy
+	}
+	err := c.getSBSResponse("GET", "accountPolicies", nil, &result)
+	return result.Results, err
 }
 
 // SBSgetPolicy returns the single Policy associated with @policyID, or an error.
@@ -118,8 +106,8 @@ func (c *Client) SBSgetPolicy(policyID string) (res SBSAccountPolicy, err error)
 	return
 }
 
-// SBSServerPolicy represents the policy associated with a server
-type SBSServerPolicy struct {
+// SBSSingleServerPolicy represents the policy associated with a server
+type SBSSingleServerPolicy struct {
 	// The name of the Policy
 	Name string
 
@@ -161,6 +149,45 @@ type SBSServerPolicy struct {
 
 	// Not currently used
 	BackupProvider string
+}
+
+// SBSServerPolicy represents a single SBS server policy, associated to an Account Policy
+type SBSServerPolicy struct {
+	// The Server Policy ID
+	ID string `json:"serverPolicyId"`
+
+	// Unique Id of the Account Policy
+	AccountPolicyID string
+
+	// Unique server name
+	ServerID string
+
+	// Region where backups are stored
+	StorageRegion string
+
+	// The account alias that the Policy belongs to
+	ClcAccountAlias string
+
+	// The status of the backup Policy. 'ACTIVE', 'INACTIVE', 'PROVISIONING', 'ERROR', 'DELETED'
+	Status string
+
+	// Date all data retention will elapse; unsubscribedDate+retentionDays
+	ExpirationDate int
+
+	// Date policy was inactivated
+	UnsubscribedDate int
+
+	// Not currently used
+	storageAccountID string
+}
+
+// SBSgetServerPolicies returns a list of Server Policies associated to an Account Policy
+func (c *Client) SBSgetServerPolicies(acPolicyId string) ([]SBSServerPolicy, error) {
+	var result struct {
+		Results []SBSServerPolicy
+	}
+	err := c.getSBSResponse("GET", fmt.Sprintf("accountPolicies/%s/serverPolicies", acPolicyId), nil, &result)
+	return result.Results, err
 }
 
 // SBSgetServerPolicy returns SBS policy details associated with a single server.

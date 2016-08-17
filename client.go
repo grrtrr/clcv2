@@ -256,8 +256,8 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 		return errors.New("authentication credentials are stale or invalid.")
 	}
 
-	// Remaining error cases: res.ContentLength is not reliable - at least in the SBS case,
-	// it was not set, even though there was a non-empty body. Hence use len(body) instead.
+	// Remaining error cases: res.ContentLength is not reliable - in the SBS case, it used
+	// Transfer-Encoding "chunked", without a Content-Length.
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil && res.ContentLength > 0 {
 		return fmt.Errorf("failed to read error response %d body: %s", res.StatusCode, err)
