@@ -3,6 +3,7 @@ package clcv2
 import (
 	"fmt"
 	"net/url"
+	"time"
 )
 
 /*
@@ -196,8 +197,96 @@ func (c *Client) SBSgetServerPolicies(acPolicyId string) ([]SBSServerPolicy, err
 	return result.Results, err
 }
 
-// SBSgetServerPolicy returns SBS policy details associated with a single @server.
-func (c *Client) SBSgetServerPolicy(server string) (res []SBSServerPolicy, err error) {
+// SBSgetServerPolicyDetails returns SBS policy details associated with a single @server.
+func (c *Client) SBSgetServerPolicyDetails(server string) (res []SBSServerPolicy, err error) {
 	err = c.getSBSResponse("GET", fmt.Sprintf("serverPolicyDetails?serverId=%s", server), nil, &res)
 	return
+}
+
+// SBSgetServerPolicy list SBS server policy details of the given @serverPolicyId
+func (c *Client) SBSgetServerPolicy(serverPolicyId string) (*SBSServerPolicy, error) {
+	acPolicies, err := c.SBSgetPolicies()
+	if err != nil {
+		return nil, err
+	}
+	for _, acPolicy := range acPolicies {
+		srvPolicies, err := c.SBSgetServerPolicies(acPolicy.PolicyID)
+		if err != nil {
+			return nil, err
+		}
+		for _, srvPolicy := range srvPolicies {
+			if srvPolicy.ID == serverPolicyId {
+				return &srvPolicy, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("no Server Policy %q found for this account", serverPolicyId)
+}
+
+// SBSRestorePoint captures the details of a single restore point
+type SBSRestorePoint struct {
+	// Unique restore point identifier
+	RestorePointID string
+
+	// Unique policy identifier
+	PolicyId string
+
+	// Days of retention applied to the restore point
+	RetentionDays int
+
+	// Timestamp of backup completion
+	BackupFinishedDate string
+
+	// Timestamp or retention expiration
+	RetentionExpiredDate string
+
+	// 'SUCCESS', 'PARTIAL_SUCCESS', 'FAILED', or 'CANCELLED'
+	RestorePointCreationStatus string
+
+	// Number of backup files transferred to storage
+	FilesTransferredToStorage int
+
+	// Total bytes of backup data sent to storage
+	BytesTransferredToStorage int
+
+	// Number of backup files that failed transfer to storage
+	FilesFailedTransferToStorage int
+
+	// Total bytes of backup data that failed transfer to storage
+	BytesFailedToTransfer int
+
+	// Number of unchanged files not requiring retransfer to storage
+	UnchangedFilesNotTransferred int
+
+	// Total bytes of unchanged data not requiring retransfer to storage
+	UnchangedBytesInStorage int
+
+	// Number of files removed from local disk
+	FilesRemovedFromDisk int
+
+	// Total bytes of data removed from local disk
+	BytesInStorageForItemsRemoved int
+
+	// Number of files currently in storage for the restore point
+	NumberOfProtectedFiles int
+
+	// Timestamp of backup start
+	BackupStartedDate string
+}
+
+// SBSgetServerPolicyDetails returns SBS restore point details for a given Account and Server Policy.
+// @acPolicy:  account policy ID
+// @srvPolicy: server policy ID (it derives from @acPolicy, hence I don't understand why @acPolicy is used)
+// @start:     start time (date) of the backup to list
+// @end:       end time (date) of the backup to list
+func (c *Client) SBSgetRestorePointDetails(acPolicy, srvPolicy string, start, end time.Time) ([]SBSRestorePoint, error) {
+	var path = fmt.Sprintf("accountPolicies/%s/serverPolicies/%s/restorePointDetails?"+
+		"backupFinishedStartDate=%s&backupFinishedEndDate=%s",
+		acPolicy, srvPolicy, start.Format("2006-01-02"), end.Format("2006-01-02"))
+	var result struct {
+		Results []SBSRestorePoint
+	}
+
+	err := c.getSBSResponse("GET", path, nil, &result)
+	return result.Results, err
 }
