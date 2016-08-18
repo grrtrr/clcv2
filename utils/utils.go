@@ -1,20 +1,20 @@
 package utils
 
 import (
-	"github.com/olekukonko/tablewriter"
+	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"time"
-	"fmt"
-	"os"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 /* CLC Server Syntax. FIXME: possibly subject to change without notice. */
-var serverRegexp = regexp.MustCompile(`(^[A-Z]{2}\d)[A-Z0-9-]{4,}$`)
+var serverRegexp = regexp.MustCompile(`(?i)(^[A-Z]{2}\d)[A-Z0-9-]{4,}$`)
 
 /* Parse time zone offset(supported formats: -07:00:00, -7:00, -700, -0700, +00:00, 100) */
 var tzRegexp = regexp.MustCompile(`^\s*([+-]?)(\d{1,2}):?(\d{2})(:?(\d{2}))?\s*$`)
-
 
 // Return true if @s looks like a CLC server name
 func LooksLikeServerName(s string) bool {
@@ -40,7 +40,7 @@ func ParseTimeZoneOffset(o string) (d time.Duration, err error) {
 		} else {
 			s += fmt.Sprintf("%ss", m[5])
 		}
-		d, err = time. ParseDuration(s)
+		d, err = time.ParseDuration(s)
 	}
 	return
 }
@@ -69,10 +69,10 @@ func PrintStruct(in interface{}) {
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAutoWrapText(false)
 
-	table.SetHeader([]string{ t.Name(), "Type", "Value" } )
+	table.SetHeader([]string{t.Name(), "Type", "Value"})
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
-		table.Append([]string{ f.Name, f.Type.Name(), fmt.Sprintf("%v", v.Field(i)) })
+		table.Append([]string{f.Name, f.Type.Name(), fmt.Sprintf("%v", v.Field(i))})
 	}
 	table.Render()
 }

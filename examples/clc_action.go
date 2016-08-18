@@ -122,8 +122,6 @@ func main() {
 		if _, err := hex.DecodeString(where); err == nil {
 			/* If the first argument decodes as a hex value, assume it is a Hardware Group UUID */
 		} else if utils.LooksLikeServerName(where) { /* Starts with a location identifier and is not hex ... */
-			handlingServer = true
-		} else if utils.LooksLikeServerName(strings.ToUpper(where)) { /* Accept lower-case server names as well */
 			where = strings.ToUpper(where)
 			handlingServer = true
 		} else if *location != "" && where != "" {

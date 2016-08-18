@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/clcv2/utils"
 	"github.com/grrtrr/exit"
 	"github.com/kr/pretty"
 )
@@ -23,19 +24,20 @@ const (
 func main() {
 	var startTime = time.Now().AddDate(0, 0, -maxDateRange)
 	var endTime time.Time
-	var start = flag.String("start", startTime.Format("2006-01-02"), "Start date of the backup")
-	var end = flag.String("end", "", "End date of the backup")
+	var start = flag.String("start", startTime.Format("2006-01-02"), "Start date of the backup (format YYYY-MM-DD)")
+	var end = flag.String("end", "", "End date of the backup (format YYYY-MM-DD)")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s [options]  <account-policy-ID> <server-policy-ID\n", path.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "usage: %s [options]  <server-policy-ID\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 
 	flag.Parse()
-	if flag.NArg() != 2 {
+	if flag.NArg() != 1 {
 		flag.Usage()
 		os.Exit(0)
 	}
-
+	fmt.Println(flag.Arg(0), utils.LooksLikeServerName(flag.Arg(0)))
+	return
 	// Date range sanity checks
 	startTime, err := time.Parse("2006-01-02", *start)
 	if err != nil {
@@ -57,15 +59,21 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	restorePoints, err := client.SBSgetRestorePointDetails(flag.Arg(0), flag.Arg(1), startTime, endTime)
+	// Look up the Account Policy ID associated with the Server Policy ID
+	p, err := client.SBSgetServerPolicy(flag.Arg(0))
 	if err != nil {
-		exit.Fatalf("failed to list SBS restore point details found for server policy %s: %s", flag.Arg(1), err)
+		exit.Fatalf("failed to look up Account Policy of %s: %s.", flag.Arg(0), err)
+	}
+
+	restorePoints, err := client.SBSgetRestorePointDetails(flag.Arg(0), p.AccountPolicyID, startTime, endTime)
+	if err != nil {
+		exit.Fatalf("failed to list SBS restore point details found for server policy %s: %s", flag.Arg(0), err)
 
 	}
 
 	if len(restorePoints) == 0 {
 		fmt.Printf("No restore point details found found for Server Policy %s between %s ... %s.\n",
-			flag.Arg(1), startTime.Format("Mon, 2 Jan 2006"), endTime.Format("Mon, 2 Jan 2006"))
+			flag.Arg(0), startTime.Format("Mon, 2 Jan 2006"), endTime.Format("Mon, 2 Jan 2006"))
 	} else {
 		pretty.Println(restorePoints)
 		/*
