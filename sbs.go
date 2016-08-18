@@ -201,6 +201,16 @@ func (c *Client) SBScreateServerPolicy(acPolicyID, server, region string) (res S
 	return
 }
 
+// SBSdeleteServerPolicy deletes the Server Policy specified by @srvPolicyID
+func (c *Client) SBSdeleteServerPolicy(srvPolicyID string) error {
+	p, err := c.SBSgetServerPolicy(srvPolicyID)
+	if err != nil {
+		return err
+	}
+	path := fmt.Sprintf("accountPolicies/%s/serverPolicies/%s", p.AccountPolicyID, p.ID)
+	return c.getSBSResponse("DELETE", path, nil, nil)
+}
+
 // SBSgetServerPolicies returns a list of Server Policies associated to an Account Policy
 func (c *Client) SBSgetServerPolicies(acPolicyId string) ([]SBSServerPolicy, error) {
 	var result struct {
@@ -233,7 +243,7 @@ func (c *Client) SBSgetServerPolicy(serverPolicyId string) (*SBSServerPolicy, er
 			}
 		}
 	}
-	return nil, fmt.Errorf("no Server Policy %q found for this account", serverPolicyId)
+	return nil, fmt.Errorf("Server Policy %q not found for this account", serverPolicyId)
 }
 
 // SBSpatchServerPolicyStatus sets the status of the specified Server Policy to @newValue.
