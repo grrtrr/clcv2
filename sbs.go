@@ -243,7 +243,7 @@ func (c *Client) SBSgetServerPolicy(serverPolicyId string) (*SBSServerPolicy, er
 			}
 		}
 	}
-	return nil, fmt.Errorf("Server Policy %q not found for this account", serverPolicyId)
+	return nil, fmt.Errorf("Server Policy %q not found for %s account", serverPolicyId, c.AccountAlias)
 }
 
 // SBSpatchServerPolicyStatus sets the status of the specified Server Policy to @newValue.
