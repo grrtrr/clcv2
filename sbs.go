@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/url"
 	"time"
+
+	"github.com/kr/pretty"
 )
 
 /*
@@ -188,6 +190,17 @@ type SBSServerPolicy struct {
 	storageAccountID string
 }
 
+// SBScreateServerPolicy creates a new Server Policy for the given @server, Account Policy ID, and @region.
+func (c *Client) SBScreateServerPolicy(acPolicyID, server, region string) (res SBSServerPolicy, err error) {
+	err = c.getSBSResponse("POST", fmt.Sprintf("accountPolicies/%s/serverPolicies", acPolicyID),
+		struct {
+			Account string `json:"clcAccountAlias"`
+			Server  string `json:"serverId"`
+			Region  string `json:"storageRegion"`
+		}{c.AccountAlias, server, region}, &res)
+	return
+}
+
 // SBSgetServerPolicies returns a list of Server Policies associated to an Account Policy
 func (c *Client) SBSgetServerPolicies(acPolicyId string) ([]SBSServerPolicy, error) {
 	var result struct {
@@ -221,6 +234,27 @@ func (c *Client) SBSgetServerPolicy(serverPolicyId string) (*SBSServerPolicy, er
 		}
 	}
 	return nil, fmt.Errorf("no Server Policy %q found for this account", serverPolicyId)
+}
+
+// SBSpatchServerPolicyStatus sets the status of the specified Server Policy to @newValue.
+func (c *Client) SBSpatchServerPolicyStatus(srvPolicyID, newValue string) (p *SBSServerPolicy, err error) {
+	p, err = c.SBSgetServerPolicy(srvPolicyID)
+	if err != nil {
+		return
+	}
+	pretty.Println(*p)
+
+	err = c.getCLCResponse("PATCH",
+		fmt.Sprintf("accountPolicies/%s/serverPolicies/%s", p.AccountPolicyID, p.ID),
+		&struct {
+			Op    string `json:"op"`
+			Path  string `json:"path"`
+			Value string `json:"value"`
+		}{"add", "/status", newValue}, p)
+	if p != nil {
+		pretty.Println(*p)
+	}
+	return
 }
 
 // SBSRestorePoint captures the details of a single restore point

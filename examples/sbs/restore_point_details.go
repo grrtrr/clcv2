@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/clcv2/utils"
 	"github.com/grrtrr/exit"
 	"github.com/kr/pretty"
 )
@@ -36,8 +35,7 @@ func main() {
 		flag.Usage()
 		os.Exit(0)
 	}
-	fmt.Println(flag.Arg(0), utils.LooksLikeServerName(flag.Arg(0)))
-	return
+
 	// Date range sanity checks
 	startTime, err := time.Parse("2006-01-02", *start)
 	if err != nil {
