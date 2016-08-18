@@ -1,7 +1,7 @@
 package main
 
 /*
- * Print the list of SBS policies associated with the user's account.
+ * Print the list of SBS server policies associated with a given Account Policy ID.
  */
 import (
 	"flag"
@@ -16,7 +16,7 @@ import (
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s [options]  <account-policy-ID>\n", path.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Account-Policy-ID>\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 
