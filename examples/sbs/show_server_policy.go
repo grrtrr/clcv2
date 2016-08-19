@@ -1,5 +1,5 @@
 /*
- * Print details of a single Server Policy given its server-policy-ID.
+ * Print details of a single Server Policy given its server-policy-ID, or server name.
  */
 package main
 
@@ -10,13 +10,16 @@ import (
 	"path"
 
 	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/clcv2/utils"
 	"github.com/grrtrr/exit"
 	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
+	var policies []clcv2.SBSServerPolicy
+
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Server-Policy-ID>\n", path.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Server-Policy-ID | Server-Name>\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 
@@ -31,9 +34,17 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	p, err := client.SBSgetServerPolicy(flag.Arg(0))
-	if err != nil {
-		exit.Fatalf("failed to list SBS server policy %s: %s", flag.Arg(0), err)
+	if utils.LooksLikeServerName(flag.Arg(0)) {
+		policies, err = client.SBSgetServerPolicyDetails(flag.Arg(0))
+		if err != nil {
+			exit.Fatalf("failed to list SBS policies for server %s: %s", flag.Arg(0), err)
+		}
+	} else {
+		p, err := client.SBSgetServerPolicy(flag.Arg(0))
+		if err != nil {
+			exit.Fatalf("failed to list SBS Server Policy %s: %s", flag.Arg(0), err)
+		}
+		policies = []clcv2.SBSServerPolicy{*p}
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
@@ -43,8 +54,10 @@ func main() {
 	table.SetHeader([]string{"Server", "Server Policy ID", "Account Policy ID",
 		"Status", "Region", "Account", "Unsubscribe Date", "Expiration Date"})
 
-	table.Append([]string{p.ServerID, p.ID, p.AccountPolicyID,
-		p.Status, p.StorageRegion, p.ClcAccountAlias,
-		fmt.Sprint(p.UnsubscribedDate), fmt.Sprint(p.ExpirationDate)})
+	for _, p := range policies {
+		table.Append([]string{p.ServerID, p.ID, p.AccountPolicyID,
+			p.Status, p.StorageRegion, p.ClcAccountAlias,
+			fmt.Sprint(p.UnsubscribedDate), fmt.Sprint(p.ExpirationDate)})
+	}
 	table.Render()
 }
