@@ -3,6 +3,7 @@ package clcv2
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/kr/pretty"
@@ -346,4 +347,23 @@ func (c *Client) SBSgetRestorePointDetails(acPolicy, srvPolicy string, start, en
 
 	err := c.getSBSResponse("GET", path, nil, &result)
 	return result.Results, err
+}
+
+// SBSgetServerStorageUsage returns the number of bytes used by the specified Server Policy on a given @day.
+func (c *Client) SBSgetServerStorageUsage(acPolicy, srvPolicy string, day time.Time) (uint64, error) {
+	var path = fmt.Sprintf("accountPolicies/%s/serverPolicies/%s/storedData?searchDate=%s",
+		acPolicy, srvPolicy, day.Format("2006-01-02"))
+	var result struct {
+		GigaBytesStored string // I don't understand why they are doing this.
+		BytesStored     string // Why are they converting numeric quantities into strings?
+	}
+
+	if err := c.getSBSResponse("GET", path, nil, &result); err != nil {
+		return 0, err
+	}
+	val, err := strconv.ParseUint(result.BytesStored, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid result %s GB / %sB: %s", result.GigaBytesStored, result.BytesStored, err)
+	}
+	return val, err
 }
