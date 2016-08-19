@@ -35,11 +35,13 @@ func main() {
 	}
 
 	if utils.LooksLikeServerName(flag.Arg(0)) {
+		// Note: when using the server name instead of the Server Policy ID, sometimes the Status field is empty.
 		policies, err = client.SBSgetServerPolicyDetails(flag.Arg(0))
 		if err != nil {
 			exit.Fatalf("failed to list SBS policies for server %s: %s", flag.Arg(0), err)
 		}
 	} else {
+		// Query by Server Policy ID
 		p, err := client.SBSgetServerPolicy(flag.Arg(0))
 		if err != nil {
 			exit.Fatalf("failed to list SBS Server Policy %s: %s", flag.Arg(0), err)

@@ -1,6 +1,5 @@
 /*
- * Create a new standard or hyperscale server.
- * Does not support creation of bare-metal servers (yet).
+ * Create a new server. Does not support creation of bare-metal servers (yet).
  */
 package main
 

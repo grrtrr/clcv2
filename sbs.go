@@ -61,33 +61,46 @@ func (c *Client) SBSgetOsTypes() (res []string, err error) {
 }
 
 // SBSAccountPolicy contains the actual SBS account policy information.
+// It is used to list existing Account Policies, and to create new ones (hence the json tags).
 type SBSAccountPolicy struct {
 	// The backup frequency of the Policy (= duration between backups)
-	BackupIntervalHours int
+	BackupIntervalHours int `json:"backupIntervalHours"`
 
 	// The account alias that the Policy belongs to
-	ClcAccountAlias string
+	ClcAccountAlias string `json:"clcAccountAlias"`
 
 	// A list of the directories that the Policy excludes from backup
-	ExcludedDirectoryPaths []string
+	ExcludedDirectoryPaths []string `json:"excludedDirectoryPaths"`
 
 	// The name of the Policy
-	Name string
+	Name string `json:"name"`
 
 	// The OS Type - 'Linux' or 'Windows'
-	OsType string
+	OsType string `json:"osType"`
 
 	// A list of the directories that the Policy includes in each backup
-	Paths []string
+	Paths []string `json:"paths"`
 
 	// The unique Id associated with this Policy
-	PolicyID string
+	PolicyID string `json:",omitempty"`
 
 	// The number of days backup data will be retained
-	RetentionDays int
+	RetentionDays int `json:"retentionDays"`
 
 	// The status of the backup Policy. Either 'ACTIVE' or 'INACTIVE'.
-	Status string
+	Status string `json:",omitempty"`
+}
+
+// SBScreatePolicy creates a new Account Policy
+func (c *Client) SBScreatePolicy(req *SBSAccountPolicy) (res SBSAccountPolicy, err error) {
+	err = c.getSBSResponse("POST", "accountPolicies", req, &res)
+	return
+}
+
+// SBSgetPolicy returns the single Policy associated with @policyID, or an error.
+func (c *Client) SBSgetPolicy(policyID string) (res SBSAccountPolicy, err error) {
+	err = c.getSBSResponse("GET", fmt.Sprintf("accountPolicies/%s", policyID), nil, &res)
+	return
 }
 
 // SBSgetPolicies returns the list of SBS backup policies associated with an account.
@@ -107,12 +120,6 @@ func (c *Client) SBSgetEligiblePolicies(server string) ([]SBSAccountPolicy, erro
 	}
 	err := c.getSBSResponse("GET", fmt.Sprintf("accountPolicies/servers/%s", server), nil, &result)
 	return result.Results, err
-}
-
-// SBSgetPolicy returns the single Policy associated with @policyID, or an error.
-func (c *Client) SBSgetPolicy(policyID string) (res SBSAccountPolicy, err error) {
-	err = c.getSBSResponse("GET", fmt.Sprintf("accountPolicies/%s", policyID), nil, &res)
-	return
 }
 
 // SBSSingleServerPolicy represents the policy associated with a server
