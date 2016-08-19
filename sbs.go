@@ -82,18 +82,24 @@ type SBSAccountPolicy struct {
 	Paths []string `json:"paths"`
 
 	// The unique Id associated with this Policy
-	PolicyID string `json:",omitempty"`
+	PolicyID string `json:"policyId,omitempty"`
 
 	// The number of days backup data will be retained
 	RetentionDays int `json:"retentionDays"`
 
 	// The status of the backup Policy. Either 'ACTIVE' or 'INACTIVE'.
-	Status string `json:",omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // SBScreatePolicy creates a new Account Policy
 func (c *Client) SBScreatePolicy(req *SBSAccountPolicy) (res SBSAccountPolicy, err error) {
 	err = c.getSBSResponse("POST", "accountPolicies", req, &res)
+	return
+}
+
+// SBSupdatePolicy updates an existing Account Policy
+func (c *Client) SBSupdatePolicy(policyID string, req *SBSAccountPolicy) (res SBSAccountPolicy, err error) {
+	err = c.getSBSResponse("PUT", fmt.Sprintf("accountPolicies/%s", policyID), req, &res)
 	return
 }
 

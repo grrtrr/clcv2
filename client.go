@@ -263,7 +263,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 		return fmt.Errorf("failed to read error response %d body: %s", res.StatusCode, err)
 	} else if len(body) > 0 {
 		//
-		// Currently 5 different types of response have been observed in the wild:
+		// Currently 5 different types of response have been observed:
 		// 1) bare JSON string
 		// 2) struct { message: "string" }
 		// 3) struct { message: "string", "modelState": map[string]interface{} }
