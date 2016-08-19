@@ -82,9 +82,14 @@ func main() {
 		})
 
 		for _, r := range restorePoints {
+			// If the backup did not finish (yet), the FinishedDate is set to a Unix Epoch date in the past.
+			var end = r.BackupFinishedDate.Local().Format("15:04:05 MST")
+
+			if r.BackupStartedDate.After(r.BackupFinishedDate) {
+				end = "unknown"
+			}
 			table.Append([]string{
-				r.BackupStartedDate.Local().Format("15:04:05 MST"),
-				r.BackupFinishedDate.Local().Format("15:04:05 MST"),
+				r.BackupStartedDate.Local().Format("15:04:05 MST"), end,
 				r.RestorePointCreationStatus,
 				fmtTransfer(r.FilesTransferredToStorage, r.BytesTransferredToStorage),
 				fmtTransfer(r.FilesFailedTransferToStorage, r.BytesFailedToTransfer),
