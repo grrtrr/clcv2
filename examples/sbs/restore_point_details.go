@@ -10,9 +10,10 @@ import (
 	"path"
 	"time"
 
+	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
-	"github.com/kr/pretty"
+	"github.com/olekukonko/tablewriter"
 )
 
 const (
@@ -45,7 +46,6 @@ func main() {
 	if *end == "" {
 		endTime = startTime.AddDate(0, 0, maxDateRange)
 		if endTime.After(time.Now()) {
-			fmt.Println(endTime, "later than NOW")
 			endTime = time.Now()
 		}
 	} else if endTime, err = time.Parse("2006-01-02", *end); err != nil {
@@ -63,30 +63,51 @@ func main() {
 		exit.Fatalf("failed to look up Account Policy of %s: %s.", flag.Arg(0), err)
 	}
 
-	restorePoints, err := client.SBSgetRestorePointDetails(flag.Arg(0), p.AccountPolicyID, startTime, endTime)
+	restorePoints, err := client.SBSgetRestorePointDetails(p.AccountPolicyID, flag.Arg(0), startTime, endTime)
 	if err != nil {
 		exit.Fatalf("failed to list SBS restore point details found for server policy %s: %s", flag.Arg(0), err)
-
 	}
 
 	if len(restorePoints) == 0 {
-		fmt.Printf("No restore point details found found for Server Policy %s between %s ... %s.\n",
-			flag.Arg(0), startTime.Format("Mon, 2 Jan 2006"), endTime.Format("Mon, 2 Jan 2006"))
+		fmt.Printf("No restore point details found found for server %s between %s and %s.\n", p.ServerID,
+			startTime.Format("Mon, 2 Jan 2006"), endTime.Format("Mon, 2 Jan 2006"))
 	} else {
-		pretty.Println(restorePoints)
-		/*
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetAutoFormatHeaders(false)
-			table.SetAlignment(tablewriter.ALIGN_LEFT)
-			table.SetAutoWrapText(false)
-			table.SetHeader([]string{"Server", "Server Policy ID", "Status", "Region", "Account",
-				"Unsubscribe Date", "Expiration Date"})
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetAutoFormatHeaders(false)
+		table.SetAlignment(tablewriter.ALIGN_RIGHT)
+		table.SetAutoWrapText(false)
+		table.SetHeader([]string{"Start", "End", "Status",
+			"Transferred", "Failed", "Removed", "Unchanged",
+			"Total #Files", "Expires",
+		})
 
-			for _, p := range policies {
-				table.Append([]string{p.ServerID, p.ID, p.Status, p.StorageRegion, p.ClcAccountAlias,
-					fmt.Sprint(p.UnsubscribedDate), fmt.Sprint(p.ExpirationDate)})
-			}
-			table.Render()
-		*/
+		for _, r := range restorePoints {
+			table.Append([]string{
+				r.BackupStartedDate.Local().Format("15:04:05 MST"),
+				r.BackupFinishedDate.Local().Format("15:04:05 MST"),
+				r.RestorePointCreationStatus,
+				fmtTransfer(r.FilesTransferredToStorage, r.BytesTransferredToStorage),
+				fmtTransfer(r.FilesFailedTransferToStorage, r.BytesFailedToTransfer),
+				fmtTransfer(r.FilesRemovedFromDisk, r.BytesInStorageForItemsRemoved),
+				fmtTransfer(r.UnchangedFilesNotTransferred, r.UnchangedBytesInStorage),
+				fmt.Sprint(r.NumberOfProtectedFiles),
+				r.RetentionExpiredDate.Local().Format("Jan 2/2006"),
+			})
+		}
+		table.Render()
 	}
+}
+
+// pretty-print #files/#bytes transfer statistics
+func fmtTransfer(numFiles, numBytes uint64) string {
+	var s string
+
+	if numFiles == 0 && numBytes == 0 {
+		return "none"
+	}
+	s = fmt.Sprintf("%d file", numFiles)
+	if numFiles != 1 {
+		s += "s"
+	}
+	return fmt.Sprintf("%s, %s", s, humanize.Bytes(numBytes))
 }

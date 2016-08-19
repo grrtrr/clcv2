@@ -285,50 +285,50 @@ type SBSRestorePoint struct {
 	// Unique restore point identifier
 	RestorePointID string
 
-	// Unique policy identifier
+	// The Server Policy ID associated with this Restore Point
 	PolicyId string
 
 	// Days of retention applied to the restore point
 	RetentionDays int
 
 	// Timestamp of backup completion
-	BackupFinishedDate string
+	BackupFinishedDate time.Time
 
 	// Timestamp or retention expiration
-	RetentionExpiredDate string
+	RetentionExpiredDate time.Time
 
 	// 'SUCCESS', 'PARTIAL_SUCCESS', 'FAILED', or 'CANCELLED'
 	RestorePointCreationStatus string
 
 	// Number of backup files transferred to storage
-	FilesTransferredToStorage int
+	FilesTransferredToStorage uint64
 
 	// Total bytes of backup data sent to storage
-	BytesTransferredToStorage int
+	BytesTransferredToStorage uint64
 
 	// Number of backup files that failed transfer to storage
-	FilesFailedTransferToStorage int
+	FilesFailedTransferToStorage uint64
 
 	// Total bytes of backup data that failed transfer to storage
-	BytesFailedToTransfer int
+	BytesFailedToTransfer uint64
 
 	// Number of unchanged files not requiring retransfer to storage
-	UnchangedFilesNotTransferred int
+	UnchangedFilesNotTransferred uint64
 
 	// Total bytes of unchanged data not requiring retransfer to storage
-	UnchangedBytesInStorage int
+	UnchangedBytesInStorage uint64
 
 	// Number of files removed from local disk
-	FilesRemovedFromDisk int
+	FilesRemovedFromDisk uint64
 
 	// Total bytes of data removed from local disk
-	BytesInStorageForItemsRemoved int
+	BytesInStorageForItemsRemoved uint64
 
 	// Number of files currently in storage for the restore point
-	NumberOfProtectedFiles int
+	NumberOfProtectedFiles uint64
 
 	// Timestamp of backup start
-	BackupStartedDate string
+	BackupStartedDate time.Time
 }
 
 // SBSgetServerPolicyDetails returns SBS restore point details for a given Account and Server Policy.

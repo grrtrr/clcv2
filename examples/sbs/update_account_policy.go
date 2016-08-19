@@ -17,10 +17,10 @@ import (
 
 func main() {
 	var intvl = flag.Duration("freq", 0, "Backup interval (time duration between backups")
-	var exclude = flag.String("exclude", "", "Comma-separated list of paths to exclude (e.g. /tmp,/var/run)")
+	var exclude = flag.String("exclude", "", "Comma-separated list of paths to exclude (use '+' prefix to add to existing)")
 	var name = flag.String("name", "", "New name of the Account Policy")
 	var osType = flag.String("os", "", "The OS type (only supported values are 'Linux' and 'Windows')")
-	var paths = flag.String("paths", "", "Comma-separated list of paths to include")
+	var paths = flag.String("paths", "", "Comma-separated list of paths to include (use '+' prefix to add to existing)")
 	var keep = flag.Int("keep", 0, "The number of days backup data will be retained")
 	var status = flag.String("status", "", "Account Policy status ('ACITVE' or 'INACTIVE')")
 
@@ -50,7 +50,7 @@ func main() {
 		p.BackupIntervalHours = int(intvl.Hours())
 	}
 	if *exclude != "" {
-		p.ExcludedDirectoryPaths = parseCSV(*exclude)
+		p.ExcludedDirectoryPaths = parseCSV(*exclude, p.ExcludedDirectoryPaths)
 	}
 	if *name != "" {
 		p.Name = *name
@@ -59,7 +59,7 @@ func main() {
 		p.OsType = *osType
 	}
 	if *paths != "" {
-		p.Paths = parseCSV(*paths)
+		p.Paths = parseCSV(*paths, p.Paths)
 	}
 	if *keep != 0 {
 		p.RetentionDays = *keep
@@ -85,8 +85,14 @@ func main() {
 }
 
 // parseCSV splits @s as comma-separated list of values, removing leading/trailing whitespace from elements
-func parseCSV(s string) []string {
+// If @s contains a '+', the new values will be appened to the old values
+func parseCSV(s string, oldVals []string) []string {
 	var res []string
+
+	// No duplicate check here -- the API returns an error message if a duplicate path is provided.
+	if strings.Index(s, "+") == 0 {
+		s, res = s[1:], oldVals
+	}
 
 	for _, val := range strings.Split(s, ",") {
 		res = append(res, strings.TrimSpace(val))
