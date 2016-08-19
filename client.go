@@ -263,7 +263,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 		return fmt.Errorf("failed to read error response %d body: %s", res.StatusCode, err)
 	} else if len(body) > 0 {
 		//
-		// Currently 4 different types of response have been observed:
+		// Currently 5 different types of response have been observed in the wild:
 		// 1) bare JSON string
 		// 2) struct { message: "string" }
 		// 3) struct { message: "string", "modelState": map[string]interface{} }
@@ -271,10 +271,16 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 		//	      "modelState":{"body.networkId":["The network vlan_1249_10.81.149 is not valid."]}
 		//	      "modelState":{"":["The server must be in Active or Archived state."]}
 		// 4) struct { error: "string" }, e.g. { "error":"Missing required parameter: serverId"}
+		// 5) struct { error: "string", validationMessages: ["string"] } - like (4), with array of messages
+		//
 		errMsg := string(body)
 		if ct, _, _ := mime.ParseMediaType(res.Header.Get("Content-Type")); ct == "application/json" {
 			/* Code thanks to & inspired by clc-go-cli */
 			var payload map[string]interface{}
+			var sbsError struct {
+				Error              string
+				ValidationMessages []string
+			}
 
 			if err := json.Unmarshal(body, &payload); err != nil {
 				/* Failed to decode as struct, try string (1) next. */
@@ -288,6 +294,11 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 			} else if errors, ok := payload["message"]; ok {
 				if msg, ok := errors.(string); ok {
 					errMsg = msg
+				}
+			} else if err = json.Unmarshal(body, &sbsError); err == nil {
+				errMsg = fmt.Sprintf("Error - %s", sbsError.Error)
+				if len(sbsError.ValidationMessages) > 0 {
+					errMsg += fmt.Sprintf(" Details: %q", strings.Join(sbsError.ValidationMessages, ", "))
 				}
 			} else if error, ok := payload["error"]; ok {
 				if msg, ok := error.(string); ok {
