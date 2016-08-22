@@ -49,17 +49,21 @@ func main() {
 		policies = []clcv2.SBSServerPolicy{*p}
 	}
 
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetAutoFormatHeaders(false)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAutoWrapText(false)
-	table.SetHeader([]string{"Server", "Server Policy ID", "Account Policy ID",
-		"Status", "Region", "Account", "Unsubscribe Date", "Expiration Date"})
+	if len(policies) == 0 {
+		fmt.Printf("Nothing found for %s.\n", flag.Arg(0))
+	} else {
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetAutoFormatHeaders(false)
+		table.SetAlignment(tablewriter.ALIGN_LEFT)
+		table.SetAutoWrapText(false)
+		table.SetHeader([]string{"Server", "Server Policy ID", "Account Policy ID",
+			"Status", "Region", "Account", "Unsubscribe Date", "Expiration Date"})
 
-	for _, p := range policies {
-		table.Append([]string{p.ServerID, p.ID, p.AccountPolicyID,
-			p.Status, p.StorageRegion, p.ClcAccountAlias,
-			fmt.Sprint(p.UnsubscribedDate), fmt.Sprint(p.ExpirationDate)})
+		for _, p := range policies {
+			table.Append([]string{p.ServerID, p.ID, p.AccountPolicyID,
+				p.Status, p.StorageRegion, p.ClcAccountAlias,
+				fmt.Sprint(p.UnsubscribedDate), fmt.Sprint(p.ExpirationDate)})
+		}
+		table.Render()
 	}
-	table.Render()
 }
