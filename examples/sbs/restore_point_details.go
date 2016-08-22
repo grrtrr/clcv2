@@ -93,10 +93,10 @@ func main() {
 			table.Append([]string{
 				r.BackupStartedDate.Local().Format("Mon, 15:04 MST"), runtime,
 				r.RestorePointCreationStatus,
-				fmtTransfer(r.FilesTransferredToStorage, r.BytesTransferredToStorage),
-				fmtTransfer(r.FilesFailedTransferToStorage, r.BytesFailedToTransfer),
-				fmtTransfer(r.FilesRemovedFromDisk, r.BytesInStorageForItemsRemoved),
-				fmtTransfer(r.UnchangedFilesNotTransferred, r.UnchangedBytesInStorage),
+				fmtTransfer(r.FilesTransferredToStorage, r.BytesTransferredToStorage, duration),
+				fmtTransfer(r.FilesFailedTransferToStorage, r.BytesFailedToTransfer, 0),
+				fmtTransfer(r.FilesRemovedFromDisk, r.BytesInStorageForItemsRemoved, 0),
+				fmtTransfer(r.UnchangedFilesNotTransferred, r.UnchangedBytesInStorage, 0),
 				fmt.Sprint(r.NumberOfProtectedFiles),
 				r.RetentionExpiredDate.Local().Format("Jan 2/2006"),
 			})
@@ -106,7 +106,7 @@ func main() {
 }
 
 // pretty-print #files/#bytes transfer statistics
-func fmtTransfer(numFiles, numBytes uint64) string {
+func fmtTransfer(numFiles, numBytes uint64, duration time.Duration) string {
 	var s string
 
 	if numFiles == 0 && numBytes == 0 {
@@ -116,5 +116,10 @@ func fmtTransfer(numFiles, numBytes uint64) string {
 	if numFiles != 1 {
 		s += "s"
 	}
-	return fmt.Sprintf("%s, %s", s, humanize.Bytes(numBytes))
+	s = fmt.Sprintf("%s, %s", s, humanize.Bytes(numBytes))
+
+	if duration > 0 {
+		s = fmt.Sprintf("%s (%s/s)", s, humanize.Bytes(numBytes/uint64(duration.Seconds())))
+	}
+	return s
 }
