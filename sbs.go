@@ -5,8 +5,6 @@ import (
 	"net/url"
 	"strconv"
 	"time"
-
-	"github.com/kr/pretty"
 )
 
 /*
@@ -261,23 +259,22 @@ func (c *Client) SBSgetServerPolicy(serverPolicyId string) (*SBSServerPolicy, er
 }
 
 // SBSpatchServerPolicyStatus sets the status of the specified Server Policy to @newValue.
+// Note: this command seems unsupported. In my tests, it always returned 200 and did nothing.
 func (c *Client) SBSpatchServerPolicyStatus(srvPolicyID, newValue string) (p *SBSServerPolicy, err error) {
 	p, err = c.SBSgetServerPolicy(srvPolicyID)
 	if err != nil {
 		return
 	}
-	pretty.Println(*p)
 
-	err = c.getCLCResponse("PATCH",
+	err = c.getSBSResponse("PATCH",
 		fmt.Sprintf("accountPolicies/%s/serverPolicies/%s", p.AccountPolicyID, p.ID),
-		&struct {
+		struct {
+			// According to v2 documentation 2016-08-22, only supported op is 'replace',
+			// and only supported path is '/status'
 			Op    string `json:"op"`
 			Path  string `json:"path"`
 			Value string `json:"value"`
-		}{"add", "/status", newValue}, p)
-	if p != nil {
-		pretty.Println(*p)
-	}
+		}{"replace", "/status", newValue}, p)
 	return
 }
 
