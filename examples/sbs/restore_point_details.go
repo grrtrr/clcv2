@@ -27,7 +27,7 @@ func main() {
 	var start = flag.String("start", startTime.Format("2006-01-02"), "Start date of the backup (format YYYY-MM-DD)")
 	var end = flag.String("end", "", "End date of the backup (format YYYY-MM-DD)")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s [options]  <server-policy-ID\n", path.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "usage: %s [options]  <server-policy-ID>\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 
@@ -76,20 +76,22 @@ func main() {
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_RIGHT)
 		table.SetAutoWrapText(false)
-		table.SetHeader([]string{"Start", "End", "Status",
+		table.SetHeader([]string{"Start", "Duration", "Status",
 			"Transferred", "Failed", "Removed", "Unchanged",
 			"Total #Files", "Expires",
 		})
 
 		for _, r := range restorePoints {
-			// If the backup did not finish (yet), the FinishedDate is set to a Unix Epoch date in the past.
-			var end = r.BackupFinishedDate.Local().Format("15:04:05 MST")
+			var duration = r.BackupFinishedDate.Sub(r.BackupStartedDate)
+			var runtime = duration.String()
 
-			if r.BackupStartedDate.After(r.BackupFinishedDate) {
-				end = "unknown"
+			// If the backup did not finish (yet), the FinishedDate is set to a Unix Epoch date in the past.
+			if duration < 0 {
+				runtime = "unknown"
 			}
+
 			table.Append([]string{
-				r.BackupStartedDate.Local().Format("15:04:05 MST"), end,
+				r.BackupStartedDate.Local().Format("Mon, 15:04 MST"), runtime,
 				r.RestorePointCreationStatus,
 				fmtTransfer(r.FilesTransferredToStorage, r.BytesTransferredToStorage),
 				fmtTransfer(r.FilesFailedTransferToStorage, r.BytesFailedToTransfer),
