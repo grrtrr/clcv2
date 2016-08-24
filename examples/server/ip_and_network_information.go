@@ -4,14 +4,14 @@
 package main
 
 import (
-	"github.com/olekukonko/tablewriter"
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-_	"strings"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
@@ -54,16 +54,16 @@ func main() {
 		}
 	}
 
-	fmt.Printf("IP addresses of %s in %s:\n", server.Name, server.LocationId)
+	fmt.Printf("IP addresses of %s:\n", server.Name)
 
 	if len(public_ips) > 0 {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_CENTRE)
 		table.SetAutoWrapText(true)
-		table.SetHeader([]string{ "Public IP", "Via" })
+		table.SetHeader([]string{"Public IP", "Via"})
 		for _, ip := range public_ips {
-			table.Append([]string{ ip.Public, ip.Internal })
+			table.Append([]string{ip.Public, ip.Internal})
 		}
 		table.Render()
 		fmt.Println()
@@ -74,9 +74,9 @@ func main() {
 	table.SetAlignment(tablewriter.ALIGN_CENTRE)
 	table.SetAutoWrapText(true)
 
-	table.SetHeader([]string{ fmt.Sprintf("%s IP", server.Name),
+	table.SetHeader([]string{fmt.Sprintf("%s IP", server.Name),
 		"CIDR", "Gateway", "VLAN", "Type", "Description",
-		"Network Name",	"Network ID",
+		"Network Name", "Network ID",
 	})
 
 	for _, ip_string := range private_ips {
@@ -84,7 +84,7 @@ func main() {
 		if err != nil {
 			exit.Fatalf("failed to identify network for %s: %s", ip_string, err)
 		} else if n == nil {
-			exit.Fatalf("No matching network found for %s in %s", ip_string, server.LocationId)
+			exit.Fatalf("no matching network found for %s in %s", ip_string, server.LocationId)
 		}
 		table.Append([]string{
 			ip_string, n.Cidr, n.Gateway, fmt.Sprint(n.Vlan),

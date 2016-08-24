@@ -147,6 +147,32 @@ func (c *Client) GetServer(serverId string) (res Server, err error) {
 	return c.GetServerByURI(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId))
 }
 
+// GetServerNets returns the networks associated with @s
+func (c *Client) GetServerNets(s Server) (nets []Network, err error) {
+	var seen = make(map[string]bool) /* map { networkId -> bool */
+
+	networks, err := c.GetNetworks(s.LocationId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query networks in %s: %s", s.LocationId, err)
+	}
+
+	for idx := range s.Details.IpAddresses {
+		ip := s.Details.IpAddresses[idx].Internal
+		if ip == "" {
+			continue
+		}
+		if net, err := NetworkByIP(ip, networks); err != nil {
+			return nil, fmt.Errorf("failed to identify network for %s: %s", ip, err)
+		} else if net == nil {
+			return nil, fmt.Errorf("no matching network found for %s in %s", ip, s.LocationId)
+		} else if !seen[net.Id] {
+			nets = append(nets, *net)
+			seen[net.Id] = true
+		}
+	}
+	return
+}
+
 // GetIPs returns the (private, public) IP addresses associated with @serverID
 func (c *Client) GetServerIPs(serverId string) (ips []string, err error) {
 	var seen = make(map[string]bool) /* track private IPs, they can be mapped to public ones */
