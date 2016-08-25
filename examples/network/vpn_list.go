@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
@@ -42,10 +41,8 @@ func main() {
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
 		table.SetAutoWrapText(true)
 
-		table.SetHeader([]string{
-			"Local", "Local Nets", "Remote", "Remote Nets",
-			"IKE", "IP Sec",
-			"ID", "Last Change",
+		table.SetHeader([]string{"CLC => Remote", "CLC Nets",
+			"Remote", "Remote Nets", "ID", "Last Change",
 		})
 
 		for _, v := range vpns {
@@ -60,19 +57,14 @@ func main() {
 			}
 
 			table.Append([]string{
-				fmt.Sprintf("%s: %s", v.Local.LocationAlias, v.Local.Address),
+				fmt.Sprintf("%s => %-15s", v.Local.LocationAlias, v.Remote.Address),
 				strings.Join(v.Local.Subnets, ", "),
-				fmt.Sprintf("%s: %s", v.Remote.SiteName, v.Remote.Address),
+				v.Remote.SiteName,
 				strings.Join(v.Remote.Subnets, ", "),
-				fmt.Sprintf("%s %s/%s, %s, NAT: %t", v.IKE.DiffieHellmanGroup, v.IKE.Encryption, v.IKE.Hashing,
-					time.Duration(v.IKE.Lifetime)*time.Second, v.IKE.NatTraversal),
-				fmt.Sprintf("%s %s/%s, %s", v.IPsec.Protocol, v.IPsec.Encryption, v.IPsec.Hashing,
-					time.Duration(v.IPsec.Lifetime)*time.Second),
 				v.ID,
 				modifiedStr,
 			})
 		}
 		table.Render()
 	}
-
 }
