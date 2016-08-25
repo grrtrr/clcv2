@@ -48,7 +48,7 @@ func main() {
 	} else if *simple {
 		pretty.Println(fwpl)
 	} else {
-		fmt.Printf("Intra Data Center Firewall Policies at %s:\n", flag.Arg(0))
+		fmt.Printf("Intra-Datacenter Firewall Policies at %s:\n", strings.ToUpper(flag.Arg(0)))
 
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
