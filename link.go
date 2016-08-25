@@ -8,6 +8,7 @@ import (
 	"fmt"
 )
 
+// Link adds hyperlink information to resources.
 type Link struct {
 	// The link type (depends on context)
 	Rel	string
