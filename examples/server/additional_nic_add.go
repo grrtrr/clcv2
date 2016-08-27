@@ -9,19 +9,22 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
 	"encoding/hex"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+	"strings"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
-	var net      = flag.String("net", "", "ID or name of the Network to use")
-	var location = flag.String("l",   "", "Data centre alias (to resolve network name if not using hex ID)")
-	var ip       = flag.String("ip",  "", "IP address on -net (optional, default is automatic assignment)")
+	var net = flag.String("net", "", "ID or name of the Network to use (required)")
+	var location = flag.String("l", "", "Data centre alias (to resolve network name if not using hex ID)")
+	var ip = flag.String("ip", "", "IP address on -net (optional, default is automatic assignment)")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options] <Server-Name>\n", path.Base(os.Args[0]))
@@ -43,19 +46,62 @@ func main() {
 	if *net != "" {
 		if _, err := hex.DecodeString(*net); err == nil {
 			/* already looks like a HEX ID */
-		} else if  *location == "" {
-			exit.Errorf("Need a location argument (-l) if not using a network ID (%s)", *net)
 		} else {
 			fmt.Printf("Resolving network id of %q ...\n", *net)
-
+			if *location == "" {
+				fmt.Printf("Querying location details of %s ...\n", flag.Arg(0))
+				src, err := client.GetServer(flag.Arg(0))
+				if err != nil {
+					exit.Fatalf("failed to list details of server %q: %s", flag.Arg(0), err)
+				}
+				*location = src.LocationId
+			}
 			if netw, err := client.GetNetworkIdByName(*net, *location); err != nil {
 				exit.Errorf("failed to resolve network name %q: %s", *net, err)
 			} else if netw == nil {
-				exit.Errorf("No network named %q was found in %s", *net, *location)
+				exit.Errorf("no network named %q was found in %s", *net, *location)
 			} else {
 				*net = netw.Id
 			}
 		}
+	} else { /* Network ID is mandatory for this request to complete. */
+		var IPs []string
+
+		fmt.Println("This request requires a network ID via -net:")
+
+		fmt.Printf("Querying details of %s ...\n", flag.Arg(0))
+		src, err := client.GetServer(flag.Arg(0))
+		if err != nil {
+			exit.Fatalf("failed to list details of server %q: %s", flag.Arg(0), err)
+		}
+		*location = src.LocationId
+
+		for _, ip := range src.Details.IpAddresses {
+			if ip.Internal != "" {
+				IPs = append(IPs, ip.Internal)
+			}
+		}
+		fmt.Printf("%s current IP configuration: %s\n", flag.Arg(0), strings.Join(IPs, ", "))
+
+		fmt.Printf("Querying available networks in %s ...\n", *location)
+		capa, err := client.GetDeploymentCapabilities(*location)
+		if err != nil {
+			exit.Fatalf("failed to determine deployable networks in %s: %s", *location, err)
+		}
+		fmt.Printf("These are the networks deployable in %s:\n", *location)
+
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetAutoFormatHeaders(false)
+		table.SetAlignment(tablewriter.ALIGN_LEFT)
+		table.SetAutoWrapText(false)
+
+		table.SetHeader([]string{"Name", "Type", "Account", "Network ID"})
+		for _, net := range capa.DeployableNetworks {
+			table.Append([]string{net.Name, net.Type, net.AccountID, net.NetworkId})
+		}
+
+		table.Render()
+		exit.Errorf("please specify a network ID via -net (using the selection above).")
 	}
 
 	if err = client.ServerAddNic(flag.Arg(0), *net, *ip); err != nil {

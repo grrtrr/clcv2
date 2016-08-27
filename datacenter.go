@@ -31,6 +31,7 @@ func (c *Client) GetDatacenter(location string, groupLinks bool) (res DataCenter
 	return
 }
 
+// IntResourceValue represents an integer value.
 type IntResourceValue struct {
 	Value     uint64 `json:"value"`
 	Inherited bool   `json:"inherited"`

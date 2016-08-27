@@ -4,24 +4,25 @@
 package main
 
 import (
-	"github.com/olekukonko/tablewriter"
-	"github.com/grrtrr/clcv2/utils"
+	"encoding/hex"
+	"flag"
+	"fmt"
+	"net"
+	"os"
+	"path"
+
 	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/clcv2/utils"
 	"github.com/grrtrr/exit"
 	"github.com/kr/pretty"
-	"encoding/hex"
-	"path"
-	"flag"
-	"net"
-	"fmt"
-	"os"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
-	var netw string	/* The network ID, name or CIDR to query */
-	var query    = flag.String("q", "free",   "Filter IP addresses; one of 'claimed', 'free', or 'all'")
-	var location = flag.String("l", "",       "Data centre alias of the network")
-	var simple   = flag.Bool("simple", false, "Use simple (debugging) output format")
+	var netw string /* The network ID, name or CIDR to query */
+	var query = flag.String("q", "free", "Filter IP addresses; one of 'claimed', 'free', or 'all'")
+	var location = flag.String("l", "", "Data centre alias of the network (required)")
+	var simple = flag.Bool("simple", false, "Use simple (debugging) output format")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Network-ID|Network-Name|Network-CIDR>)>\n", path.Base(os.Args[0]))
@@ -45,7 +46,7 @@ func main() {
 	/* Allow argument to be one of hex-ID, CIDR, or network name. */
 	if _, err := hex.DecodeString(flag.Arg(0)); err == nil {
 		netw = flag.Arg(0)
-	} else if  *location == "" {
+	} else if *location == "" {
 		exit.Errorf("Need a location argument (-l) if not using a network ID (%s)", flag.Arg(0))
 	} else if _, _, err := net.ParseCIDR(flag.Arg(0)); err == nil {
 		if network, err := client.GetNetworkIdByCIDR(flag.Arg(0), *location); err != nil {
@@ -76,7 +77,7 @@ func main() {
 	} else if *simple {
 		pretty.Println(details)
 	} else if *query == "free" {
-		fmt.Printf("Free IP addresses on %s (%s):\n", details.Cidr, details.Name)
+		fmt.Printf("Free IP addresses on %s, %q:\n", details.Cidr, details.Name)
 		for _, rng := range utils.CollapseIpRanges(clcv2.ExtractIPs(details.IpAddresses)) {
 			fmt.Println(rng)
 		}
@@ -89,14 +90,14 @@ func main() {
 		switch *query {
 		case "claimed":
 			table.SetAlignment(tablewriter.ALIGN_LEFT)
-			table.SetHeader([]string{ "Address", "Server" })
+			table.SetHeader([]string{"Address", "Server"})
 			for _, i := range details.IpAddresses {
-				table.Append([]string{ i.Address, i.Server })
+				table.Append([]string{i.Address, i.Server})
 			}
 		case "all":
-			table.SetHeader([]string{ "Address", "Claimed", "Server", "Type" })
+			table.SetHeader([]string{"Address", "Claimed", "Server", "Type"})
 			for _, i := range details.IpAddresses {
-				table.Append([]string{ i.Address, fmt.Sprint(i.Claimed), i.Server, i.Type })
+				table.Append([]string{i.Address, fmt.Sprint(i.Claimed), i.Server, i.Type})
 			}
 		}
 		table.Render()
