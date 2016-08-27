@@ -5,6 +5,9 @@
  * first available IP address in the network will be assigned. Up to four total network
  * adapters can be attached to a server (i.e. a total of 3 secondary adapters).
  * In addition, only one IP address per secondary network can be associated with a server.
+ *
+ * NOTE: the additional NIC will not show in the IP address list when listing the server
+ *       via the API.
  */
 package main
 
