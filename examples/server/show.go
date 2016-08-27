@@ -61,7 +61,6 @@ func main() {
 			if ip.Internal != "" {
 				IPs = append(IPs, ip.Internal)
 			}
-
 		}
 
 		table := tablewriter.NewWriter(os.Stdout)

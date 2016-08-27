@@ -142,32 +142,34 @@ func (c *Client) GetServerByURI(path string) (res Server, err error) {
 }
 
 // Get the details for a individual server.
-// @serverId: name of the server being queried (e.g. WA1DTGDFEDAD0
+// @serverId: name of the server being queried (e.g. WA1DTGDFEDAD0)
 func (c *Client) GetServer(serverId string) (res Server, err error) {
 	return c.GetServerByURI(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId))
 }
 
-// GetServerNets returns the networks associated with @s
+// GetServerNets returns the networks associated with the server @s.
 func (c *Client) GetServerNets(s Server) (nets []Network, err error) {
 	var seen = make(map[string]bool) /* map { networkId -> bool */
 
+	// The GetNetworks() call returns only the networks visible to the current account.
+	// In practice, the current account may be a sub-account, and the server may be
+	// using a network owned by the parent's account. If that is the case,	the results will
+	// be empty, and the credentials of the parent account are neede to obtain the details.
 	networks, err := c.GetNetworks(s.LocationId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query networks in %s: %s", s.LocationId, err)
+	} else if len(networks) == 0 {
+		return nil, fmt.Errorf("failed to query network information in %s", s.LocationId)
 	}
 
 	for idx := range s.Details.IpAddresses {
-		ip := s.Details.IpAddresses[idx].Internal
-		if ip == "" {
-			continue
-		}
-		if net, err := NetworkByIP(ip, networks); err != nil {
+		if ip := s.Details.IpAddresses[idx].Internal; ip == "" {
+			/* only use the internal IPs */
+		} else if net, err := NetworkByIP(ip, networks); err != nil {
 			return nil, fmt.Errorf("failed to identify network for %s: %s", ip, err)
-		} else if net == nil {
-			return nil, fmt.Errorf("no matching network found for %s in %s", ip, s.LocationId)
-		} else if !seen[net.Id] {
-			nets = append(nets, *net)
+		} else if net != nil && !seen[net.Id] {
 			seen[net.Id] = true
+			nets = append(nets, *net)
 		}
 	}
 	return
