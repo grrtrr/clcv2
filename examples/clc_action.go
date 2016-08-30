@@ -39,6 +39,7 @@ func usage() {
 		{"delsnapshot", "delete server snapshot"},
 		{"revert", "revert server to snapshot state"},
 		{"archive", "archive the server/group"},
+		{"password", "<password> - set server password"},
 		{"credentials", "show server credentials"},
 		{"delete", "delete server/group (CAUTION)"},
 		{"remove", "alias for 'delete'"},
@@ -87,6 +88,11 @@ func main() {
 		}
 	case "credentials":
 		handlingServer = true
+	case "password":
+		handlingServer = true
+		if flag.NArg() != 3 {
+			exit.Errorf("usage: password <serverName> <new-password>")
+		}
 	case "rawdisk":
 		handlingServer = true
 		if flag.NArg() != 3 {
@@ -158,6 +164,19 @@ func main() {
 				showServers(client, flag.Args()[1:]...)
 			}
 			os.Exit(0)
+		case "password":
+			fmt.Printf("Looking up existing pasword of %s ... ", where)
+
+			credentials, err := client.GetServerCredentials(where)
+			if err != nil {
+				exit.Fatalf("failed to obtain the credentials of server %q: %s", where, err)
+			}
+			fmt.Printf("%q\n", credentials.Password)
+
+			reqID, err = client.ServerChangePassword(where, credentials.Password, flag.Arg(2))
+			if err != nil {
+				exit.Fatalf("failed to change the password on %q: %s", where, err)
+			}
 		case "credentials":
 			credentials, err := client.GetServerCredentials(where)
 			if err != nil {
