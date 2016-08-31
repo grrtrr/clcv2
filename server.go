@@ -68,7 +68,7 @@ type Server struct {
 		// How many MB of memory are allocated to the server
 		MemoryMb int
 
-		// Whether the server is running or not
+		// Whether the server is running or not: "started" or "stopped"
 		PowerState string
 
 		// How many total GB of storage are allocated to the server

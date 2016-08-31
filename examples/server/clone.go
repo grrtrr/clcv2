@@ -52,6 +52,15 @@ func main() {
 		exit.Fatalf("failed to list details of source server %q: %s", flag.Arg(0), err)
 	}
 
+	if src.Details.PowerState == "stopped" {
+		log.Printf("%s is powered off - unable to clone", src.Name)
+		fmt.Println("\nERROR: Unable to clone powered-off server.")
+		// 5 minutes were required for (a) the source server password to be verified and
+		// for the server to become 'domain joined', which took longer than just booting it.
+		fmt.Println("Please power on manually and wait circa 5 minutes before cloning again.")
+		os.Exit(1)
+	}
+
 	// We need the credentials, too
 	log.Printf("Obtaining %s credentials ...", src.Name)
 	credentials, err := client.GetServerCredentials(src.Name)
@@ -63,7 +72,6 @@ func main() {
 		Name:                 *seed,
 		Cpu:                  src.Details.Cpu,
 		MemoryGB:             src.Details.MemoryMb >> 10,
-		Description:          fmt.Sprintf("%s (cloned from %s)", src.Description, src.Name),
 		GroupId:              src.GroupId,
 		SourceServerId:       src.Name,
 		PrimaryDns:           *primDNS,
@@ -73,16 +81,21 @@ func main() {
 
 		Type: src.Type,
 	}
-
 	if *numCpu != 0 {
 		req.Cpu = *numCpu
 	}
 	if *memGB != 0 {
 		req.MemoryGB = *memGB
 	}
+
 	if *desc != "" {
 		req.Description = *desc
+	} else if src.Description == "" {
+		req.Description = fmt.Sprintf("Clone of %s", src.Name)
+	} else {
+		req.Description = fmt.Sprintf("%s (cloned from %s)", src.Description, src.Name)
 	}
+
 	if *extraDrv != 0 {
 		req.AdditionalDisks = append(req.AdditionalDisks,
 			clcv2.ServerAdditionalDisk{SizeGB: uint32(*extraDrv), Type: "raw"})
@@ -157,12 +170,13 @@ func main() {
 		}
 	}
 
+	log.Printf("Cloning %s ...", src.Name)
 	name, status, err := client.CreateServer(&req)
 	if err != nil {
 		exit.Fatalf("failed to create server: %s", err)
 	}
 
-	fmt.Printf("New server name: %s\n", name)
-	fmt.Printf("Server Password: \"%s\"\n", credentials.Password)
-	fmt.Printf("Status Id:       %s\n", status)
+	log.Printf("New server name: %s", name)
+	log.Printf("Server Password: \"%s\"", credentials.Password)
+	log.Printf("Status Id: %s\n", status)
 }
