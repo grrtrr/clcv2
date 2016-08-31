@@ -43,6 +43,7 @@ func usage() {
 		{"credentials", "show server credentials"},
 		{"delete", "delete server/group (CAUTION)"},
 		{"remove", "alias for 'delete'"},
+		{"mv", "<groupName> - move server to different folder"},
 		{"rename", "<newName> - rename group"},
 		{"create", "<parentGroup> <newGroupName> - create new group under @parentGroup"},
 		{"help", "print this help screen"},
@@ -97,6 +98,11 @@ func main() {
 		handlingServer = true
 		if flag.NArg() != 3 {
 			exit.Errorf("usage: rawdisk <serverName> <diskGB>")
+		}
+	case "mv":
+		handlingServer = true
+		if flag.NArg() != 3 {
+			exit.Errorf("usage: mv <serverName> <new-Group>")
 		}
 	case "create":
 		if flag.NArg() != 3 {
@@ -163,6 +169,29 @@ func main() {
 			} else {
 				showServers(client, flag.Args()[1:]...)
 			}
+			os.Exit(0)
+		case "mv":
+			var group = flag.Arg(2)
+
+			if _, err := hex.DecodeString(group); err == nil {
+				/* Looks like a Group UUID */
+			} else if *location == "" {
+				exit.Errorf("Need a location argument (-l) if -g (%s) is not a UUID", group)
+			} else {
+				if grp, err := client.GetGroupByName(group, *location); err != nil {
+					exit.Errorf("failed to resolve group name %q: %s", group, err)
+				} else if grp == nil {
+					exit.Errorf("No group named %q was found in %s", group, *location)
+				} else {
+					group = grp.Id
+				}
+			}
+
+			if err = client.ServerSetGroup(where, group); err != nil {
+				exit.Fatalf("failed to change the parent group on %q: %s", where, err)
+			}
+
+			fmt.Printf("Successfully changed the parent group of %s to %s.\n", where, flag.Arg(2))
 			os.Exit(0)
 		case "password":
 			fmt.Printf("Looking up existing pasword of %s ... ", where)
