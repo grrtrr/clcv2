@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/grrtrr/clcv2"
@@ -18,16 +19,19 @@ import (
 )
 
 func main() {
-	var seed = flag.String("s", "CLONE", "The 4-6 character seed for the name of the cloned server")
 	var net = flag.String("net", "", "ID or name of the Network to use (if different from source)")
 	var hwGroup = flag.String("g", "", "UUID or name (if unique) of the HW group to add this server to")
 	var primDNS = flag.String("dns1", "8.8.8.8", "Primary DNS to use")
 	var secDNS = flag.String("dns2", "8.8.4.4", "Secondary DNS to use")
 	var numCpu = flag.Int("cpu", 0, "Number of Cpus to use (if different from source VM)")
 	var memGB = flag.Int("memory", 0, "Amount of memory in GB (if different from source VM")
+	var seed = flag.String("name", "", "The 4-6 character seed for the name of the cloned server")
 	var desc = flag.String("desc", "", "Description of the cloned server")
 	var ttl = flag.Duration("ttl", 0, "Time span (counting from time of creation) until server gets deleted")
 	var extraDrv = flag.Int("drive", 0, "Extra storage (in GB) to add to server as a raw disk")
+	var wasStopped bool
+	var maxAttempts = 1
+	var name, status string
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options] <Source-Server-Name>\n", path.Base(os.Args[0]))
@@ -52,13 +56,21 @@ func main() {
 		exit.Fatalf("failed to list details of source server %q: %s", flag.Arg(0), err)
 	}
 
-	if src.Details.PowerState == "stopped" {
-		log.Printf("%s is powered off - unable to clone", src.Name)
-		fmt.Println("\nERROR: Unable to clone powered-off server.")
-		// 5 minutes were required for (a) the source server password to be verified and
-		// for the server to become 'domain joined', which took longer than just booting it.
-		fmt.Println("Please power on manually and wait circa 5 minutes before cloning again.")
-		os.Exit(1)
+	if wasStopped = src.Details.PowerState == "stopped"; wasStopped {
+		// The source server must be powered on
+		log.Printf("%s is powered-off - powering on ...", src.Name)
+		statusId, err := client.PowerOnServer(src.Name)
+		if err != nil {
+			exit.Fatalf("failed to power on source server %s: %s", src.Name, err)
+		}
+		log.Printf("Waiting for %s to power on (status ID: %s) ...", src.Name, statusId)
+		if _, err = client.AwaitCompletion(statusId); err != nil {
+			exit.Fatalf("failed to await completion of %s: %s", statusId, err)
+		}
+		// When the server is being powered on, it can take up to 5 minutes until
+		// the backend is able to clone it; it requires the server to be fully booted.
+		maxAttempts = 5
+		time.Sleep(1 * time.Minute)
 	}
 
 	// We need the credentials, too
@@ -81,6 +93,15 @@ func main() {
 
 		Type: src.Type,
 	}
+
+	if *seed == "" {
+		if len(src.Name) >= 15 { // use same naming as original by default
+			req.Name = src.Name[7:13]
+		} else {
+			req.Name = "CLONE"
+		}
+	}
+
 	if *numCpu != 0 {
 		req.Cpu = *numCpu
 	}
@@ -171,12 +192,19 @@ func main() {
 	}
 
 	log.Printf("Cloning %s ...", src.Name)
-	name, status, err := client.CreateServer(&req)
+	for i := 1; ; i++ {
+		name, status, err = client.CreateServer(&req)
+		if err == nil || i == maxAttempts || strings.Index(err.Error(), "body.sourceServerId") > 0 {
+			break
+		}
+		log.Printf("attempt %d/%d failed (%s) - retrying ...", i, maxAttempts, strings.TrimSpace(err.Error()))
+		time.Sleep(1 * time.Minute)
+	}
 	if err != nil {
 		exit.Fatalf("failed to create server: %s", err)
 	}
 
-	log.Printf("New server name: %s", name)
-	log.Printf("Server Password: \"%s\"", credentials.Password)
-	log.Printf("Status Id: %s\n", status)
+	log.Printf("New server name: %s\n", name)
+	log.Printf("Server Password: \"%s\"\n", credentials.Password)
+	log.Printf("Status Id:       %s\n", status)
 }
