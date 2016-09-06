@@ -39,6 +39,7 @@ func usage() {
 		{"delsnapshot", "delete server snapshot"},
 		{"revert", "revert server to snapshot state"},
 		{"archive", "archive the server/group"},
+		{"memory", "<memoryGB> - set server memory"},
 		{"password", "<password> - set server password"},
 		{"credentials", "show server credentials"},
 		{"delete", "delete server/group (CAUTION)"},
@@ -89,6 +90,11 @@ func main() {
 		}
 	case "credentials":
 		handlingServer = true
+	case "memory":
+		handlingServer = true
+		if flag.NArg() != 3 {
+			exit.Errorf("usage: password <serverName> <memoryGB>")
+		}
 	case "password":
 		handlingServer = true
 		if flag.NArg() != 3 {
@@ -193,6 +199,13 @@ func main() {
 
 			fmt.Printf("Successfully changed the parent group of %s to %s.\n", where, flag.Arg(2))
 			os.Exit(0)
+		case "memory":
+			fmt.Printf("Setting %s memory to %s GB ...\n", where, flag.Arg(2))
+
+			reqID, err = client.ServerSetMemory(where, flag.Arg(2))
+			if err != nil {
+				exit.Fatalf("failed to change the amount of Memory on %q: %s", where, err)
+			}
 		case "password":
 			fmt.Printf("Looking up existing pasword of %s ... ", where)
 
