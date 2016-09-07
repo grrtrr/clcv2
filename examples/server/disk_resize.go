@@ -56,21 +56,22 @@ func main() {
 			SizeGB: server.Details.Disks[i].SizeGB,
 		}
 		if disks[i].Id == id {
-			if disks[i].SizeGB == uint32(*size) {
+			// The API does not allow to reduce the size of an existing disk.
+			if disks[i].SizeGB <= uint32(*size) {
 				fmt.Printf("Disk %s size is already at %s.\n", id, *size)
 				os.Exit(0)
 			}
-			fmt.Printf("Changing disk %s size from %d to %d GB) ...\n",
+			fmt.Printf("Changing disk %s size from %d to %d GB ...\n",
 				id, disks[i].SizeGB, *size)
 			disks[i].SizeGB = uint32(*size)
 		}
 	}
 
-	statusId, err := client.ServerSetDisks(flag.Arg(0), disks)
+	reqID, err := client.ServerSetDisks(flag.Arg(0), disks)
 	if err != nil {
 		exit.Fatalf("failed to update the disk configuration on %q: %s", flag.Arg(0), err)
 	}
 
-	fmt.Printf("Status Id for adding disk to %s: %s\n", flag.Arg(0), statusId)
-	client.PollStatus(flag.Arg(0), 10*time.Second)
+	fmt.Printf("Status Id for changing disk %s of %s to %d GB: %s\n", flag.Arg(1), flag.Arg(0), *size, reqID)
+	client.PollStatus(reqID, 10*time.Second)
 }
