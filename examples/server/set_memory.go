@@ -4,12 +4,13 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
 )
 
 func main() {

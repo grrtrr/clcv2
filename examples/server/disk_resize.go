@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	var size = flag.Int("size", 0, "New size of the disk in GB")
+	var size = flag.Uint("size", 0, "New size of the disk in GB")
 	// Allow the same ID types as in disk_remove.go
 	var reMajMin = regexp.MustCompile(`^\d+:\d+$`)
 	var reMin = regexp.MustCompile(`^\d+$`)
@@ -56,13 +56,13 @@ func main() {
 			SizeGB: server.Details.Disks[i].SizeGB,
 		}
 		if disks[i].Id == id {
-			if disks[i].SizeGB == *size {
+			if disks[i].SizeGB == uint32(*size) {
 				fmt.Printf("Disk %s size is already at %s.\n", id, *size)
 				os.Exit(0)
 			}
 			fmt.Printf("Changing disk %s size from %d to %d GB) ...\n",
 				id, disks[i].SizeGB, *size)
-			disks[i].SizeGB = *size
+			disks[i].SizeGB = uint32(*size)
 		}
 	}
 
