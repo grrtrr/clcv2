@@ -31,7 +31,7 @@ func main() {
 	var extraDrv = flag.Int("drive", 0, "Extra storage (in GB) to add to server as a raw disk")
 	var wasStopped bool
 	var maxAttempts = 1
-	var name, status string
+	var name, reqID string
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options] <Source-Server-Name>\n", path.Base(os.Args[0]))
@@ -59,13 +59,13 @@ func main() {
 	if wasStopped = src.Details.PowerState == "stopped"; wasStopped {
 		// The source server must be powered on
 		log.Printf("%s is powered-off - powering on ...", src.Name)
-		statusId, err := client.PowerOnServer(src.Name)
+		reqID, err := client.PowerOnServer(src.Name)
 		if err != nil {
 			exit.Fatalf("failed to power on source server %s: %s", src.Name, err)
 		}
-		log.Printf("Waiting for %s to power on (status ID: %s) ...", src.Name, statusId)
-		if _, err = client.AwaitCompletion(statusId); err != nil {
-			exit.Fatalf("failed to await completion of %s: %s", statusId, err)
+		log.Printf("Waiting for %s to power on (status ID: %s) ...", src.Name, reqID)
+		if _, err = client.AwaitCompletion(reqID); err != nil {
+			exit.Fatalf("failed to await completion of %s: %s", reqID, err)
 		}
 		// When the server is being powered on, it can take up to 5 minutes until
 		// the backend is able to clone it; it requires the server to be fully booted.
@@ -95,7 +95,7 @@ func main() {
 	}
 
 	if *seed == "" {
-		if len(src.Name) >= 15 { // use same naming as original by default
+		if len(src.Name) >= 14 { // use same naming as original by default
 			req.Name = src.Name[7:13]
 		} else {
 			req.Name = "CLONE"
@@ -193,7 +193,7 @@ func main() {
 
 	log.Printf("Cloning %s ...", src.Name)
 	for i := 1; ; i++ {
-		name, status, err = client.CreateServer(&req)
+		name, reqID, err = client.CreateServer(&req)
 		if err == nil || i == maxAttempts || strings.Index(err.Error(), "body.sourceServerId") > 0 {
 			break
 		}
@@ -206,5 +206,6 @@ func main() {
 
 	log.Printf("New server name: %s\n", name)
 	log.Printf("Server Password: \"%s\"\n", credentials.Password)
-	log.Printf("Status Id:       %s\n", status)
+	log.Printf("Status Id:       %s\n", reqID)
+	client.PollStatus(reqID, 5*time.Second)
 }

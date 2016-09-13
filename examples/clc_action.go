@@ -74,7 +74,7 @@ func main() {
 
 	if flag.NArg() >= 1 {
 		action = flag.Arg(0)
-		if flag.NArg() >= 2 {
+		if flag.NArg() > 1 {
 			where = flag.Arg(1)
 		}
 	} else {

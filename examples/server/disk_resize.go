@@ -57,8 +57,8 @@ func main() {
 		}
 		if disks[i].Id == id {
 			// The API does not allow to reduce the size of an existing disk.
-			if disks[i].SizeGB <= uint32(*size) {
-				fmt.Printf("Disk %s size is already at %s.\n", id, *size)
+			if uint32(*size) <= disks[i].SizeGB {
+				fmt.Printf("Disk %s size is already at %d GB.\n", id, disks[i].SizeGB)
 				os.Exit(0)
 			}
 			fmt.Printf("Changing disk %s size from %d to %d GB ...\n",
@@ -72,6 +72,5 @@ func main() {
 		exit.Fatalf("failed to update the disk configuration on %q: %s", flag.Arg(0), err)
 	}
 
-	fmt.Printf("Status Id for changing disk %s of %s to %d GB: %s\n", flag.Arg(1), flag.Arg(0), *size, reqID)
 	client.PollStatus(reqID, 10*time.Second)
 }
