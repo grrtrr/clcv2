@@ -2,6 +2,7 @@ package clcv2
 
 import (
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -33,6 +34,7 @@ func (c *Client) GetStatus(statusId string) (status QueueStatus, err error) {
 // PollStatus polls the queue status of @statusId until it reaches either %Succeeded or %Failed.
 // @statusId:     queue ID to query
 // @pollInterval: wait interval between poll attemps, use 0 for one-shot operation
+// NOTE: since this logs to stderr, it is suitable only for terminal-based applications!
 func (c *Client) PollStatus(statusId string, pollInterval time.Duration) error {
 	var prevStatus QueueStatus = Unknown
 	for {
@@ -40,8 +42,8 @@ func (c *Client) PollStatus(statusId string, pollInterval time.Duration) error {
 		if err != nil {
 			return fmt.Errorf("failed to query status of status ID %d: %s", statusId, err)
 		}
-		if status != prevStatus {
-			fmt.Printf("%s %s: %s\n", time.Now().Format("15:04:05"), statusId, status)
+		if status != prevStatus { // periodically log to stdout
+			log.Printf("%s: %s", statusId, status)
 			prevStatus = status
 		}
 		if pollInterval == 0 || status == Succeeded || status == Failed {
