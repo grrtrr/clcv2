@@ -484,11 +484,21 @@ func showServer(client *clcv2.CLIClient, servname string) {
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAutoWrapText(true)
 
-	table.SetHeader([]string{
-		"Name", "Group", "Description", "OS",
-		"CPU", "Mem",
-		"IP", "Power", "Last Change",
-	})
+	// CPU, Memory, IP and Power status are not filled in until the server reaches 'active' state.
+	if server.Status == "active" {
+		table.SetHeader([]string{
+			"Name", "Group", "Description", "OS",
+			"CPU", "Mem", "IP", "Power",
+			"Owner", "Last Change",
+		})
+
+	} else {
+		table.SetHeader([]string{
+			"Name", "Group", "Description", "OS",
+			"Status",
+			"Owner", "Last Change",
+		})
+	}
 
 	modifiedStr := humanize.Time(server.ChangeInfo.ModifiedDate)
 	/* The ModifiedBy field can be an email address, or an API Key (hex string) */
@@ -500,12 +510,19 @@ func showServer(client *clcv2.CLIClient, servname string) {
 		modifiedStr += " by " + server.ChangeInfo.ModifiedBy
 	}
 
-	table.Append([]string{
-		server.Name, grp.Name, server.Description, server.OsType,
-		fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024),
-		strings.Join(IPs, " "),
-		server.Details.PowerState, modifiedStr,
-	})
+	if server.Status == "active" {
+		table.Append([]string{
+			server.Name, grp.Name, server.Description, server.OsType,
+			fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024), strings.Join(IPs, " "), server.Details.PowerState,
+			server.ChangeInfo.CreatedBy, modifiedStr,
+		})
+	} else {
+		table.Append([]string{
+			server.Name, grp.Name, server.Description, server.OsType,
+			server.Status,
+			server.ChangeInfo.CreatedBy, modifiedStr,
+		})
+	}
 	table.Render()
 
 	// Disks
