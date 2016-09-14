@@ -489,7 +489,7 @@ func showServer(client *clcv2.CLIClient, servname string) {
 		table.SetHeader([]string{
 			"Name", "Group", "Description", "OS",
 			"CPU", "Mem", "IP", "Power",
-			"Owner", "Last Change",
+			"Last Change",
 		})
 
 	} else {
@@ -514,7 +514,7 @@ func showServer(client *clcv2.CLIClient, servname string) {
 		table.Append([]string{
 			server.Name, grp.Name, server.Description, server.OsType,
 			fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024), strings.Join(IPs, " "), server.Details.PowerState,
-			server.ChangeInfo.CreatedBy, modifiedStr,
+			modifiedStr,
 		})
 	} else {
 		table.Append([]string{
