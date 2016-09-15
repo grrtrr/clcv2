@@ -383,75 +383,6 @@ func printGroupIPs(client *clcv2.CLIClient, root *clcv2.Group) {
 	clcv2.VisitGroupHierarchy(root, serverPrinter, "")
 }
 
-// Condensed details of multiple servers
-// @client:    authenticated CLCv2 Client
-// @servnames: server names
-func showServers(client *clcv2.CLIClient, servnames ...string) {
-
-	truncate := func(s string, maxlen int) string {
-		if len(s) >= maxlen {
-			s = s[:maxlen]
-		}
-		return s
-	}
-
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetAutoFormatHeaders(false)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAutoWrapText(true)
-
-	table.SetHeader([]string{
-		"Name", "Description", "OS",
-		"IP", "CPU", "Mem", "Storage",
-		"Status", "Power", "Last Change",
-	})
-
-	for _, servname := range servnames {
-		server, err := client.GetServer(servname)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to list details of server %q: %s", servname, err)
-			continue
-		}
-
-		IPs := []string{}
-		for _, ip := range server.Details.IpAddresses {
-			if ip.Public != "" {
-				IPs = append(IPs, ip.Public)
-			}
-			if ip.Internal != "" {
-				IPs = append(IPs, ip.Internal)
-			}
-		}
-
-		status := server.Status
-		if server.Details.InMaintenanceMode {
-			status = "MAINTENANCE"
-		}
-
-		desc := server.Description
-		if server.IsTemplate {
-			desc = "TPL: " + desc
-		}
-
-		modifiedStr := humanize.Time(server.ChangeInfo.ModifiedDate)
-		/* The ModifiedBy field can be an email address, or an API Key (hex string) */
-		if _, err := hex.DecodeString(server.ChangeInfo.ModifiedBy); err == nil {
-			modifiedStr += " via API Key"
-		} else {
-			modifiedStr += " by " + truncate(server.ChangeInfo.ModifiedBy, 6)
-		}
-
-		table.Append([]string{
-			server.Name, truncate(desc, 30), truncate(server.OsType, 15),
-			strings.Join(IPs, " "),
-			fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024),
-			fmt.Sprintf("%d G", server.Details.StorageGb),
-			status, server.Details.PowerState, modifiedStr,
-		})
-	}
-	table.Render()
-}
-
 // Show details of a single server
 // @client:    authenticated CLCv2 Client
 // @servname:  server name
@@ -570,6 +501,81 @@ func showServer(client *clcv2.CLIClient, servname string) {
 		}
 		table.Render()
 	}
+}
+
+// Show condensed details of multiple servers
+// @client:    authenticated CLCv2 Client
+// @servnames: server names
+func showServers(client *clcv2.CLIClient, servnames ...string) {
+	var truncate = func(s string, maxlen int) string {
+		if len(s) >= maxlen {
+			s = s[:maxlen]
+		}
+		return s
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetAutoFormatHeaders(false)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAutoWrapText(true)
+
+	table.SetHeader([]string{
+		"Name", "Group", "Description", "OS",
+		"IP", "CPU", "Mem", "Storage",
+		"Status", "Last Change",
+	})
+
+	for _, servname := range servnames {
+		server, err := client.GetServer(servname)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to list details of server %q: %s", servname, err)
+			continue
+		}
+
+		grp, err := client.GetGroup(server.GroupId)
+		if err != nil {
+			exit.Fatalf("failed to resolve %s group UUID: %s", servname, err)
+		}
+
+		IPs := []string{}
+		for _, ip := range server.Details.IpAddresses {
+			if ip.Public != "" {
+				IPs = append(IPs, ip.Public)
+			}
+			if ip.Internal != "" {
+				IPs = append(IPs, ip.Internal)
+			}
+		}
+
+		status := server.Details.PowerState
+		if server.Details.InMaintenanceMode {
+			status = "MAINTENANCE"
+		} else if server.Status != "active" {
+			status = server.Status
+		}
+
+		desc := server.Description
+		if server.IsTemplate {
+			desc = "TPL: " + desc
+		}
+
+		modifiedStr := humanize.Time(server.ChangeInfo.ModifiedDate)
+		/* The ModifiedBy field can be an email address, or an API Key (hex string) */
+		if _, err := hex.DecodeString(server.ChangeInfo.ModifiedBy); err == nil {
+			modifiedStr += " via API Key"
+		} else {
+			modifiedStr += " by " + truncate(server.ChangeInfo.ModifiedBy, 6)
+		}
+
+		table.Append([]string{
+			server.Name, grp.Name, truncate(desc, 30), truncate(server.OsType, 15),
+			strings.Join(IPs, " "),
+			fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024),
+			fmt.Sprintf("%d G", server.Details.StorageGb),
+			status, modifiedStr,
+		})
+	}
+	table.Render()
 }
 
 // Show nested group details
