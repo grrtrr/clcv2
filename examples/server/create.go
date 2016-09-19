@@ -7,12 +7,16 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path"
+	"strings"
 	"time"
 
+	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
@@ -144,11 +148,136 @@ func main() {
 		*req.Ttl = time.Now().Add(*ttl)
 	}
 
-	name, status, err := client.CreateServer(&req)
+	name, reqID, err := client.CreateServer(&req)
 	if err != nil {
 		exit.Fatalf("failed to create server: %s", err)
 	}
 
-	fmt.Printf("New server name: %s\n", name)
-	fmt.Printf("Status Id:       %s\n", status)
+	log.Printf("New server name: %s\n", name)
+	log.Printf("Status Id:       %s\n", reqID)
+
+	client.PollStatus(reqID, 10*time.Second)
+
+	// Print details after job completes
+	showServer(client, name)
+}
+
+// Show details of a single server (taken from clc_action.go)
+// @client:    authenticated CLCv2 Client
+// @servname:  server name
+func showServer(client *clcv2.CLIClient, servname string) {
+	server, err := client.GetServer(servname)
+	if err != nil {
+		exit.Fatalf("failed to list details of server %q: %s", servname, err)
+	}
+
+	grp, err := client.GetGroup(server.GroupId)
+	if err != nil {
+		exit.Fatalf("failed to resolve group UUID: %s", err)
+	}
+
+	/* First public, then private */
+	IPs := []string{}
+	for _, ip := range server.Details.IpAddresses {
+		if ip.Public != "" {
+			IPs = append(IPs, ip.Public)
+		}
+	}
+	for _, ip := range server.Details.IpAddresses {
+		if ip.Internal != "" {
+			IPs = append(IPs, ip.Internal)
+		}
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetAutoFormatHeaders(false)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAutoWrapText(true)
+
+	// CPU, Memory, IP and Power status are not filled in until the server reaches 'active' state.
+	if server.Status == "active" {
+		table.SetHeader([]string{
+			"Name", "Group", "Description", "OS",
+			"CPU", "Mem", "IP", "Power",
+			"Last Change",
+		})
+
+	} else {
+		table.SetHeader([]string{
+			"Name", "Group", "Description", "OS",
+			"Status",
+			"Owner", "Last Change",
+		})
+	}
+
+	modifiedStr := humanize.Time(server.ChangeInfo.ModifiedDate)
+	/* The ModifiedBy field can be an email address, or an API Key (hex string) */
+	if _, err := hex.DecodeString(server.ChangeInfo.ModifiedBy); err == nil {
+		modifiedStr += " via API Key"
+	} else if len(server.ChangeInfo.ModifiedBy) > 6 {
+		modifiedStr += " by " + server.ChangeInfo.ModifiedBy[:6]
+	} else {
+		modifiedStr += " by " + server.ChangeInfo.ModifiedBy
+	}
+
+	if server.Status == "active" {
+		table.Append([]string{
+			server.Name, grp.Name, server.Description, server.OsType,
+			fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024), strings.Join(IPs, " "), server.Details.PowerState,
+			modifiedStr,
+		})
+	} else {
+		table.Append([]string{
+			server.Name, grp.Name, server.Description, server.OsType,
+			server.Status,
+			server.ChangeInfo.CreatedBy, modifiedStr,
+		})
+	}
+	table.Render()
+
+	// Disks
+	if len(server.Details.Disks) > 0 {
+		fmt.Printf("\nDisks of %s (total storage: %d GB)\n", server.Name, server.Details.StorageGb)
+		table = tablewriter.NewWriter(os.Stdout)
+		table.SetAutoFormatHeaders(false)
+		table.SetAlignment(tablewriter.ALIGN_RIGHT)
+		table.SetAutoWrapText(true)
+
+		table.SetHeader([]string{"Disk ID", "Disk Size/GB", "Paths"})
+		for _, d := range server.Details.Disks {
+			table.Append([]string{d.Id, fmt.Sprint(d.SizeGB), strings.Join(d.PartitionPaths, ", ")})
+		}
+		table.Render()
+	}
+
+	// Partitions
+	if len(server.Details.Partitions) > 0 {
+		fmt.Printf("\nPartitions of %s:\n", server.Name)
+		table = tablewriter.NewWriter(os.Stdout)
+		table.SetAutoFormatHeaders(false)
+		table.SetAlignment(tablewriter.ALIGN_RIGHT)
+		table.SetAutoWrapText(true)
+
+		table.SetHeader([]string{"Partition Path", "Partition Size/GB"})
+		for _, p := range server.Details.Partitions {
+			table.Append([]string{p.Path, fmt.Sprintf("%.1f", p.SizeGB)})
+		}
+		table.Render()
+	}
+
+	// Snapshots
+	if len(server.Details.Snapshots) > 0 {
+		fmt.Println()
+
+		table = tablewriter.NewWriter(os.Stdout)
+		table.SetAutoFormatHeaders(false)
+		table.SetAlignment(tablewriter.ALIGN_CENTRE)
+		table.SetAutoWrapText(true)
+
+		table.SetHeader([]string{fmt.Sprintf("Snapshots of %s", server.Name)})
+		for _, s := range server.Details.Snapshots {
+			table.Append([]string{s.Name})
+		}
+		table.Render()
+	}
 }
