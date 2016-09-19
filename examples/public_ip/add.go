@@ -18,7 +18,7 @@ func main() {
 	var portSp clcv2.PortSpecs
 
 	flag.Var(&srcRes, "src", "Restrict source traffic to given CIDR range(s)")
-	flag.Var(&portSp, "p", "Port spec(s), number(s) or service name(s)\n"+
+	flag.Var(&portSp, "p", "Port spec(s), number(s) or service name(s) (option can be repeated)\n"+
 		"        - ping:      use ping or icmp\n"+
 		"        - full spec: tcp/20081-20083, udp/554, udp/6080-7000, ...\n"+
 		"        - tcp names: rdp, http, https, http-alt, ssh, ftp, ftps, ...\n"+
