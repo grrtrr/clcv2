@@ -153,8 +153,8 @@ func main() {
 		exit.Fatalf("failed to create server: %s", err)
 	}
 
-	log.Printf("New server name: %s\n", name)
-	log.Printf("Status Id:       %s\n", reqID)
+	log.Printf("New server name: %s", name)
+	log.Printf("Status Id: %s", reqID)
 
 	client.PollStatus(reqID, 10*time.Second)
 
