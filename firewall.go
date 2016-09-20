@@ -100,15 +100,26 @@ type CrossDataCenterFirewallPolicy struct {
 	Links []Link
 }
 
-// GetCrossDataCenterFirewallPolicyList lists intra-datacenter firewall policies for the given account.
+// GetCrossDataCenterFirewallPolicyList lists cross-datacenter firewall policies for the given account.
 // Optionally filter results to policies associated with a second "destination" account.
-// @location:   Short string representing the data center to query.
-// @dstAccount: Optional destination account (empty string to omit).
+// @location:   short string representing the data center to query
+// @dstAccount: optional destination account (empty string to omit)
 func (c *Client) GetCrossDataCenterFirewallPolicyList(location, dstAccount string) (res []CrossDataCenterFirewallPolicy, err error) {
-	path := fmt.Sprintf("/v2-experimental/crossDcFirewallPolicies/%s/%s", c.AccountAlias, location)
+	var path = fmt.Sprintf("/v2-experimental/crossDcFirewallPolicies/%s/%s", c.AccountAlias, location)
+
 	if dstAccount != "" {
 		path += fmt.Sprintf("?destinationAccount=%s", dstAccount)
 	}
+	err = c.getCLCResponse("GET", path, nil, &res)
+	return
+}
+
+// GetCrossDataCenterFirewallPolicy returns details of a single cross-datacenter policy
+// @location: data center location
+// @id:       cross-datacenter policy ID
+func (c *Client) GetCrossDataCenterFirewallPolicy(location, id string) (res CrossDataCenterFirewallPolicy, err error) {
+	var path = fmt.Sprintf("/v2-experimental/crossDcFirewallPolicies/%s/%s/%s", c.AccountAlias, location, id)
+
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
