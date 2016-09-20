@@ -77,8 +77,10 @@ func main() {
 	} else if *simple {
 		pretty.Println(details)
 	} else if *query == "free" {
-		fmt.Printf("Free IP addresses on %s, %q:\n", details.Cidr, details.Name)
-		for _, rng := range utils.CollapseIpRanges(clcv2.ExtractIPs(details.IpAddresses)) {
+		var freeIPs = clcv2.ExtractIPs(details.IpAddresses)
+
+		fmt.Printf("%d free IP addresses on %s:\n", len(freeIPs), details.Cidr)
+		for _, rng := range utils.CollapseIpRanges(freeIPs) {
 			fmt.Println(rng)
 		}
 	} else {
