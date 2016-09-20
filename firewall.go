@@ -4,27 +4,28 @@ import (
 	"fmt"
 )
 
-type FWPolicy struct {
+// IntraDataCenterFirewallPolicy represents an intra-datacenter firewall policy
+type IntraDataCenterFirewallPolicy struct {
 	// ID of the firewall policy
-	Id			string
+	Id string
 
 	// The state of the policy: either
 	// - active  (policy is available and working as expected),
 	// - error   (policy creation did not complete as expected) or
 	// - pending (the policy is in the process of being created)
-	Status			string
+	Status string
 
 	// Indicates if the policy is enabled (true) or disabled (false)
-	Enabled			bool
+	Enabled bool
 
 	// Source addresses for traffic on the originating firewall, specified using CIDR notation
-	Source			[]string
+	Source []string
 
 	// Destination addresses for traffic on the terminating firewall, specified using CIDR notation
-	Destination		[]string
+	Destination []string
 
 	// Short code for a particular account
-	DestinationAccount	string
+	DestinationAccount string
 
 	// Type of ports associated with the policy.
 	// Supported ports include:
@@ -34,30 +35,77 @@ type FWPolicy struct {
 	// - port ranges (tcp/123-456, udp/123-456).
 	// Some common ports include: tcp/21 (for FTP), tcp/990 (FTPS), tcp/80 (HTTP 80), tcp/8080 (HTTP 8080),
 	//                            tcp/443 (HTTPS 443), icmp (PING), tcp/3389 (RDP), and tcp/22 (SSH/SFTP).
-	Ports			[]string
+	Ports []string
 
 	// Collection of entity links that point to resources related to this list of firewall policies
-	Links			[]Link
-
+	Links []Link
 }
 
 // Get details of a specific firewall policy associated with a given account in a given data center
 // (an "intra data center firewall policy").
 // @location: Short string representing the data center to query.
 // @policyId: ID of the firewall policy to display.
-func (c *Client) GetFWPolicy(location, policyId string) (res FWPolicy, err error) {
+func (c *Client) GetIntraDataCenterFirewallPolicy(location, policyId string) (res IntraDataCenterFirewallPolicy, err error) {
 	path := fmt.Sprintf("/v2-experimental/firewallPolicies/%s/%s/%s", c.AccountAlias, location, policyId)
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
 
-// List firewall policies associated with a given account in a given data center
-// ("intra data center firewall policies").
+// GetIntraDataCenterFirewallPolicyList lists intra-datacenter firewall policies for the given account.
 // Optionally filter results to policies associated with a second "destination" account.
 // @location:   Short string representing the data center to query.
 // @dstAccount: Optional destination account (empty string to omit).
-func (c *Client) GetFWPolicyList(location, dstAccount string) (res []FWPolicy, err error) {
+func (c *Client) GetIntraDataCenterFirewallPolicyList(location, dstAccount string) (res []IntraDataCenterFirewallPolicy, err error) {
 	path := fmt.Sprintf("/v2-experimental/firewallPolicies/%s/%s", c.AccountAlias, location)
+	if dstAccount != "" {
+		path += fmt.Sprintf("?destinationAccount=%s", dstAccount)
+	}
+	err = c.getCLCResponse("GET", path, nil, &res)
+	return
+}
+
+/*
+ * Cross-DataCenter Firewall Policies
+ */
+// CrossDataCenterFirewallPolicy represents an intra-datacenter firewall policy
+type CrossDataCenterFirewallPolicy struct {
+	// ID of the firewall policy
+	ID string `json:"id"`
+
+	// The state of the policy, possibly one of "active", "error", "pending"
+	Status string `json:"status"`
+
+	// Indicates if the policy is enabled
+	Enabled bool `json:"enabled"`
+
+	// Source network in CIDR notation
+	SourceCIDR string `json:"sourceCidr"`
+
+	// Source Account
+	SourceAccount string `json:"sourceAccount"`
+
+	// Source DataCenter Alias
+	SourceLocation string `json:"sourceLocation"`
+
+	// Destination network in CIDR notation
+	DestCIDR string `json:"destinationCidr"`
+
+	// Destination Account
+	DestAccount string `json:"destinationAccount"`
+
+	// Destination DataCenter Alias
+	DestLocation string `json:"destinationLocation"`
+
+	// Collection of entity links, listing e.g. verbs for self
+	Links []Link
+}
+
+// GetCrossDataCenterFirewallPolicyList lists intra-datacenter firewall policies for the given account.
+// Optionally filter results to policies associated with a second "destination" account.
+// @location:   Short string representing the data center to query.
+// @dstAccount: Optional destination account (empty string to omit).
+func (c *Client) GetCrossDataCenterFirewallPolicyList(location, dstAccount string) (res []CrossDataCenterFirewallPolicy, err error) {
+	path := fmt.Sprintf("/v2-experimental/crossDcFirewallPolicies/%s/%s", c.AccountAlias, location)
 	if dstAccount != "" {
 		path += fmt.Sprintf("?destinationAccount=%s", dstAccount)
 	}
