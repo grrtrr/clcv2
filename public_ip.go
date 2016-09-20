@@ -1,10 +1,6 @@
 package clcv2
 
-import (
-	"fmt"
-	"net"
-	"strings"
-)
+import "fmt"
 
 /*
  * Management of Public IP Addresses
@@ -22,34 +18,6 @@ type PublicIPAddress struct {
 	// The source IP address range allowed to access the new public IP address.
 	// Used to restrict access to only the specified range of source IPs.
 	SourceRestrictions SrcRestrictions `json:"sourceRestrictions"`
-}
-
-// SrcRestrictions implements the flag.Value interface - for populating SourceCIDR fields.
-type SrcRestrictions []SourceCIDR
-
-// SourceCIDR wraps the IP range allowed to access a public IP, specified using CIDR notation.
-type SourceCIDR struct {
-	Cidr string `json:"cidr"`
-}
-
-// String implements the flag.Value String method for SrcRestrictions.
-func (s *SrcRestrictions) String() string {
-	var cidrs = make([]string, len(*s))
-
-	for i := range *s {
-		cidrs[i] = (*s)[i].Cidr
-	}
-	return fmt.Sprintf("[%s]", strings.Join(cidrs, ", "))
-}
-
-// Set implements the flag.Value Set method for SrcRestrictions.
-func (s *SrcRestrictions) Set(val string) error {
-	_, net, err := net.ParseCIDR(val)
-	if err != nil {
-		return fmt.Errorf("invalid source restriction format %q: %s", val, err)
-	}
-	*s = append(*s, SourceCIDR{net.String()})
-	return nil
 }
 
 // Claim a public IP address and associate it with a server, allowing access to it on a given set of
