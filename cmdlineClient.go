@@ -22,7 +22,6 @@ import (
 // Global (commandline flag) variables
 var (
 	g_user, g_pass string              /* Command-line username/password */
-	g_base         string              /* Alternate base URL. */
 	g_acct         string              /* Account Alias to use instead of the default */
 	g_debug        bool                /* Command-line debug flag */
 	g_timeout      = 180 * time.Second /* Client default timeout */
@@ -31,7 +30,6 @@ var (
 func init() {
 	flag.StringVar(&g_user, "username", "", "CLC Login Username")
 	flag.StringVar(&g_pass, "password", "", "CLC Login Password")
-	flag.StringVar(&g_base, "baseURL", BaseURL, "Alternate CLC Base URL")
 	flag.BoolVar(&g_debug, "d", false, "Produce debug output")
 	flag.StringVar(&g_acct, "a", "", "CLC Account Alias to use (instead of default)")
 	/*
@@ -87,22 +85,18 @@ func NewCLIClient() (client *CLIClient, err error) {
 	return client, nil
 }
 
-// setBaseURL sets the URL base based on @g_Base or $CLC_BASE_URL.
+// setBaseURL sets the URL base based on $CLC_BASE_URL.
 func setBaseURL() error {
-	if baseURL = os.Getenv("CLC_BASE_URL"); baseURL == "" {
-		baseURL = g_base
+	if envURL := os.Getenv("CLC_BASE_URL"); envURL != "" {
+		url, err := url.Parse(envURL)
+		if err != nil {
+			return err
+		}
+		if url.Scheme == "" {
+			url.Scheme = "https"
+		}
+		baseURL = url.String()
 	}
-	if baseURL == "" {
-		return fmt.Errorf("empty base URL")
-	}
-	url, err := url.Parse(baseURL)
-	if err != nil {
-		return err
-	}
-	if url.Scheme == "" {
-		url.Scheme = "https"
-	}
-	baseURL = url.String()
 	return nil
 }
 
