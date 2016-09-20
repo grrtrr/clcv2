@@ -1,32 +1,28 @@
 /*
- * Get details of a specific firewall policy associated with a given account in a given data center
- * (an "intra data center firewall policy").
+ * Get details of a specific intra-datacenter firewall policy associated with a given account.
  */
 package main
 
 import (
-	"github.com/olekukonko/tablewriter"
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"github.com/kr/pretty"
-	"strings"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+	"strings"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
-	var location = flag.String("l", "", "Data centre location to query")
-	var simple   = flag.Bool("simple", false, "Use simple (debugging) output format")
-
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Location>\n", path.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Location> <Policy-ID>\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 	flag.Parse()
 
-	if flag.NArg() != 1 || *location == "" {
+	if flag.NArg() != 2 {
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -36,29 +32,26 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	fwp, err := client.GetFWPolicy(*location, flag.Arg(0))
+	fwp, err := client.GetIntraDataCenterFirewallPolicy(flag.Arg(0), flag.Arg(1))
 	if err != nil {
-		exit.Fatalf("failed to list firewall policy %s at %s: %s", *location, flag.Arg(0), err)
+		exit.Fatalf("failed to list intra-datacenter firewall policy %s at %s: %s", flag.Arg(0), flag.Arg(1), err)
 	}
 
-	if *simple {
-		pretty.Println(fwp)
-	} else {
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetAutoFormatHeaders(false)
-		table.SetAlignment(tablewriter.ALIGN_CENTRE)
-		table.SetAutoWrapText(true)
+	fmt.Printf("Details of intra-datacenter Firewall Policy %s at %s:\n", flag.Arg(1), strings.ToUpper(flag.Arg(0)))
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetAutoFormatHeaders(false)
+	table.SetAlignment(tablewriter.ALIGN_CENTRE)
+	table.SetAutoWrapText(true)
 
-		table.SetHeader([]string{ "Source", "Destination", "Ports",
-			"Dst Account", "Enabled", "State", "Id",
-		})
-		table.Append([]string{
-			strings.Join(fwp.Source, ", "),
-			strings.Join(fwp.Destination, ", "),
-			strings.Join(fwp.Ports, ", "),
-			strings.ToUpper(fwp.DestinationAccount),
-			fmt.Sprint(fwp.Enabled), fwp.Status, fwp.Id,
-		})
-		table.Render()
-	}
+	table.SetHeader([]string{"Source", "Destination", "Ports",
+		"Dst Account", "Enabled", "State", "Id",
+	})
+	table.Append([]string{
+		strings.Join(fwp.Source, ", "),
+		strings.Join(fwp.Destination, ", "),
+		strings.Join(fwp.Ports, ", "),
+		strings.ToUpper(fwp.DestinationAccount),
+		fmt.Sprint(fwp.Enabled), fwp.Status, fwp.ID,
+	})
+	table.Render()
 }
