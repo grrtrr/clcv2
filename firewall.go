@@ -123,3 +123,42 @@ func (c *Client) GetCrossDataCenterFirewallPolicy(location, id string) (res Cros
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
+
+// ToggleCrossDataCenterFirewallPolicy enables/disables the given cross-datacenter firewall policy.
+// @location: data center location
+// @id:       cross-datacenter policy ID
+// @enable:   whether to enable or disable @id
+func (c *Client) ToggleCrossDataCenterFirewallPolicy(location, id string, enable bool) error {
+	var path = fmt.Sprintf("/v2-experimental/crossDcFirewallPolicies/%s/%s/%s?enabled=%t", c.AccountAlias, location, id, enable)
+
+	return c.getCLCResponse("PUT", path, nil, nil) // the response is an empty "204 No Content"
+}
+
+// DeleteCrossDataCenterFirewallPolicy deletes the given cross-datacenter firewall policy @id in datacenter @location.
+func (c *Client) DeleteCrossDataCenterFirewallPolicy(location, id string) error {
+	return c.getCLCResponse("DELETE", fmt.Sprintf("/v2-experimental/crossDcFirewallPolicies/%s/%s/%s", c.AccountAlias, location, id), nil, nil)
+}
+
+// CrossDataCenterFirewallPolicyReq contains the requisite data to request a new cross-datacenter firewall policy.
+type CrossDataCenterFirewallPolicyReq struct {
+	// Source network in CIDR notation
+	SourceCIDR string `json:"sourceCidr"`
+
+	// Destination network in CIDR notation
+	DestCIDR string `json:"destinationCidr"`
+
+	// Destination Account (short code)
+	DestAccount string `json:"destinationAccountId"`
+
+	// Destination DataCenter Alias
+	DestLocation string `json:"destinationLocationId"`
+
+	// Whether the policy is enabled
+	Enabled bool `json:"enabled"`
+}
+
+// CreateCrossDataCenterFirewallPolicy creates a new cross-datacenter firewall policy at @location.
+func (c *Client) CreateCrossDataCenterFirewallPolicy(location string, req *CrossDataCenterFirewallPolicyReq) (res CrossDataCenterFirewallPolicy, err error) {
+	err = c.getCLCResponse("POST", fmt.Sprintf("/v2-experimental/crossDcFirewallPolicies/%s/%s", c.AccountAlias, location), req, &res)
+	return
+}

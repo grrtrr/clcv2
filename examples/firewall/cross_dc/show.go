@@ -47,7 +47,6 @@ func main() {
 	table.SetHeader([]string{"Data Center", "Network", "Account", "Status", "ID"})
 
 	enabledStr := "*"
-
 	if !p.Enabled {
 		enabledStr = "-"
 	}
