@@ -156,7 +156,7 @@ func main() {
 	log.Printf("New server name: %s", name)
 	log.Printf("Status Id: %s", reqID)
 
-	client.PollStatus(reqID, 10*time.Second)
+	client.PollStatus(reqID, 5*time.Second)
 
 	// Print details after job completes
 	showServer(client, name)
