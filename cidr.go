@@ -13,22 +13,22 @@ import (
 type CIDRs []string
 
 // String implements the flag.Value String method for CIDRs.
-func (c *CIDRs) String() string {
-	var cidrs = make([]string, len(*s))
+func (c CIDRs) String() string {
+	var cidrs = make([]string, len(c))
 
-	for i := range *s {
-		cidrs[i] = fmt.Sprint(*s)
+	for i, cidr := range c {
+		cidrs[i] = fmt.Sprint(cidr)
 	}
 	return fmt.Sprintf("[%s]", strings.Join(cidrs, ", "))
 }
 
 // Set implements the flag.Value Set method for CIDRs.
-func (s *CIDRs) Set(val string) error {
+func (c *CIDRs) Set(val string) error {
 	_, net, err := net.ParseCIDR(val)
 	if err != nil {
 		return fmt.Errorf("invalid CIDR format %q: %s", val, err)
 	}
-	*s = append(*s, net.String())
+	*c = append(*c, net.String())
 	return nil
 }
 
@@ -41,11 +41,11 @@ type SourceCIDR struct {
 }
 
 // String implements the flag.Value String method for SrcRestrictions.
-func (s *SrcRestrictions) String() string {
-	var cidrs = make([]string, len(*s))
+func (s SrcRestrictions) String() string {
+	var cidrs = make([]string, len(s))
 
-	for i := range *s {
-		cidrs[i] = (*s)[i].Cidr
+	for i, cidr := range s {
+		cidrs[i] = cidr.Cidr
 	}
 	return fmt.Sprintf("[%s]", strings.Join(cidrs, ", "))
 }

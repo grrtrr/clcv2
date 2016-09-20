@@ -11,7 +11,22 @@ import (
 // PortSpecs implements the flag.Value interface for Port, allowing to use flags repeatedly.
 type PortSpecs []Port
 
+// PortSpecString is a Port to be used for other applications
+type PortSpecString PortSpecs
+
+// MarshalJSON to JSON
+func (p PortSpecString) MarshalJSON() ([]byte, error) {
+	var specs = make([]string, len(p))
+
+	for i, port := range p {
+		specs[i] = fmt.Sprintf("\"%s\"", port)
+	}
+	return []byte(fmt.Sprintf("[%s]", strings.Join(specs, ", "))), nil
+}
+
 // Port specifies a port or a port range.
+// Note: the struct and json tags refer to the format used by the Public IP API.
+//       To reuse the struct, convert it into string using Port.String()
 type Port struct {
 	// The specific protocol to support for the given port(s).
 	// Should be either "tcp", "udp", or "icmp".
@@ -27,23 +42,26 @@ type Port struct {
 
 // String implements the Stringer interface for Port
 func (p Port) String() string {
-	// Note: v2 documentation specifies lower case, reality and examples use upper case
-	var portSpec = fmt.Sprintf("%s/%d", strings.ToLower(p.Protocol), p.Port)
+	if p.Protocol == "icmp" { // icmp does not have a port
+		return p.Protocol
+	}
 
+	// Note: v2 documentation specifies lower case, reality and examples use upper case
+	portSpec := fmt.Sprintf("%s/%d", strings.ToLower(p.Protocol), p.Port)
 	if p.PortTo != 0 {
 		portSpec += fmt.Sprintf("-%d", p.PortTo)
 	}
 	return portSpec
 }
 
-// String implements the flag.Value String method for PortSpecs.
-func (p *PortSpecs) String() string {
-	var specs = make([]string, len(*p))
+// String implements the flag.Value String method for PortSpecs
+func (p PortSpecs) String() string {
+	var specs = make([]string, len(p))
 
-	for i := range *p {
-		specs[i] = fmt.Sprint((*p)[i])
+	for i, port := range p {
+		specs[i] = fmt.Sprint(port)
 	}
-	return strings.Join(specs, ", ")
+	return fmt.Sprintf("[%s]", strings.Join(specs, ", "))
 }
 
 // Set implements the flag.Value Set method for SourceRestriction.

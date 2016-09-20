@@ -1,5 +1,5 @@
 /*
- * Create a new cross-datacenter firewall rule.
+ * Create a new cross-datacenter firewall policy.
  */
 package main
 
@@ -25,7 +25,7 @@ func main() {
 	)
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s [options] <Location\n", path.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "usage: %s [options] <Location>\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 
