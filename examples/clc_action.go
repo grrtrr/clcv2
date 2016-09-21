@@ -44,9 +44,9 @@ func usage() {
 		{"credentials", "show server credentials"},
 		{"delete", "delete server/group (CAUTION)"},
 		{"remove", "alias for 'delete'"},
+		{"mkdir", "<parentGroup> <newGroupName> - create new folder under @parentGroup"},
 		{"mv", "<groupName> - move server to different folder"},
 		{"rename", "<newName> - rename group"},
-		{"create", "<parentGroup> <newGroupName> - create new group under @parentGroup"},
 		{"help", "print this help screen"},
 	} {
 		fmt.Fprintf(os.Stderr, "\t%-15s %s\n", r[0], r[1])
@@ -110,9 +110,9 @@ func main() {
 		if flag.NArg() != 3 {
 			exit.Errorf("usage: mv <serverName> <new-Group>")
 		}
-	case "create":
+	case "mkdir":
 		if flag.NArg() != 3 {
-			exit.Errorf("usage: create <parentGroup> <newGroupName>")
+			exit.Errorf("usage: mkdir <parentGroup> <newGroupName>")
 		}
 	case "rename":
 		if flag.NArg() != 3 {
@@ -297,11 +297,10 @@ func main() {
 		switch action {
 		case "archive":
 			reqID, err = client.ArchiveGroup(where)
-		case "create":
-			g, err := client.CreateGroup(flag.Arg(2), where, flag.Arg(2), []clcv2.SimpleCustomField{})
+		case "mkdir":
+			g, err := client.CreateGroup(flag.Arg(2), where, flag.Arg(2), nil)
 			if err == nil {
-				fmt.Println("New Group: ", g.Name)
-				fmt.Println("UUID:      ", g.Id)
+				fmt.Printf("New subfolder of %s: %q (UUID: %s)\n", flag.Arg(1), g.Name, g.Id)
 			}
 		case "delete", "remove":
 			reqID, err = client.DeleteGroup(where)
