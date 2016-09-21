@@ -15,7 +15,6 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -51,7 +50,7 @@ func main() {
 
 	client, err := clcv2.NewCLIClient()
 	if err != nil {
-		exit.Fatal(err.Error())
+		log.Fatalf(err.Error())
 	}
 
 	/* hwGroup may be hex uuid or group name */
@@ -59,9 +58,9 @@ func main() {
 		fmt.Printf("Resolving ID of Hardware Group %q ...\n", *hwGroup)
 
 		if group, err := client.GetGroupByName(*hwGroup, *location); err != nil {
-			exit.Errorf("failed to resolve group name %q: %s", *hwGroup, err)
+			log.Fatalf("failed to resolve group name %q: %s", *hwGroup, err)
 		} else if group == nil {
-			exit.Errorf("No group named %q was found in %s", *hwGroup, *location)
+			log.Fatalf("no group named %q was found in %s", *hwGroup, *location)
 		} else {
 			*hwGroup = group.Id
 		}
@@ -72,14 +71,14 @@ func main() {
 		if _, err := hex.DecodeString(*net); err == nil {
 			/* already looks like a HEX ID */
 		} else if *location == "" {
-			exit.Errorf("Need a location argument (-l) if not using a network ID (%s)", *net)
+			log.Fatalf("Need a location argument (-l) if not using a network ID (%s)", *net)
 		} else {
-			fmt.Printf("Resolving network id of %q ...\n", *net)
+			log.Printf("resolving network id of %q ...\n", *net)
 
 			if netw, err := client.GetNetworkIdByName(*net, *location); err != nil {
-				exit.Errorf("failed to resolve network name %q: %s", *net, err)
+				log.Fatalf("failed to resolve network name %q: %s", *net, err)
 			} else if netw == nil {
-				exit.Errorf("No network named %q was found in %s", *net, *location)
+				log.Fatalf("No network named %q was found in %s", *net, *location)
 			} else {
 				*net = netw.Id
 			}
@@ -148,32 +147,31 @@ func main() {
 		*req.Ttl = time.Now().Add(*ttl)
 	}
 
-	name, reqID, err := client.CreateServer(&req)
+	// The CreateServer request resolves the server name at the end.
+	// This second call can fail at the remote end; it does not mean that
+	// the server has not been created yet.
+	url, reqID, err := client.CreateServer(&req)
 	if err != nil {
-		exit.Fatalf("failed to create server: %s", err)
+		log.Fatalf("failed to create server: %s", err)
 	}
-
-	log.Printf("New server name: %s", name)
-	log.Printf("Status Id: %s", reqID)
-
-	client.PollStatus(reqID, 5*time.Second)
+	client.PollStatus(reqID, 10*time.Second)
 
 	// Print details after job completes
-	showServer(client, name)
+	server, err := client.GetServerByURI(url)
+	if err != nil {
+		log.Fatalf("failed to query server details at %s: %s", url, err)
+	}
+	showServer(client, server)
 }
 
 // Show details of a single server (taken from clc_action.go)
 // @client:    authenticated CLCv2 Client
 // @servname:  server name
-func showServer(client *clcv2.CLIClient, servname string) {
-	server, err := client.GetServer(servname)
-	if err != nil {
-		exit.Fatalf("failed to list details of server %q: %s", servname, err)
-	}
-
+func showServer(client *clcv2.CLIClient, server clcv2.Server) {
+	fmt.Printf("Details of server %s:\n", server.Name)
 	grp, err := client.GetGroup(server.GroupId)
 	if err != nil {
-		exit.Fatalf("failed to resolve group UUID: %s", err)
+		log.Fatalf("failed to resolve group UUID: %s", err)
 	}
 
 	/* First public, then private */

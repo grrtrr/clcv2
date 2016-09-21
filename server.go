@@ -144,6 +144,8 @@ func (c *Client) GetServerByURI(path string) (res Server, err error) {
 // Get the details for a individual server.
 // @serverId: name of the server being queried (e.g. WA1DTGDFEDAD0)
 func (c *Client) GetServer(serverId string) (res Server, err error) {
+	// Note: there exists a second way of querying a server. If @serverId is a hex UUID,
+	//       then use "/v2/servers/%s/%s?uuid=True" instead.
 	return c.GetServerByURI(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId))
 }
 
@@ -316,31 +318,19 @@ type ServerAdditionalDisk struct {
 
 // Create a new server.
 // @serverId: ID of the server to be deleted.
-// Returns new server @name and @statusId if successful.
-func (c *Client) CreateServer(req *CreateServerReq) (name, statusId string, err error) {
-	var status StatusResponse
-	var server Server
-	var link *Link
+// Returns new server @url and @statusId if successful.
+func (c *Client) CreateServer(req *CreateServerReq) (url, statusId string, err error) {
+	var path = fmt.Sprintf("/v2/servers/%s", c.AccountAlias)
 
-	status, err = c.getStatusResponse("POST", fmt.Sprintf("/v2/servers/%s", c.AccountAlias), false, req)
-	if err != nil {
-		return
+	if status, err := c.getStatusResponse("POST", path, false, req); err != nil {
+		/* Main request failed. */
+	} else if link, err := extractLink(status.Links, "status"); err == nil {
+		/* Sanity checks: err != nil only if extractLink fails for expected links. */
+		statusId = link.Id
+		if link, err = extractLink(status.Links, "self"); err == nil {
+			url = link.Href
+		}
 	}
-
-	if link, err = extractLink(status.Links, "status"); err != nil {
-		return
-	}
-	statusId = link.Id
-
-	if link, err = extractLink(status.Links, "self"); err != nil {
-		return
-	}
-
-	/* Note: the following call can take long, at least circa a minute. Use appropriate timeout. */
-	if server, err = c.GetServerByURI(link.Href); err != nil {
-		err = fmt.Errorf("failed to query details of server %s: %s", name, err)
-	}
-	name = server.Name
 	return
 }
 

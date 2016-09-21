@@ -31,7 +31,7 @@ func main() {
 	var extraDrv = flag.Int("drive", 0, "Extra storage (in GB) to add to server as a raw disk")
 	var wasStopped bool
 	var maxAttempts = 1
-	var name, reqID string
+	var url, reqID string
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options] <Source-Server-Name>\n", path.Base(os.Args[0]))
@@ -193,7 +193,7 @@ func main() {
 
 	log.Printf("Cloning %s ...", src.Name)
 	for i := 1; ; i++ {
-		name, reqID, err = client.CreateServer(&req)
+		url, reqID, err = client.CreateServer(&req)
 		if err == nil || i == maxAttempts || strings.Index(err.Error(), "body.sourceServerId") > 0 {
 			break
 		}
@@ -204,8 +204,14 @@ func main() {
 		exit.Fatalf("failed to create server: %s", err)
 	}
 
-	log.Printf("New server name: %s\n", name)
-	log.Printf("Server Password: \"%s\"\n", credentials.Password)
-	log.Printf("Status Id:       %s\n", reqID)
+	log.Printf("Status Id: %s\n", reqID)
 	client.PollStatus(reqID, 5*time.Second)
+
+	server, err := client.GetServerByURI(url)
+	if err != nil {
+		log.Fatalf("failed to query server details at %s: %s", url, err)
+	}
+	log.Printf("New server name: %s\n", server.Name)
+	log.Printf("Server Password: \"%s\"\n", credentials.Password)
+
 }
