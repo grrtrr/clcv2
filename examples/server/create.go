@@ -154,7 +154,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create server: %s", err)
 	}
-	client.PollStatus(reqID, 10*time.Second)
+	log.Printf("Status Id: %s", reqID)
+	client.PollStatus(reqID, 5*time.Second)
 
 	// Print details after job completes
 	server, err := client.GetServerByURI(url)
@@ -168,7 +169,6 @@ func main() {
 // @client:    authenticated CLCv2 Client
 // @servname:  server name
 func showServer(client *clcv2.CLIClient, server clcv2.Server) {
-	fmt.Printf("Details of server %s:\n", server.Name)
 	grp, err := client.GetGroup(server.GroupId)
 	if err != nil {
 		log.Fatalf("failed to resolve group UUID: %s", err)
