@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"strconv"
@@ -28,9 +29,9 @@ func usage() {
 		{"templates", "show the templates for a given region (requires -l to be set)"},
 		{"networks", "show the networks available in a given region (requires -l to be set)"},
 		{"ip", "print IP addresses of a server, or of all servers in a group"},
-		{"on", "power on server (or resume from paused state)"},
+		{"on/start", "power on server (or resume from paused state)"},
 		{"off", "power off server"},
-		{"shutdown", "OS-level shutdown followed by power-off for server"},
+		{"shutdown/stop", "OS-level shutdown followed by power-off for server"},
 		{"pause", "pause server"},
 		{"reset", "perform forced power-cycle on server"},
 		{"reboot", "reboot server"},
@@ -118,7 +119,7 @@ func main() {
 		if flag.NArg() != 3 {
 			exit.Errorf("usage: rename <oldGroupName> <newGroupName>")
 		}
-	case "ip", "on", "off", "shutdown", "pause", "reset", "reboot", "snapshot",
+	case "ip", "on", "start", "off", "shutdown", "stop", "pause", "reset", "reboot", "snapshot",
 		"delsnapshot", "revert", "archive", "delete", "remove":
 		/* FIXME: use map for usage, and use keys here, i.e. _, ok := map[action] */
 		if where == "" {
@@ -207,13 +208,17 @@ func main() {
 				exit.Fatalf("failed to change the amount of Memory on %q: %s", where, err)
 			}
 		case "password":
-			fmt.Printf("Looking up existing pasword of %s ... ", where)
+			log.Printf("Looking up existing password of %s", where)
 
 			credentials, err := client.GetServerCredentials(where)
 			if err != nil {
-				exit.Fatalf("failed to obtain the credentials of server %q: %s", where, err)
+				exit.Fatalf("failed to obtain the credentials of %q: %s", where, err)
 			}
-			fmt.Printf("%q\n", credentials.Password)
+			if credentials.Password == flag.Arg(2) {
+				log.Printf("%s password is already set to %q", where, flag.Arg(2))
+				os.Exit(0)
+			}
+			log.Printf("%s password: %q\n", where, credentials.Password)
 
 			reqID, err = client.ServerChangePassword(where, credentials.Password, flag.Arg(2))
 			if err != nil {
@@ -238,11 +243,13 @@ func main() {
 		default:
 			var serverAction = map[string]func(string) (string, error){
 				"on":          client.PowerOnServer,
+				"start":       client.PowerOnServer,
 				"off":         client.PowerOffServer,
 				"pause":       client.PauseServer,
 				"reset":       client.ResetServer,
 				"reboot":      client.RebootServer,
 				"shutdown":    client.ShutdownServer,
+				"stop":        client.ShutdownServer,
 				"archive":     client.ArchiveServer,
 				"delete":      client.DeleteServer,
 				"remove":      client.DeleteServer,
