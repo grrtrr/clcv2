@@ -46,7 +46,7 @@ func usage() {
 		{"delete", "delete server/group (CAUTION)"},
 		{"remove", "alias for 'delete'"},
 		{"mkdir", "<parentGroup> <newGroupName> - create new folder under @parentGroup"},
-		{"mv", "<groupName> - move server to different folder"},
+		{"mv", "<groupName> - move group/server to different folder"},
 		{"rename", "<newName> - rename group"},
 		{"help", "print this help screen"},
 	} {
@@ -107,9 +107,8 @@ func main() {
 			exit.Errorf("usage: rawdisk <serverName> <diskGB>")
 		}
 	case "mv":
-		handlingServer = true
 		if flag.NArg() != 3 {
-			exit.Errorf("usage: mv <serverName> <new-Group>")
+			exit.Errorf("usage: mv <server|group> <new-Group>")
 		}
 	case "mkdir":
 		if flag.NArg() != 3 {
@@ -178,23 +177,23 @@ func main() {
 			}
 			os.Exit(0)
 		case "mv":
-			var group = flag.Arg(2)
+			var newParent = flag.Arg(2)
 
-			if _, err := hex.DecodeString(group); err == nil {
+			if _, err := hex.DecodeString(newParent); err == nil {
 				/* Looks like a Group UUID */
 			} else if *location == "" {
-				exit.Errorf("Need a location argument (-l) if -g (%s) is not a UUID", group)
+				exit.Errorf("Need a location argument (-l) if destination group (%s) is not a UUID", newParent)
 			} else {
-				if grp, err := client.GetGroupByName(group, *location); err != nil {
-					exit.Errorf("failed to resolve group name %q: %s", group, err)
+				if grp, err := client.GetGroupByName(newParent, *location); err != nil {
+					exit.Errorf("failed to resolve group name %q: %s", newParent, err)
 				} else if grp == nil {
-					exit.Errorf("No group named %q was found in %s", group, *location)
+					exit.Errorf("No group named %q was found in %s", newParent, *location)
 				} else {
-					group = grp.Id
+					newParent = grp.Id
 				}
 			}
 
-			if err = client.ServerSetGroup(where, group); err != nil {
+			if err = client.ServerSetGroup(where, newParent); err != nil {
 				exit.Fatalf("failed to change the parent group on %q: %s", where, err)
 			}
 
@@ -311,6 +310,29 @@ func main() {
 			}
 		case "delete", "remove":
 			reqID, err = client.DeleteGroup(where)
+		case "mv":
+			var newParent = flag.Arg(2)
+
+			if _, err := hex.DecodeString(newParent); err == nil {
+				/* Looks like a Group UUID */
+			} else if *location == "" {
+				exit.Errorf("Need a location argument (-l) if destination group (%s) is not a UUID", newParent)
+			} else {
+				if grp, err := client.GetGroupByName(newParent, *location); err != nil {
+					exit.Errorf("failed to resolve group name %q: %s", newParent, err)
+				} else if grp == nil {
+					exit.Errorf("No group named %q was found in %s", newParent, *location)
+				} else {
+					newParent = grp.Id
+				}
+			}
+
+			if err = client.GroupSetParent(where, newParent); err != nil {
+				exit.Fatalf("failed to change the parent group on %q: %s", where, err)
+			}
+
+			fmt.Printf("Successfully changed the parent group of %s to %s.\n", where, flag.Arg(2))
+			os.Exit(0)
 		case "rename":
 			if err = client.GroupSetName(where, flag.Arg(2)); err == nil {
 				fmt.Println("OK")
