@@ -2,6 +2,7 @@ package clcv2
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -44,17 +45,23 @@ type Client struct {
 	// Authentication information
 	LoginRes
 
+	// Logger used for (debugging) output.
+	Log logrus.StdLogger
+
+	/*
+	 * private
+	 */
 	// Performs the actual requests
 	requestor *http.Client
 
-	// Optional callback which is called when @LoginRes is updated
-	credentialsChanged func() error
+	// Optional context to control cancellation/deadline
+	ctx context.Context
 
 	// controls automatic re-login
 	retryingLogin bool
 
-	// Logger used for (debugging) output.
-	Log logrus.StdLogger
+	// Optional callback which is called when @LoginRes is updated
+	credentialsChanged func() error
 }
 
 // LoginReq is the data structure required to perform the initial CLCv2 login request.
@@ -99,6 +106,11 @@ func NewClient(user, pass string) (*Client, error) {
 	return client, nil
 }
 
+// SetContext sets the cancellation context of @c to @ctx
+func (c *Client) SetContext(ctx context.Context) {
+	c.ctx = ctx
+}
+
 // initClient initializes the parts common to both Client and CLIClient
 func initClient(user, pass string) *Client {
 	client := &Client{LoginReq: LoginReq{user, pass}}
@@ -111,7 +123,6 @@ func initClient(user, pass string) *Client {
 			rehttp.ExpJitterDelay(StepDelay, g_timeout),
 		),
 	}
-
 	return client
 }
 
@@ -133,6 +144,9 @@ func (c *Client) login() error {
 // retryer implements the retry policy: (a) any failure, (b) temporary failure status codes
 func (c *Client) retryer(maxRetries int) rehttp.RetryFn {
 	return rehttp.RetryFn(func(at rehttp.Attempt) bool {
+		if c.ctx != nil && c.ctx.Err() != nil {
+			return false
+		}
 		if at.Index < maxRetries {
 			if at.Response == nil {
 				if c.Log != nil {
@@ -193,6 +207,8 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 	req, err := http.NewRequest(verb, url, reqBody)
 	if err != nil {
 		return
+	} else if c.ctx != nil {
+		req = req.WithContext(c.ctx)
 	}
 
 	if c.BearerToken != "" {
@@ -208,7 +224,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 
 	res, err := c.requestor.Do(req)
 	if err != nil {
-		return
+		return err
 	}
 	defer res.Body.Close()
 
