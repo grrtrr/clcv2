@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
@@ -57,5 +58,5 @@ func main() {
 		exit.Fatalf("failed to add a public IP address to %q: %s", flag.Arg(0), err)
 	}
 
-	fmt.Println("Request ID for adding public IP:", reqId)
+	client.PollStatus(reqId, 1*time.Second)
 }
