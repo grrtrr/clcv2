@@ -29,12 +29,12 @@ func main() {
 		"        - DEFAULTS:  ping, ssh, http")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s [options] <Location>\n", path.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "usage: %s [options] -src <SrcCIDR> -dst <DstCIDR>  <Location>\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 
 	flag.Parse()
-	if flag.NArg() != 1 {
+	if flag.NArg() != 1 || len(src) == 0 || len(dst) == 0 {
 		flag.Usage()
 		os.Exit(0)
 	}
