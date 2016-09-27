@@ -34,7 +34,7 @@ func (c *Client) GetStatus(statusId string) (status QueueStatus, err error) {
 // PollStatus polls the queue status of @statusId until it reaches either %Succeeded or %Failed.
 // @statusId:     queue ID to query
 // @pollInterval: wait interval between poll attemps, use 0 for one-shot operation
-// NOTE: since this logs to stderr, it is suitable only for terminal-based applications!
+// NOTE: since this logs to stdout, it is suitable only for terminal-based applications!
 func (c *Client) PollStatus(statusId string, pollInterval time.Duration) error {
 	var prevStatus QueueStatus = Unknown
 	for {
@@ -54,18 +54,32 @@ func (c *Client) PollStatus(statusId string, pollInterval time.Duration) error {
 	return nil
 }
 
-// AwaitCompletion waits until @statusId completes.
+// AwaitCompletion waits until @statusId completes. It is meant for automated (non-interactive)
+// monitoring and thus also continually checks whether the context has been canceled (unlike PollStatus).
 // @statusId: queue ID to query
 func (c *Client) AwaitCompletion(statusId string) (QueueStatus, error) {
+	const waitIntvl = 1 * time.Second
+	var timer = time.NewTimer(waitIntvl)
+	var done <-chan struct{}
+
+	defer timer.Stop()
+	if c.ctx != nil {
+		done = c.ctx.Done()
+	}
+
 	for {
-		status, err := c.GetStatus(statusId)
-		if err != nil {
-			return Unknown, fmt.Errorf("unable to query status of %s: %s", statusId, err)
+		select {
+		case <-done:
+			return Unknown, c.ctx.Err()
+		case <-timer.C:
+			timer.Stop()
+			if status, err := c.GetStatus(statusId); err != nil {
+				return Unknown, fmt.Errorf("unable to query status of %s: %s", statusId, err)
+			} else if status == Succeeded || status == Failed {
+				return status, nil
+			}
+			timer.Reset(waitIntvl)
 		}
-		if status == Succeeded || status == Failed {
-			return status, nil
-		}
-		time.Sleep(1 * time.Second)
 	}
 }
 
