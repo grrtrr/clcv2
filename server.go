@@ -120,6 +120,25 @@ type Server struct {
 	Links []Link
 }
 
+// IPs returns the list of IPs of @s as flattened list
+func (s *Server) IPs() []string {
+	var seen = make(map[string]bool) /* track private IPs, they can be mapped to public ones */
+	var ips []string
+
+	if s != nil {
+		for _, ip := range s.Details.IpAddresses {
+			if ip.Public != "" {
+				ips = append(ips, ip.Public)
+			}
+			if !seen[ip.Internal] {
+				ips = append(ips, ip.Internal)
+				seen[ip.Internal] = true
+			}
+		}
+	}
+	return ips
+}
+
 // ServerIPAddress represents an IP address attached to a server.
 type ServerIPAddress struct {
 	// Private IP address. If @Public is non-empty, @Internal is associated with @Public.
@@ -130,7 +149,7 @@ type ServerIPAddress struct {
 }
 
 // IsPublic returns true if @s is a public ServerIPAddress
-func (s ServerIPAddress) IsPublic() bool {
+func (s *ServerIPAddress) IsPublic() bool {
 	return s.Public != ""
 }
 
@@ -179,22 +198,11 @@ func (c *Client) GetServerNets(s Server) (nets []Network, err error) {
 
 // GetIPs returns the (private, public) IP addresses associated with @serverID
 func (c *Client) GetServerIPs(serverId string) (ips []string, err error) {
-	var seen = make(map[string]bool) /* track private IPs, they can be mapped to public ones */
-
 	srv, err := c.GetServer(serverId)
 	if err != nil {
 		return nil, err
 	}
-	for _, ip := range srv.Details.IpAddresses {
-		if ip.Public != "" {
-			ips = append(ips, ip.Public)
-		}
-		if !seen[ip.Internal] {
-			ips = append(ips, ip.Internal)
-			seen[ip.Internal] = true
-		}
-	}
-	return
+	return srv.IPs(), nil
 }
 
 /*
