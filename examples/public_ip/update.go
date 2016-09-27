@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
@@ -57,5 +58,5 @@ func main() {
 		exit.Fatalf("failed to update public IP address %s on %q: %s", flag.Arg(1), flag.Arg(0), err)
 	}
 
-	fmt.Printf("Request ID for modifying public IP: %s\n", reqId)
+	client.PollStatus(reqId, 1*time.Second)
 }

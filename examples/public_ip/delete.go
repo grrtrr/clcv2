@@ -5,12 +5,14 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+	"time"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
@@ -34,6 +36,5 @@ func main() {
 	if err != nil {
 		exit.Fatalf("failed to remove public IP on %q: %s", flag.Arg(0), err)
 	}
-
-	fmt.Printf("Request ID for removing public IP %s: %s\n", flag.Arg(1), statusId)
+	client.PollStatus(statusId, 1*time.Second)
 }
