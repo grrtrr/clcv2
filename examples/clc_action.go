@@ -48,6 +48,7 @@ func usage() {
 		{"mkdir", "<parentGroup> <newGroupName> - create new folder under @parentGroup"},
 		{"mv", "<groupName> - move group/server to different folder"},
 		{"rename", "<newName> - rename group"},
+		{"wait", "<statusID> - wait for status ID"},
 		{"help", "print this help screen"},
 	} {
 		fmt.Fprintf(os.Stderr, "\t%-15s %s\n", r[0], r[1])
@@ -119,7 +120,7 @@ func main() {
 			exit.Errorf("usage: rename <oldGroupName> <newGroupName>")
 		}
 	case "ip", "on", "start", "off", "shutdown", "stop", "pause", "reset", "reboot", "snapshot",
-		"delsnapshot", "revert", "archive", "delete", "remove":
+		"delsnapshot", "revert", "archive", "delete", "remove", "wait":
 		/* FIXME: use map for usage, and use keys here, i.e. _, ok := map[action] */
 		if where == "" {
 			exit.Errorf("Action %q requires an argument (try -h).", action)
@@ -133,7 +134,7 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	if !handlingServer {
+	if !handlingServer && action != "wait" {
 		/*
 		 * Decide if arguments refer to a server or a hardware group.
 		 */
@@ -163,6 +164,8 @@ func main() {
 	} else if action == "networks" { /* similar, neither server nor group action; print regional networks */
 		showNetworks(client, *location)
 		os.Exit(0)
+	} else if action == "wait" {
+		reqID = flag.Arg(1)
 	} else if handlingServer { /* Server Action */
 		switch action {
 		case "ip":
