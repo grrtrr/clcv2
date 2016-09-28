@@ -21,7 +21,7 @@ func main() {
 	var simple = flag.Bool("simple", false, "Use simple (debugging) output format")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Network-ID (hex)>\n", path.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "usage: %s [options] -l <Location>  <Network-ID (hex)>\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 

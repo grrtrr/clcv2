@@ -47,9 +47,8 @@ func main() {
 		if err != nil {
 			exit.Fatalf("failed to get existing configuration for %s: %s", flag.Arg(1), err)
 		}
-		fmt.Printf("EXISTING settings: %+v\n", old.Ports)
+		log.Printf("existing settings: %v", old.Ports)
 		portSp = append(portSp, old.Ports...)
-		fmt.Println(portSp)
 	}
 
 	req := clcv2.PublicIPAddress{Ports: portSp, SourceRestrictions: srcRes}
