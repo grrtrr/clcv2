@@ -10,11 +10,13 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-/* CLC Server Syntax. FIXME: possibly subject to change without notice. */
-var serverRegexp = regexp.MustCompile(`(?i)(^[A-Z]{2}\d)[A-Z0-9-]{4,}$`)
+var (
+	// CLC Server Syntax. FIXME: possibly subject to change without notice.
+	serverRegexp = regexp.MustCompile(`(?i)(^[A-Z]{2}\d)[A-Z0-9-]{4,}$`)
 
-/* Parse time zone offset(supported formats: -07:00:00, -7:00, -700, -0700, +00:00, 100) */
-var tzRegexp = regexp.MustCompile(`^\s*([+-]?)(\d{1,2}):?(\d{2})(:?(\d{2}))?\s*$`)
+	// Parse time zone offset(supported formats: -07:00:00, -7:00, -700, -0700, +00:00, 100)
+	tzRegexp = regexp.MustCompile(`^\s*([+-]?)(\d{1,2}):?(\d{2})(:?(\d{2}))?\s*$`)
+)
 
 // Return true if @s looks like a CLC server name
 func LooksLikeServerName(s string) bool {

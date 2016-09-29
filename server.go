@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+const (
+	// CLC Password unsupported characters. FIXME: possibly subject to change without notice.
+	InvalidPasswordCharacters = `"';^&<>|\`
+)
+
 // Various server-related errors returned by this package
 var (
 	// ErrNoSnapshot is returned when trying to delete a non-existing snapshot
