@@ -213,6 +213,14 @@ func main() {
 		case "password":
 			var newPassword string
 
+			log.Printf("Looking up existing password of %s", where)
+
+			credentials, err := client.GetServerCredentials(where)
+			if err != nil {
+				exit.Fatalf("failed to obtain the credentials of %q: %s", where, err)
+			}
+			log.Printf("Existing %s password: %q", where, credentials.Password)
+
 			if flag.NArg() == 3 {
 				newPassword = flag.Arg(2)
 			} else if newPassword, err = garbler.NewPassword(&garbler.Paranoid); err != nil {
@@ -226,19 +234,13 @@ func main() {
 					}
 					return r
 				}, newPassword)
-				log.Printf("Generated new paranoid 'garbler' password: %s", newPassword)
+				log.Printf("New paranoid 'garbler' password: %q", newPassword)
 			}
-			log.Printf("Looking up existing password of %s", where)
 
-			credentials, err := client.GetServerCredentials(where)
-			if err != nil {
-				exit.Fatalf("failed to obtain the credentials of %q: %s", where, err)
-			}
 			if newPassword == credentials.Password {
 				log.Printf("%s password is already set to %q", where, newPassword)
 				os.Exit(0)
 			}
-			log.Printf("%s password: %q\n", where, credentials.Password)
 
 			reqID, err = client.ServerChangePassword(where, credentials.Password, newPassword)
 			if err != nil {
