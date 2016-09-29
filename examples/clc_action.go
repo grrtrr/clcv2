@@ -16,6 +16,7 @@ import (
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/clcv2/utils"
 	"github.com/grrtrr/exit"
+	garbler "github.com/michaelbironneau/garbler/lib"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -41,7 +42,7 @@ func usage() {
 		{"revert", "revert server to snapshot state"},
 		{"archive", "archive the server/group"},
 		{"memory", "<memoryGB> - set server memory"},
-		{"password", "<password> - set server password"},
+		{"password", "[<password>] - set/generate server password"},
 		{"credentials", "show server credentials"},
 		{"delete", "delete server/group (CAUTION)"},
 		{"remove", "alias for 'delete'"},
@@ -99,8 +100,8 @@ func main() {
 		}
 	case "password":
 		handlingServer = true
-		if flag.NArg() != 3 {
-			exit.Errorf("usage: password <serverName> <new-password>")
+		if flag.NArg() < 2 {
+			exit.Errorf("usage: password <serverName> [<new-password>]")
 		}
 	case "rawdisk":
 		handlingServer = true
@@ -210,19 +211,36 @@ func main() {
 				exit.Fatalf("failed to change the amount of Memory on %q: %s", where, err)
 			}
 		case "password":
+			var newPassword string
+
+			if flag.NArg() == 3 {
+				newPassword = flag.Arg(2)
+			} else if newPassword, err = garbler.NewPassword(&garbler.Paranoid); err != nil {
+				exit.Fatalf("failed to generate new 'garbler' password: %s", err)
+			} else {
+				// The 'Paranoid' mode in garbler more than satisfies CLC requirements.
+				// However, the symbols may contain unsupported characters.
+				newPassword = strings.Map(func(r rune) rune {
+					if strings.Index(clcv2.InvalidPasswordCharacters, string(r)) > -1 {
+						return '@'
+					}
+					return r
+				}, newPassword)
+				log.Printf("Generated new paranoid 'garbler' password: %s", newPassword)
+			}
 			log.Printf("Looking up existing password of %s", where)
 
 			credentials, err := client.GetServerCredentials(where)
 			if err != nil {
 				exit.Fatalf("failed to obtain the credentials of %q: %s", where, err)
 			}
-			if credentials.Password == flag.Arg(2) {
-				log.Printf("%s password is already set to %q", where, flag.Arg(2))
+			if newPassword == credentials.Password {
+				log.Printf("%s password is already set to %q", where, newPassword)
 				os.Exit(0)
 			}
 			log.Printf("%s password: %q\n", where, credentials.Password)
 
-			reqID, err = client.ServerChangePassword(where, credentials.Password, flag.Arg(2))
+			reqID, err = client.ServerChangePassword(where, credentials.Password, newPassword)
 			if err != nil {
 				exit.Fatalf("failed to change the password on %q: %s", where, err)
 			}
