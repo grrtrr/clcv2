@@ -70,17 +70,18 @@ func NewCLIClient() (client *CLIClient, err error) {
 	if err = client.loadCredentials(); err != nil {
 		return nil, err
 	}
+	client.AccountAlias = client.credentials.AccountAlias
 
 	if alias := os.Getenv("CLC_ALIAS"); alias != "" {
-		client.LoginRes.LocationAlias = alias
+		client.credentials.LocationAlias = alias
 	}
 	if account := os.Getenv("CLC_ACCOUNT"); account != "" {
-		client.LoginRes.AccountAlias = account
+		client.AccountAlias = account
 	}
 
 	/* Commandline flags take precedence over environment variables. */
 	if g_acct != "" {
-		client.LoginRes.AccountAlias = g_acct
+		client.AccountAlias = g_acct
 	}
 	return client, nil
 }
@@ -100,7 +101,7 @@ func setBaseURL() error {
 	return nil
 }
 
-// Load credentials from file at default path, do a fresh login otherwise.
+// Populate and allocate c.credentials, either by loading from file or via a fresh login.
 // Save (updated) credentials if successful.
 func (c *CLIClient) loadCredentials() error {
 	var path = defaultCredentialsPath()
@@ -112,12 +113,12 @@ func (c *CLIClient) loadCredentials() error {
 		}
 		defer fd.Close()
 
-		err = json.NewDecoder(fd).Decode(&c.LoginRes)
-		if err != nil {
+		c.credentials = new(LoginRes)
+		if err = json.NewDecoder(fd).Decode(c.credentials); err != nil {
 			return err
 		}
 
-		if strings.ToLower(c.LoginReq.Username) == strings.ToLower(c.LoginRes.User) {
+		if strings.ToLower(c.credentials.User) == strings.ToLower(c.LoginReq.Username) {
 			/* Found credentials and user has not changed. No login required. */
 			return nil
 		}
@@ -132,7 +133,10 @@ func (c *CLIClient) loadCredentials() error {
 
 // Save credentials to default file path. Return error on failure.
 func (c *CLIClient) saveCredentials() error {
-	enc, err := json.MarshalIndent(&c.LoginRes, "", "\t")
+	if c.credentials == nil {
+		return fmt.Errorf("login credentials not initialized")
+	}
+	enc, err := json.MarshalIndent(c.credentials, "", "\t")
 	if err != nil {
 		return err
 	}

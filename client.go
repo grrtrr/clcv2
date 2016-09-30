@@ -42,8 +42,8 @@ type Client struct {
 	// Login credentials
 	LoginReq
 
-	// Authentication information
-	LoginRes
+	// AccountAlias to use (defaults to @credentials.AccountAlias, but can be overridden)
+	AccountAlias string
 
 	// Logger used for (debugging) output.
 	Log logrus.StdLogger
@@ -51,6 +51,9 @@ type Client struct {
 	/*
 	 * private
 	 */
+	// Authentication information (may be updated when the BearerToken is stale)
+	credentials *LoginRes
+
 	// Performs the actual requests
 	requestor *http.Client
 
@@ -60,7 +63,7 @@ type Client struct {
 	// controls automatic re-login
 	retryingLogin bool
 
-	// Optional callback which is called when @LoginRes is updated
+	// Optional callback which is called when @credentials is updated
 	credentialsChanged func() error
 }
 
@@ -131,10 +134,12 @@ func (c *Client) login() error {
 	if c.LoginReq.Username == "" || c.LoginReq.Password == "" {
 		return fmt.Errorf("invalid CLC credentials %q/%q", c.LoginReq.Username, c.LoginReq.Password)
 	}
-	c.LoginRes.BearerToken = ""
-	if err := c.getCLCResponse("POST", "/v2/authentication/login", &c.LoginReq, &c.LoginRes); err != nil {
+	c.credentials = new(LoginRes)
+	if err := c.getCLCResponse("POST", "/v2/authentication/login", &c.LoginReq, c.credentials); err != nil {
 		return err
 	}
+	c.AccountAlias = c.credentials.AccountAlias
+
 	if c.credentialsChanged != nil {
 		return c.credentialsChanged()
 	}
@@ -211,8 +216,8 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 		req = req.WithContext(c.ctx)
 	}
 
-	if c.BearerToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.BearerToken)
+	if c.credentials != nil && c.credentials.BearerToken != "" {
+		req.Header.Set("Authorization", "Bearer "+c.credentials.BearerToken)
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json")
