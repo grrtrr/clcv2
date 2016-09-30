@@ -47,8 +47,9 @@ type CLIClient struct {
 
 // NewCLIClient returns an authenticated commandline client.
 // This will use the default values for AccountAlias  and LocationAlias.
-// It will respect the following environment variable to override the defaults:
-// - CLC_ACCOUNT: takes precedence over default AccountAlias
+// It will respect the following environment variables to override the defaults:
+// - CLC_ACCOUNT:  takes precedence over default AccountAlias
+// - CLC_BASE_URL: overrides the API URL (for testing)
 func NewCLIClient() (client *CLIClient, err error) {
 	username, password, err := resolveUserAndPass()
 	if err != nil {
@@ -57,46 +58,32 @@ func NewCLIClient() (client *CLIClient, err error) {
 	client = &CLIClient{initClient(username, password)}
 
 	client.credentialsChanged = client.saveCredentials
-
 	if g_debug {
 		client.Log = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
 	}
 
-	if err = setBaseURL(); err != nil {
-		return nil, err
-	}
-
-	if err = client.loadCredentials(); err != nil {
-		return nil, err
-	}
-
-	/* Set/override account alias. */
-	client.AccountAlias = client.credentials.AccountAlias
-
-	if account := os.Getenv("CLC_ACCOUNT"); account != "" {
-		client.AccountAlias = account
-	}
-
-	/* Commandline flags take precedence over environment variables. */
-	if g_acct != "" {
-		client.AccountAlias = g_acct
-	}
-	return client, nil
-}
-
-// setBaseURL sets the URL base based on $CLC_BASE_URL.
-func setBaseURL() error {
+	// Set/override %baseURL
 	if envURL := os.Getenv("CLC_BASE_URL"); envURL != "" {
 		url, err := url.Parse(envURL)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if url.Scheme == "" {
 			url.Scheme = "https"
 		}
 		baseURL = url.String()
 	}
-	return nil
+
+	// Set/override account alias.
+	if g_acct != "" {
+		client.AccountAlias = g_acct
+	} else if account := os.Getenv("CLC_ACCOUNT"); account != "" {
+		client.AccountAlias = account
+	} else { // may have been initialized from disk
+		client.AccountAlias = client.credentials.AccountAlias
+	}
+
+	return client, nil
 }
 
 // Populate and allocate c.credentials, either by loading from file or via a fresh login.

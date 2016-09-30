@@ -132,12 +132,14 @@ func initClient(user, pass string) *Client {
 	return client
 }
 
-// Log in and update credentials if successful.
+// login wipes olds credentials, logs in, and updates credentials if successful.
 func (c *Client) login() error {
+	c.credentials = new(LoginRes)
+
 	if c.LoginReq.Username == "" || c.LoginReq.Password == "" {
 		return fmt.Errorf("invalid CLC credentials %q/%q", c.LoginReq.Username, c.LoginReq.Password)
 	}
-	c.credentials = new(LoginRes)
+
 	if err := c.getCLCResponse("POST", "/v2/authentication/login", &c.LoginReq, c.credentials); err != nil {
 		return err
 	}
