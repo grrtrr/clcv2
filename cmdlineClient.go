@@ -133,12 +133,11 @@ func (c *CLIClient) loadCredentials() error {
 func (c *CLIClient) saveCredentials() error {
 	if c.credentials == nil {
 		return fmt.Errorf("login credentials not initialized")
-	}
-	enc, err := json.MarshalIndent(c.credentials, "", "\t")
-	if err != nil {
+	} else if enc, err := json.MarshalIndent(c.credentials, "", "\t"); err != nil {
 		return err
+	} else {
+		return ioutil.WriteFile(defaultCredentialsPath(), append(enc, '\n'), 0600)
 	}
-	return ioutil.WriteFile(defaultCredentialsPath(), append(enc, '\n'), 0600)
 }
 
 // Remove (stale) credentials
