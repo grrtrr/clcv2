@@ -47,8 +47,7 @@ type CLIClient struct {
 
 // NewCLIClient returns an authenticated commandline client.
 // This will use the default values for AccountAlias  and LocationAlias.
-// It will respect the following environment variables to override the defaults:
-// - CLC_ALIAS:   takes precedence over default LocationAlias
+// It will respect the following environment variable to override the defaults:
 // - CLC_ACCOUNT: takes precedence over default AccountAlias
 func NewCLIClient() (client *CLIClient, err error) {
 	username, password, err := resolveUserAndPass()
@@ -70,11 +69,10 @@ func NewCLIClient() (client *CLIClient, err error) {
 	if err = client.loadCredentials(); err != nil {
 		return nil, err
 	}
+
+	/* Set/override account alias. */
 	client.AccountAlias = client.credentials.AccountAlias
 
-	if alias := os.Getenv("CLC_ALIAS"); alias != "" {
-		client.credentials.LocationAlias = alias
-	}
 	if account := os.Getenv("CLC_ACCOUNT"); account != "" {
 		client.AccountAlias = account
 	}
