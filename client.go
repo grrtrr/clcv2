@@ -33,6 +33,9 @@ const (
 
 // GLOBAL VARIABLES
 var (
+	// Errors returned by this package
+	ErrCredentialsInValid = errors.New("authentication credentials are stale or invalid")
+
 	// allow overriding of the %BaseURL default
 	baseURL = BaseURL
 )
@@ -274,7 +277,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 			c.retryingLogin = false
 			return nil
 		}
-		return errors.New("authentication credentials are stale or invalid.")
+		return ErrCredentialsInValid
 	}
 
 	// Remaining error cases: res.ContentLength is not reliable - in the SBS case, it used
