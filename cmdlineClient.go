@@ -74,6 +74,10 @@ func NewCLIClient() (client *CLIClient, err error) {
 		baseURL = url.String()
 	}
 
+	if err = client.loadCredentials(); err != nil {
+		return nil, err
+	}
+
 	// Set/override account alias.
 	if g_acct != "" {
 		client.AccountAlias = g_acct
