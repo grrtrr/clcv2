@@ -31,7 +31,7 @@ func usage() {
 		{"networks", "show the networks available in a given region (requires -l to be set)"},
 		{"ip", "print IP addresses of a server, or of all servers in a group"},
 		{"on/start", "power on server (or resume from paused state)"},
-		{"off", "power off server"},
+		{"off", "power off server (forced/hard power-off)"},
 		{"shutdown/stop", "OS-level shutdown followed by power-off for server"},
 		{"pause", "pause server"},
 		{"reset", "perform forced power-cycle on server"},
@@ -265,16 +265,16 @@ func main() {
 		default:
 			var serverAction = map[string]func(string) (string, error){
 				"on":          client.PowerOnServer,
-				"start":       client.PowerOnServer,
+				"start":       client.PowerOnServer, // Alias
 				"off":         client.PowerOffServer,
 				"pause":       client.PauseServer,
 				"reset":       client.ResetServer,
 				"reboot":      client.RebootServer,
 				"shutdown":    client.ShutdownServer,
-				"stop":        client.ShutdownServer,
+				"stop":        client.ShutdownServer, // Alias
 				"archive":     client.ArchiveServer,
 				"delete":      client.DeleteServer,
-				"remove":      client.DeleteServer,
+				"remove":      client.DeleteServer, // Alias
 				"snapshot":    client.SnapshotServer,
 				"delsnapshot": client.DeleteSnapshot,
 				"revert":      client.RevertToSnapshot,

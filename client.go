@@ -60,8 +60,11 @@ type Client struct {
 	// Performs the actual requests
 	requestor *http.Client
 
-	// Optional context to control cancellation/deadline
+	// Cancellation context (used by @cancel). Can be overridden via SetContext()
 	ctx context.Context
+
+	// Cancels this client via @ctx
+	cancel context.CancelFunc
 
 	// controls automatic re-login
 	retryingLogin bool
@@ -114,12 +117,23 @@ func NewClient(user, pass string) (*Client, error) {
 
 // SetContext sets the cancellation context of @c to @ctx
 func (c *Client) SetContext(ctx context.Context) {
-	c.ctx = ctx
+	c.ctx, c.cancel = context.WithCancel(ctx)
+}
+
+// Cancel cancels @c.ctx
+func (c *Client) Cancel() {
+	c.cancel()
+}
+
+// Context returns the cancellation context of @c
+func (c *Client) Context() context.Context {
+	return c.ctx
 }
 
 // initClient initializes the parts common to both Client and CLIClient
 func initClient(user, pass string) *Client {
-	client := &Client{LoginReq: LoginReq{user, pass}}
+	var client = &Client{LoginReq: LoginReq{user, pass}}
+
 	client.requestor = &http.Client{
 		Transport: rehttp.NewTransport(nil, // default transport
 			client.retryer(MaxRetries),
@@ -129,6 +143,8 @@ func initClient(user, pass string) *Client {
 			rehttp.ExpJitterDelay(StepDelay, g_timeout),
 		),
 	}
+	client.ctx, client.cancel = context.WithCancel(context.Background())
+
 	return client
 }
 

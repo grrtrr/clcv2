@@ -591,13 +591,13 @@ func (c *Client) PowerOnServer(serverId string) (statusId string, err error) {
 	return c.serverPowerOperation("powerOn", serverId)
 }
 
-// Send the power-off operation to a server and add operation to queue.
+// Send the (hard) power-off operation to a server and add operation to queue.
 // @serverId: Name of server to power off.
 func (c *Client) PowerOffServer(serverId string) (statusId string, err error) {
 	return c.serverPowerOperation("powerOff", serverId)
 }
 
-// Send the shut-down operation to a server and add operation to queue.
+// Send the (soft) shut-down operation to a server and add operation to queue.
 // @serverId: Name of server to shut down.
 func (c *Client) ShutdownServer(serverId string) (statusId string, err error) {
 	return c.serverPowerOperation("shutDown", serverId)
