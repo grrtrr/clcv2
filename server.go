@@ -673,7 +673,7 @@ type ChangeNicStatus struct {
 	RequestType string
 
 	// This starts with "queued" and reaches "succeeded" when done
-	Status string
+	Status QueueStatus
 
 	// Use maps for the rest: there is no documentation currently
 	Summary, Source map[string]string

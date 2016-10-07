@@ -11,11 +11,11 @@ type QueueStatus string
 
 const (
 	NotStarted QueueStatus = "notStarted"
-	Executing              = "executing"
-	Succeeded              = "succeeded"
-	Failed                 = "failed"
-	Resumed                = "resumed"
-	Unknown                = "unknown"
+	Executing  QueueStatus = "executing"
+	Succeeded  QueueStatus = "succeeded"
+	Failed     QueueStatus = "failed"
+	Resumed    QueueStatus = "resumed"
+	Unknown    QueueStatus = "unknown"
 )
 
 // Get the status of a particular job in the queue, which keeps track of any long-running
@@ -35,23 +35,21 @@ func (c *Client) GetStatus(statusId string) (status QueueStatus, err error) {
 // @statusId:     queue ID to query
 // @pollInterval: wait interval between poll attemps, use 0 for one-shot operation
 // NOTE: since this logs to stdout, it is suitable only for terminal-based applications!
-func (c *Client) PollStatus(statusId string, pollInterval time.Duration) error {
-	var prevStatus QueueStatus = Unknown
-	for {
+func (c *Client) PollStatus(statusId string, pollInterval time.Duration) (QueueStatus, error) {
+	for prevStatus := Unknown; ; {
 		status, err := c.GetStatus(statusId)
 		if err != nil {
-			return fmt.Errorf("failed to query status of status ID %d: %s", statusId, err)
+			return Unknown, fmt.Errorf("failed to query status of status ID %d: %s", statusId, err)
 		}
 		if status != prevStatus { // periodically log to stdout
 			log.Printf("%s: %s", statusId, status)
 			prevStatus = status
 		}
 		if pollInterval == 0 || status == Succeeded || status == Failed {
-			break
+			return status, nil
 		}
 		time.Sleep(pollInterval)
 	}
-	return nil
 }
 
 // AwaitCompletion waits until @statusId completes. It is meant for automated (non-interactive)
