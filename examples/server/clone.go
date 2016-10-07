@@ -20,7 +20,7 @@ import (
 
 func main() {
 	var net = flag.String("net", "", "ID or name of the Network to use (if different from source)")
-	var hwGroup = flag.String("g", "", "UUID or name (if unique) of the HW group to add this server to")
+	var hwGroup = flag.String("g", "", "UUID or name (if unique) of the HW group to clone this server into")
 	var primDNS = flag.String("dns1", "8.8.8.8", "Primary DNS to use")
 	var secDNS = flag.String("dns2", "8.8.4.4", "Secondary DNS to use")
 	var numCpu = flag.Int("cpu", 0, "Number of Cpus to use (if different from source VM)")
@@ -131,7 +131,7 @@ func main() {
 		req.GroupId = *hwGroup
 
 		if _, err := hex.DecodeString(*hwGroup); err != nil {
-			fmt.Printf("Resolving ID of Hardware Group %q ...\n", *hwGroup)
+			log.Printf("Resolving ID of Hardware Group %q in %s ...", *hwGroup, src.LocationId)
 
 			if group, err := client.GetGroupByName(*hwGroup, src.LocationId); err != nil {
 				exit.Fatalf("failed to resolve group name %q: %s", *hwGroup, err)
@@ -180,7 +180,7 @@ func main() {
 			req.NetworkId = nets[0].Id
 		}
 	} else if _, err := hex.DecodeString(*net); err != nil { // not a HEX ID, treat as group name
-		fmt.Printf("Resolving network ID of %q ...\n", *net)
+		log.Printf("Resolving network ID of %q in %s ...", *net, src.LocationId)
 
 		if netw, err := client.GetNetworkIdByName(*net, src.LocationId); err != nil {
 			exit.Fatalf("failed to resolve network name %q: %s", *net, err)
@@ -205,13 +205,17 @@ func main() {
 	}
 
 	log.Printf("Status Id: %s\n", reqID)
-	client.PollStatus(reqID, 5*time.Second)
+	status, err := client.PollStatus(reqID, 5*time.Second)
+	if err != nil {
+		exit.Fatalf("failed to poll %s status: %s", reqID, err)
+	}
 
 	server, err := client.GetServerByURI(url)
 	if err != nil {
 		log.Fatalf("failed to query server details at %s: %s", url, err)
+	} else if status == clcv2.Failed {
+		exit.Fatalf("failed to clone %s (will show up as 'under construction')", server.Name)
 	}
 	log.Printf("New server name: %s\n", server.Name)
 	log.Printf("Server Password: \"%s\"\n", credentials.Password)
-
 }
