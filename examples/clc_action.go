@@ -43,6 +43,7 @@ func usage() {
 		{"archive", "archive the server/group"},
 		{"memory", "<memoryGB> - set server memory"},
 		{"password", "[<password>] - set/generate server password"},
+		{"description", "<server-description> - set the server description"},
 		{"credentials", "show server credentials"},
 		{"delete", "delete server/group (CAUTION)"},
 		{"remove", "alias for 'delete'"},
@@ -102,6 +103,11 @@ func main() {
 		handlingServer = true
 		if flag.NArg() < 2 {
 			exit.Errorf("usage: password <serverName> [<new-password>]")
+		}
+	case "description":
+		handlingServer = true
+		if flag.NArg() < 2 {
+			exit.Errorf("usage: description <serverName> <descriptive-text")
 		}
 	case "rawdisk":
 		handlingServer = true
@@ -209,6 +215,12 @@ func main() {
 			reqID, err = client.ServerSetMemory(where, flag.Arg(2))
 			if err != nil {
 				exit.Fatalf("failed to change the amount of Memory on %q: %s", where, err)
+			}
+		case "description":
+			fmt.Printf("Setting %s description to to %q.\n", where, flag.Arg(2))
+
+			if err = client.ServerSetDescription(where, flag.Arg(2)); err != nil {
+				exit.Fatalf("failed to change the description of %q: %s", where, err)
 			}
 		case "password":
 			var newPassword string
