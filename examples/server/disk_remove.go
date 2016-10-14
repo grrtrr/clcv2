@@ -6,9 +6,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"regexp"
+	"time"
 
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
@@ -63,12 +65,13 @@ func main() {
 		}
 	}
 
-	statusId, err := client.ServerSetDisks(flag.Arg(0), disks)
+	reqID, err := client.ServerSetDisks(flag.Arg(0), disks)
 	if err != nil {
 		exit.Fatalf("failed to update the disk configuration on %q: %s", flag.Arg(0), err)
 	}
 
-	fmt.Printf("Status Id for updating the disks on %s: %s\n", flag.Arg(0), statusId)
+	log.Printf("Status Id for updating the disks on %s: %s", flag.Arg(0), reqID)
+	client.PollStatus(reqID, 5*time.Second)
 }
 
 // inStringArray returns true if @s is found in @cand

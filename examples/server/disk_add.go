@@ -6,8 +6,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path"
+	"time"
 
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
@@ -54,10 +56,11 @@ func main() {
 		newDisk.Type = "partitioned"
 	}
 
-	statusId, err := client.ServerSetDisks(flag.Arg(0), append(disks, newDisk))
+	reqID, err := client.ServerSetDisks(flag.Arg(0), append(disks, newDisk))
 	if err != nil {
 		exit.Fatalf("failed to update the disk configuration on %q: %s", flag.Arg(0), err)
 	}
 
-	fmt.Printf("Status Id for adding disk to %s: %s\n", flag.Arg(0), statusId)
+	log.Printf("Status Id for adding disk to %s: %s", flag.Arg(0), reqID)
+	client.PollStatus(reqID, 5*time.Second)
 }

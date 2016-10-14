@@ -6,6 +6,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"regexp"
@@ -72,5 +73,6 @@ func main() {
 		exit.Fatalf("failed to update the disk configuration on %q: %s", flag.Arg(0), err)
 	}
 
+	log.Printf("Status Id for resizing the disk on %s: %s", flag.Arg(0), reqID)
 	client.PollStatus(reqID, 10*time.Second)
 }
