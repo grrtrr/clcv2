@@ -336,8 +336,10 @@ func (c *Client) CreateServer(req *CreateServerReq) (url, statusId string, err e
 	var path = fmt.Sprintf("/v2/servers/%s", c.AccountAlias)
 
 	if status, err := c.getStatusResponse("POST", path, false, req); err != nil {
-		/* Main request failed. */
-	} else if link, err := extractLink(status.Links, "status"); err == nil {
+		return "", "", err
+	} else if link, err := extractLink(status.Links, "status"); err != nil {
+		return "", "", err
+	} else {
 		/* Sanity checks: err != nil only if extractLink fails for expected links. */
 		statusId = link.Id
 		if link, err = extractLink(status.Links, "self"); err == nil {
