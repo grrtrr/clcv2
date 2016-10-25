@@ -26,7 +26,11 @@ const (
 // to get called until a "succeeded" or "failed" response is returned.
 // @statusId: queue ID to query (contains location ID in the format of "wa1-<number>")
 func (c *Client) GetStatus(statusId string) (status QueueStatus, err error) {
-	path := fmt.Sprintf("/v2/operations/%s/status/%s", c.AccountAlias, statusId)
+	var path = fmt.Sprintf("/v2/operations/%s/status/%s", c.AccountAlias, statusId)
+
+	if statusId == "" {
+		return Unknown, fmt.Errorf("invalid status ID %q", statusId)
+	}
 	err = c.getCLCResponse("GET", path, nil, &struct{ Status *QueueStatus }{&status})
 	return
 }
@@ -57,13 +61,14 @@ func (c *Client) PollStatus(statusId string, pollInterval time.Duration) (QueueS
 // @statusId: queue ID to query
 func (c *Client) AwaitCompletion(statusId string) (QueueStatus, error) {
 	const waitIntvl = 1 * time.Second
-	var timer = time.NewTimer(waitIntvl)
 	var done <-chan struct{}
 
-	defer timer.Stop()
 	if c.ctx != nil {
 		done = c.ctx.Done()
 	}
+
+	timer := time.NewTimer(waitIntvl)
+	defer timer.Stop()
 
 	for {
 		select {
