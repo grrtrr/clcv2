@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // CIDRs implements the flag.Value interface, allowing to speciy multiple CIDR values.
@@ -26,7 +28,7 @@ func (c CIDRs) String() string {
 func (c *CIDRs) Set(val string) error {
 	_, net, err := net.ParseCIDR(val)
 	if err != nil {
-		return fmt.Errorf("invalid CIDR format %q: %s", val, err)
+		return errors.Errorf("invalid CIDR format %q: %s", val, err)
 	}
 	*c = append(*c, net.String())
 	return nil
@@ -54,7 +56,7 @@ func (s SrcRestrictions) String() string {
 func (s *SrcRestrictions) Set(val string) error {
 	_, net, err := net.ParseCIDR(val)
 	if err != nil {
-		return fmt.Errorf("invalid source restriction format %q: %s", val, err)
+		return errors.Errorf("invalid source restriction format %q: %s", val, err)
 	}
 	*s = append(*s, SourceCIDR{net.String()})
 	return nil

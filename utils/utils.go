@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -34,7 +35,7 @@ func ExtractLocationFromServerName(serverName string) string {
 // Parse time zone offset string @o
 func ParseTimeZoneOffset(o string) (d time.Duration, err error) {
 	if m := tzRegexp.FindStringSubmatch(o); m == nil {
-		err = fmt.Errorf("Invalid time zone offset format %q", o)
+		err = errors.Errorf("Invalid time zone offset format %q", o)
 	} else {
 		s := fmt.Sprintf("%s%sh%sm", m[1], m[2], m[3])
 		if m[5] == "" {
@@ -63,7 +64,7 @@ func PrintStruct(in interface{}) {
 	}
 
 	if t.Kind() != reflect.Struct {
-		panic(fmt.Errorf("Expected a struct, got %T", in))
+		panic(errors.Errorf("Expected a struct, got %T", in))
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)

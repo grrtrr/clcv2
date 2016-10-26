@@ -1,9 +1,10 @@
 package clcv2
 
 import (
-	"errors"
 	"fmt"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -183,16 +184,16 @@ func (c *Client) GetServerNets(s Server) (nets []Network, err error) {
 	// be empty, and the credentials of the parent account are neede to obtain the details.
 	networks, err := c.GetNetworks(s.LocationId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query networks in %s: %s", s.LocationId, err)
+		return nil, errors.Errorf("failed to query networks in %s: %s", s.LocationId, err)
 	} else if len(networks) == 0 {
-		return nil, fmt.Errorf("failed to query network information in %s", s.LocationId)
+		return nil, errors.Errorf("failed to query network information in %s", s.LocationId)
 	}
 
 	for idx := range s.Details.IpAddresses {
 		if ip := s.Details.IpAddresses[idx].Internal; ip == "" {
 			/* only use the internal IPs */
 		} else if net, err := NetworkByIP(ip, networks); err != nil {
-			return nil, fmt.Errorf("failed to identify network for %s: %s", ip, err)
+			return nil, errors.Errorf("failed to identify network for %s: %s", ip, err)
 		} else if net != nil && !seen[net.Id] {
 			seen[net.Id] = true
 			nets = append(nets, *net)
@@ -483,7 +484,7 @@ func (c *Client) GetServerSnapshot(serverId string) (sn *ServerSnapshot, err err
 	} else if len(server.Details.Snapshots) == 0 {
 		return nil, nil
 	} else if len(server.Details.Snapshots) > 1 {
-		return nil, fmt.Errorf("%s unexpectedly has more (%d) than one snapshot",
+		return nil, errors.Errorf("%s unexpectedly has more (%d) than one snapshot",
 			serverId, len(server.Details.Snapshots))
 	} else {
 		return &server.Details.Snapshots[0], nil
@@ -498,9 +499,9 @@ func (c *Client) SnapshotServer(serverId string) (statusId string, err error) {
 		return "", err
 	} else if statusId != "" {
 		if status, err := c.AwaitCompletion(statusId); err != nil {
-			return "", fmt.Errorf("failed to query %s snapshot status: %s", serverId, err)
+			return "", errors.Errorf("failed to query %s snapshot status: %s", serverId, err)
 		} else if status != Succeeded {
-			return "", fmt.Errorf("failed to delete %s snapshot (status: %s)", serverId, status)
+			return "", errors.Errorf("failed to delete %s snapshot (status: %s)", serverId, status)
 		}
 	}
 	return c.CreateSnapshot(serverId, 10)
@@ -692,9 +693,9 @@ func (c *Client) changeNic(verb, path string, reqModel interface{}) (err error) 
 			if err = c.getCLCResponse("GET", res.Uri, nil, &s); err != nil {
 				break
 			} else if s.Status == Failed {
-				return fmt.Errorf("request %s %s failed", verb, path)
+				return errors.Errorf("request %s %s failed", verb, path)
 			} else if time.Since(start) > change_nic_timeout {
-				return fmt.Errorf("request %s %s timed out after %s", verb,
+				return errors.Errorf("request %s %s timed out after %s", verb,
 					path, time.Since(start))
 			}
 		}

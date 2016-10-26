@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 /*
@@ -255,7 +257,7 @@ func (c *Client) SBSgetServerPolicy(serverPolicyId string) (*SBSServerPolicy, er
 			}
 		}
 	}
-	return nil, fmt.Errorf("Server Policy %q not found for %s account", serverPolicyId, c.AccountAlias)
+	return nil, errors.Errorf("Server Policy %q not found for %s account", serverPolicyId, c.AccountAlias)
 }
 
 // SBSpatchServerPolicyStatus sets the status of the specified Server Policy to @newValue.
@@ -360,7 +362,7 @@ func (c *Client) SBSgetServerStorageUsage(acPolicy, srvPolicy string, day time.T
 	}
 	val, err := strconv.ParseUint(result.BytesStored, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("invalid result %s GB / %sB: %s", result.GigaBytesStored, result.BytesStored, err)
+		return 0, errors.Errorf("invalid result %s GB / %sB: %s", result.GigaBytesStored, result.BytesStored, err)
 	}
 	return val, err
 }

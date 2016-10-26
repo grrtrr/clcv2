@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // QueueStatus reflects the CLCv2 status according to https://www.ctl.io/api-docs/v2/#get-status#response
@@ -29,7 +31,7 @@ func (c *Client) GetStatus(statusId string) (status QueueStatus, err error) {
 	var path = fmt.Sprintf("/v2/operations/%s/status/%s", c.AccountAlias, statusId)
 
 	if statusId == "" {
-		return Unknown, fmt.Errorf("invalid status ID %q", statusId)
+		return Unknown, errors.Errorf("invalid status ID %q", statusId)
 	}
 	err = c.getCLCResponse("GET", path, nil, &struct{ Status *QueueStatus }{&status})
 	return
@@ -43,7 +45,7 @@ func (c *Client) PollStatus(statusId string, pollInterval time.Duration) (QueueS
 	for prevStatus := Unknown; ; {
 		status, err := c.GetStatus(statusId)
 		if err != nil {
-			return Unknown, fmt.Errorf("failed to query status of status ID %d: %s", statusId, err)
+			return Unknown, errors.Errorf("failed to query status of status ID %d: %s", statusId, err)
 		}
 		if status != prevStatus { // periodically log to stdout
 			log.Printf("%s: %s", statusId, status)
@@ -77,7 +79,7 @@ func (c *Client) AwaitCompletion(statusId string) (QueueStatus, error) {
 		case <-timer.C:
 			timer.Stop()
 			if status, err := c.GetStatus(statusId); err != nil {
-				return Unknown, fmt.Errorf("unable to query status of %s: %s", statusId, err)
+				return Unknown, errors.Errorf("unable to query status of %s: %s", statusId, err)
 			} else if status == Succeeded || status == Failed {
 				return status, nil
 			}
@@ -106,7 +108,7 @@ func (c *Client) getStatus(verb, path string, reqModel interface{}) (statusId st
 
 	if err = c.getCLCResponse(verb, path, reqModel, &sl); err == nil {
 		if sl.Rel != "status" {
-			err = fmt.Errorf("Link information Rel-type not set to 'status' in %+v", sl)
+			err = errors.Errorf("Link information Rel-type not set to 'status' in %+v", sl)
 		} else {
 			statusId = sl.Id
 		}
@@ -142,9 +144,9 @@ func (c *Client) getStatusResponse(verb, path string, useArray bool, reqModel in
 		if err = c.getCLCResponse(verb, path, reqModel, &status); err != nil {
 			return
 		} else if len(status) == 0 {
-			err = fmt.Errorf("empty status response from server")
+			err = errors.Errorf("empty status response from server")
 		} else if len(status) != 1 {
-			err = fmt.Errorf("multiple status responses (%d) from server", len(status))
+			err = errors.Errorf("multiple status responses (%d) from server", len(status))
 		} else {
 			res = status[0]
 		}
@@ -154,9 +156,9 @@ func (c *Client) getStatusResponse(verb, path string, useArray bool, reqModel in
 
 	if err == nil {
 		if res.ErrorMessage != "" {
-			err = fmt.Errorf("request on %s failed - %s", res.Server, res.ErrorMessage)
+			err = errors.Errorf("request on %s failed - %s", res.Server, res.ErrorMessage)
 		} else if !res.IsQueued {
-			err = fmt.Errorf("request on %s was not queued", res.Server)
+			err = errors.Errorf("request on %s was not queued", res.Server)
 		}
 	}
 	return

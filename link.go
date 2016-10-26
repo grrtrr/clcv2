@@ -4,30 +4,32 @@
 package clcv2
 
 import (
-	"strings"
 	"fmt"
+	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // Link adds hyperlink information to resources.
 type Link struct {
 	// The link type (depends on context)
-	Rel	string
+	Rel string
 
 	// Address of the resource.
-	Href	string
+	Href string
 
 	/*
-         * Optional Fields
-         */
+	 * Optional Fields
+	 */
 	// Unique ID of the resource.
-	Id	string
+	Id string
 
 	// Friendly name of the resource.
-	Name	string
+	Name string
 
 	// Valid HTTP verbs that can act on this resource.
 	// If none are explicitly listed, GET is assumed to be the only one.
-	Verbs	[]string
+	Verbs []string
 }
 
 func (l *Link) String() string {
@@ -50,7 +52,7 @@ func extractLink(from []Link, rel_type string) (l *Link, err error) {
 		// FIXME: maybe warn here if there is more than 1 match
 		l = &links[0]
 	} else {
-		err = fmt.Errorf("No link with Rel=%s found in %+v", rel_type, from)
+		err = errors.Errorf("No link with Rel=%s found in %+v", rel_type, from)
 	}
 	return
 }

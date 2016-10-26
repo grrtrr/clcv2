@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,6 +17,7 @@ import (
 
 	"github.com/PuerkitoBio/rehttp"
 	"github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -153,7 +153,7 @@ func (c *Client) login() error {
 	c.credentials = new(LoginRes)
 
 	if c.LoginReq.Username == "" || c.LoginReq.Password == "" {
-		return fmt.Errorf("invalid CLC credentials %q/%q", c.LoginReq.Username, c.LoginReq.Password)
+		return errors.Errorf("invalid CLC credentials %q/%q", c.LoginReq.Username, c.LoginReq.Password)
 	}
 
 	if err := c.getCLCResponse("POST", "/v2/authentication/login", &c.LoginReq, c.credentials); err != nil {
@@ -216,7 +216,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 
 		jsonReq, err := json.Marshal(reqModel)
 		if err != nil {
-			return fmt.Errorf("failed to encode request model %T %+v: %s", reqModel, reqModel, err)
+			return errors.Errorf("failed to encode request model %T %+v: %s", reqModel, reqModel, err)
 		}
 		reqBody = bytes.NewBuffer(jsonReq)
 	}
@@ -224,7 +224,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 	/* resModel must be a pointer type (call-by-value) */
 	if resModel != nil {
 		if resType := reflect.TypeOf(resModel); resType.Kind() != reflect.Ptr {
-			return fmt.Errorf("Expecting pointer to result model %T", resModel)
+			return errors.Errorf("Expecting pointer to result model %T", resModel)
 		} else if g_debug && c.Log != nil {
 			c.Log.Printf("resModel %T %+v", resModel, resModel)
 		}
@@ -263,17 +263,17 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 	case 200, 201, 202, 204: /* OK / CREATED / ACCEPTED / NO CONTENT */
 		if resModel != nil {
 			if res.ContentLength == 0 {
-				return fmt.Errorf("Unable do populate %T result model, due to empty %q response",
+				return errors.Errorf("Unable do populate %T result model, due to empty %q response",
 					resModel, res.Status)
 			}
 			return json.NewDecoder(res.Body).Decode(resModel)
 		} else if res.ContentLength > 0 {
-			return fmt.Errorf("Unable to decode non-empty %q response (%d bytes) to nil response model",
+			return errors.Errorf("Unable to decode non-empty %q response (%d bytes) to nil response model",
 				res.Status, res.ContentLength)
 		}
 		return nil
 	case 401:
-		// This is returned if the BearerToken is missing or has become stale.
+		// This is returned if the BearerToken is m<issing or has become stale.
 		if c.retryingLogin {
 			return errors.New("failed to re-authenticate, credentials may be invalid")
 		}
@@ -302,7 +302,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 	// Transfer-Encoding "chunked", without a Content-Length.
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil && res.ContentLength > 0 {
-		return fmt.Errorf("failed to read error response %d body: %s", res.StatusCode, err)
+		return errors.Errorf("failed to read error response %d body: %s", res.StatusCode, err)
 	} else if len(body) > 0 {
 		//
 		// Currently 5 different types of response have been observed:
@@ -348,7 +348,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 				}
 			}
 		}
-		err = fmt.Errorf("%s (status: %d)", errMsg, res.StatusCode)
+		err = errors.Errorf("%s (status: %d)", errMsg, res.StatusCode)
 	} else {
 		err = errors.New(res.Status)
 	}

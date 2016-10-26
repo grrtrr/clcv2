@@ -3,6 +3,8 @@ package clcv2
 import (
 	"fmt"
 	"net"
+
+	"github.com/pkg/errors"
 )
 
 /*
@@ -77,11 +79,11 @@ func (c *Client) GetNetworkIdByCIDR(cidr, location string) (net *Network, err er
 func NetworkByIP(ips string, networks []Network) (*Network, error) {
 	ip := net.ParseIP(ips)
 	if ip == nil {
-		return nil, fmt.Errorf("Invalid IP address %s", ips)
+		return nil, errors.Errorf("Invalid IP address %s", ips)
 	}
 	for i := range networks {
 		if _, net, err := net.ParseCIDR(networks[i].Cidr); err != nil {
-			return nil, fmt.Errorf("failed to parse CIDR %s: %s", networks[i].Cidr, err)
+			return nil, errors.Errorf("failed to parse CIDR %s: %s", networks[i].Cidr, err)
 		} else if net.Contains(ip) {
 			return &networks[i], nil
 		}
@@ -142,7 +144,7 @@ func (c *Client) GetNetworkDetailsByIp(ip, location string) (iad *IpAddressDetai
 	if networks, err := c.GetNetworks(location); err != nil {
 		return nil, err
 	} else if len(networks) == 0 {
-		return nil, fmt.Errorf("No %s networks in %s available", c.AccountAlias, location)
+		return nil, errors.Errorf("No %s networks in %s available", c.AccountAlias, location)
 	} else {
 		if net, err := NetworkByIP(ip, networks); err != nil {
 			return nil, err
@@ -158,13 +160,13 @@ func (c *Client) GetNetworkDetailsByIp(ip, location string) (iad *IpAddressDetai
 	for _, id := range candidateNetworkIds {
 		details, err := c.GetNetworkDetails(location, id, "claimed")
 		if err != nil {
-			return nil, fmt.Errorf("failed to query details of network %s: %s", id, err)
+			return nil, errors.Errorf("failed to query details of network %s: %s", id, err)
 		}
 		for idx := range details.IpAddresses {
 			if details.IpAddresses[idx].Address == ip {
 				/* Bail out if match is ambiguous, i.e. guarantee at most 1 match */
 				if iad != nil {
-					return nil, fmt.Errorf("Duplicate match for %s: %+v and %+v\n",
+					return nil, errors.Errorf("Duplicate match for %s: %+v and %+v\n",
 						ip, iad, details.IpAddresses[idx])
 				}
 				iad = &details.IpAddresses[idx]

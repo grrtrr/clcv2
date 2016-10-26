@@ -4,15 +4,16 @@
 package utils
 
 import (
-	"golang.org/x/crypto/ssh/terminal"
-	"os/signal"
-	"syscall"
-	"strings"
-	"errors"
 	"bytes"
-	"time"
 	"fmt"
 	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
+
+	"github.com/pkg/errors"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 /* Get the terminal descriptor for stdin */
@@ -20,7 +21,7 @@ func getTerminalFd() (fd int, err error) {
 	fd = int(os.Stdin.Fd())
 
 	if !terminal.IsTerminal(fd) {
-		err = fmt.Errorf("Input is not from a terminal")
+		err = errors.Errorf("Input is not from a terminal")
 	}
 	return
 }
@@ -37,16 +38,16 @@ func GetPass(prompt string) (pass string, err error) {
 	/* Store current terminal state in case the call gets interrupted by signal */
 	oldState, err := terminal.GetState(fd)
 	if err != nil {
-		err = fmt.Errorf("failed to get terminal state: %s\n", err)
+		err = errors.Errorf("failed to get terminal state: %s\n", err)
 		return
 	}
 
 	/*
-         * Install signal handler
-         * Unlike the ReadLine function, using a raw terminal state here does not help.
-         * If the prompt gets killed by a signal, the terminal state is not restored.
-         * Hence restore it in a signal handler
-         */
+	 * Install signal handler
+	 * Unlike the ReadLine function, using a raw terminal state here does not help.
+	 * If the prompt gets killed by a signal, the terminal state is not restored.
+	 * Hence restore it in a signal handler
+	 */
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGINT)
 	go func() {
@@ -55,7 +56,6 @@ func GetPass(prompt string) (pass string, err error) {
 		fmt.Fprintln(os.Stderr, "aborting")
 		os.Exit(1)
 	}()
-
 
 	for i := 0; len(resp) == 0; i++ {
 		if i > 0 {
@@ -87,18 +87,19 @@ func GetPass(prompt string) (pass string, err error) {
  *    The case of using a single repeated element twice is the same as (b).
  */
 func PromptInput(msg string, choices ...string) (resp string, err error) {
-	var defval  string
+	var defval string
 	var allowed []string = choices[:]
 
 	switch len(allowed) {
-	case 0:	/* Do nothing */
-	case 1: defval = allowed[0]
+	case 0: /* Do nothing */
+	case 1:
+		defval = allowed[0]
 		msg = fmt.Sprintf("%s [%s]", msg, defval)
 	default:
 		if strings.Index(strings.Join(allowed[:len(allowed)-1], " "),
-			         allowed[len(allowed)-1]) != -1 {
+			allowed[len(allowed)-1]) != -1 {
 			/* Choice with default present */
-			defval  = allowed[len(allowed)-1]
+			defval = allowed[len(allowed)-1]
 			allowed = allowed[:len(allowed)-1]
 			for i, e := range allowed {
 				if e == defval {
@@ -116,7 +117,7 @@ func PromptInput(msg string, choices ...string) (resp string, err error) {
 
 	oldState, err := terminal.MakeRaw(fd)
 	if err != nil {
-		err = fmt.Errorf("failed to set terminal into raw mode: %s", err)
+		err = errors.Errorf("failed to set terminal into raw mode: %s", err)
 		return
 	}
 	defer terminal.Restore(fd, oldState)

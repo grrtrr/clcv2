@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/grrtrr/clcv2/utils"
+	"github.com/pkg/errors"
 )
 
 // Global (commandline flag) variables
@@ -123,7 +124,7 @@ func (c *CLIClient) loadCredentials() error {
 // Save credentials to default file path. Return error on failure.
 func (c *CLIClient) saveCredentials() error {
 	if c.credentials == nil {
-		return fmt.Errorf("login credentials not initialized")
+		return errors.Errorf("login credentials not initialized")
 	} else if enc, err := json.MarshalIndent(c.credentials, "", "\t"); err != nil {
 		return err
 	} else {
@@ -147,7 +148,7 @@ func defaultCredentialsPath() string {
 	}
 	u, err := user.Current()
 	if err != nil {
-		panic(fmt.Errorf("failed to look up current user: %s", err))
+		panic(errors.Errorf("failed to look up current user: %s", err))
 	}
 	return path.Join(u.HomeDir, ".clc_credentials.json")
 }
