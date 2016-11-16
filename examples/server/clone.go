@@ -95,8 +95,8 @@ func main() {
 	}
 
 	if *seed == "" {
-		if len(src.Name) >= 14 { // use same naming as original by default
-			req.Name = src.Name[7:13]
+		if l := len(src.Name); l > 10 { // use same naming as original by default
+			req.Name = src.Name[7 : l-1]
 		} else {
 			req.Name = "CLONE"
 		}
@@ -189,7 +189,10 @@ func main() {
 		} else {
 			req.NetworkId = netw.Id
 		}
+	} else { // HEX ID, use directoy
+		req.NetworkId = *net
 	}
+
 
 	log.Printf("Cloning %s ...", src.Name)
 	for i := 1; ; i++ {
