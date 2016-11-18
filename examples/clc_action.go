@@ -88,10 +88,8 @@ func main() {
 	switch action {
 	case "help":
 		usage()
-	case "networks", "show", "templates":
-		if flag.NArg() == 1 && *location == "" {
-			exit.Errorf("Action %q requires location (-l argument).", action)
-		}
+	case "networks", "templates", "show":
+		// Omit location warning here, will be displayed after client is initialized.
 	case "credentials":
 		handlingServer = true
 	case "memory":
@@ -139,6 +137,13 @@ func main() {
 	client, err := clcv2.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
+	}
+
+	if *location == "" {
+		if action == "networks" || action == "show" || action == "templates" {
+			fmt.Fprintf(os.Stderr, "Note: no location argument (-l) given, defaulting to %s.\n", client.LocationAlias)
+		}
+		*location = client.LocationAlias
 	}
 
 	if !handlingServer && action != "wait" {

@@ -50,6 +50,7 @@ type CLIClient struct {
 // This will use the default values for AccountAlias  and LocationAlias.
 // It will respect the following environment variables to override the defaults:
 // - CLC_ACCOUNT:  takes precedence over default AccountAlias
+// - CLC_LOCATION: takes precedence over default LocationAlias
 // - CLC_BASE_URL: overrides the API URL (for testing)
 func NewCLIClient() (client *CLIClient, err error) {
 	username, password, err := resolveUserAndPass()
@@ -63,7 +64,7 @@ func NewCLIClient() (client *CLIClient, err error) {
 		client.Log = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
 	}
 
-	// Set/override %baseURL
+	// Set/override %baseURL (experimental).
 	if envURL := os.Getenv("CLC_BASE_URL"); envURL != "" {
 		url, err := url.Parse(envURL)
 		if err != nil {
@@ -79,13 +80,20 @@ func NewCLIClient() (client *CLIClient, err error) {
 		return nil, err
 	}
 
-	// Set/override account alias.
+	// Set/override AccountAlias
 	if g_acct != "" {
 		client.AccountAlias = g_acct
 	} else if account := os.Getenv("CLC_ACCOUNT"); account != "" {
 		client.AccountAlias = account
 	} else { // may have been initialized from disk
 		client.AccountAlias = client.credentials.AccountAlias
+	}
+
+	// Set/override LocationAlias
+	if location := os.Getenv("CLC_LOCATION"); location != "" {
+		client.LocationAlias = location
+	} else {
+		client.LocationAlias = client.credentials.LocationAlias
 	}
 
 	return client, nil

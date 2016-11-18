@@ -2,7 +2,7 @@
 
 This is a Go implementation of the [CLC v2 API](https://www.ctl.io/api-docs/v2).
 
-It is _not yet complete_. Contributions are welcome.
+Contributions are welcome.
 
 ### Getting started
 
@@ -13,6 +13,7 @@ Get this package from inside your `$GOPATH`:
 
 Try some of the examples in the `examples/` folder. These illustrate individual API calls.
 
+### Environment and login
 Most have help screens (`-h`). The library supports _debug output_ via `-d`.
 
 _Credentials_ can be passed in one of two forms:
@@ -20,18 +21,19 @@ _Credentials_ can be passed in one of two forms:
 1. Via _commandline flags_:
   + `-u <your CLC-Portal-Username>`,
   + `-p <your CLC-Portal-Password>`.
+
 2. Using _environment variables_:
   + `CLC_USERNAME=<CLC-Portal-Username>`,
   + `CLC_PASSWORD=<CLC-Portal-Password>`.
 
-To _override the default Account Alias_, use one of
+If you are using a _CLC sub-account_, _override the default Account Alias_ via one of
 
-* flag: `-a <AccountAlias>` or
-* environment: `CLC_ACCOUNT=<AccountAlias>`
+* _Flag_: `-a <AccountAlias>` or
+* _Environment_: `CLC_ACCOUNT=<AccountAlias>`
 
-***Caveat***: Be careful with the credentials. Using 3 times the wrong username and/or password will cause the account to be locked.
+Likewise, to _set a Default Data Centre_ (e.g. `wa1`), use one of
 
-### TODO
+* _Flag_: `-l <your Default DataCentre>` or
+* _Environment_: `CLC_LOCATION=<your default DataCentre>`
 
-This is as yet a partial implementation. Also many examples are missing.
-After that, refactoring is desirable.
+***Caveat***: Be very careful with the credentials. Using 3 times the wrong username and/or password will cause the account to be locked.

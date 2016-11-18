@@ -48,6 +48,9 @@ type Client struct {
 	// AccountAlias to use (defaults to @credentials.AccountAlias, but can be overridden)
 	AccountAlias string
 
+	// Similar to @AccountAlias, set the default data center
+	LocationAlias string
+
 	// Logger used for (debugging) output.
 	Log logrus.StdLogger
 
@@ -160,6 +163,7 @@ func (c *Client) login() error {
 		return err
 	}
 	c.AccountAlias = c.credentials.AccountAlias
+	c.LocationAlias = c.credentials.LocationAlias
 
 	if c.credentialsChanged != nil {
 		return c.credentialsChanged()
