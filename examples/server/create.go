@@ -55,7 +55,7 @@ func main() {
 
 	/* hwGroup may be hex uuid or group name */
 	if _, err := hex.DecodeString(*hwGroup); err != nil {
-		fmt.Printf("Resolving ID of Hardware Group %q ...\n", *hwGroup)
+		log.Printf("Resolving ID of Hardware Group %q ...", *hwGroup)
 
 		if group, err := client.GetGroupByName(*hwGroup, *location); err != nil {
 			log.Fatalf("failed to resolve group name %q: %s", *hwGroup, err)
@@ -73,7 +73,7 @@ func main() {
 		} else if *location == "" {
 			log.Fatalf("Need a location argument (-l) if not using a network ID (%s)", *net)
 		} else {
-			log.Printf("resolving network id of %q ...\n", *net)
+			log.Printf("resolving network id of %q ...", *net)
 
 			if netw, err := client.GetNetworkIdByName(*net, *location); err != nil {
 				log.Fatalf("failed to resolve network name %q: %s", *net, err)
