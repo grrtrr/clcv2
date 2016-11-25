@@ -41,7 +41,7 @@ type Server struct {
 	// Friendly name of the Operating System the server is running
 	OsType string
 
-	// Describes whether the server is active: "underConstruction", "active"
+	// Describes whether the server is active: "underConstruction", "active", "queuedForDelete"
 	Status string
 
 	// Resource allocations, alert policies, snapshots, and more.
