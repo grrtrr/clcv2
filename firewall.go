@@ -47,7 +47,7 @@ type IntraDataCenterFirewallPolicy struct {
 // @location: Short string representing the data center to query.
 // @policyId: ID of the firewall policy to display.
 func (c *Client) GetIntraDataCenterFirewallPolicy(location, policyId string) (res IntraDataCenterFirewallPolicy, err error) {
-	var path = fmt.Sprintf("/v2-experimental/firewallPolicies/%s/%s/%s", c.AccountAlias, location, policyId)
+	var path = fmt.Sprintf("/v2-experimental/firewallPolicies/%s/%s/%s", c.credentials.AccountAlias, location, policyId)
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
@@ -57,7 +57,7 @@ func (c *Client) GetIntraDataCenterFirewallPolicy(location, policyId string) (re
 // @location:   Short string representing the data center to query.
 // @dstAccount: Optional destination account (empty string to omit).
 func (c *Client) GetIntraDataCenterFirewallPolicyList(location, dstAccount string) (res []IntraDataCenterFirewallPolicy, err error) {
-	var path = fmt.Sprintf("/v2-experimental/firewallPolicies/%s/%s", c.AccountAlias, location)
+	var path = fmt.Sprintf("/v2-experimental/firewallPolicies/%s/%s", c.credentials.AccountAlias, location)
 	if dstAccount != "" {
 		path += fmt.Sprintf("?destinationAccount=%s", dstAccount)
 	}
@@ -144,7 +144,7 @@ type CrossDataCenterFirewallPolicy struct {
 // @location:   short string representing the data center to query
 // @dstAccount: optional destination account (empty string to omit)
 func (c *Client) GetCrossDataCenterFirewallPolicyList(location, dstAccount string) (res []CrossDataCenterFirewallPolicy, err error) {
-	var path = fmt.Sprintf("/v2-experimental/crossDcFirewallPolicies/%s/%s", c.AccountAlias, location)
+	var path = fmt.Sprintf("/v2-experimental/crossDcFirewallPolicies/%s/%s", c.credentials.AccountAlias, location)
 
 	if dstAccount != "" {
 		path += fmt.Sprintf("?destinationAccount=%s", dstAccount)
@@ -157,7 +157,7 @@ func (c *Client) GetCrossDataCenterFirewallPolicyList(location, dstAccount strin
 // @location: data center location
 // @id:       cross-datacenter policy ID
 func (c *Client) GetCrossDataCenterFirewallPolicy(location, id string) (res CrossDataCenterFirewallPolicy, err error) {
-	var path = fmt.Sprintf("/v2-experimental/crossDcFirewallPolicies/%s/%s/%s", c.AccountAlias, location, id)
+	var path = fmt.Sprintf("/v2-experimental/crossDcFirewallPolicies/%s/%s/%s", c.credentials.AccountAlias, location, id)
 
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return

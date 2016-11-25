@@ -16,9 +16,11 @@ import (
 )
 
 func main() {
-	var query = flag.String("q", "none", "Filter IP addresses; one of 'none', 'claimed', 'free', or 'all'")
-	var location = flag.String("l", "", "Data centre alias of the network")
-	var simple = flag.Bool("simple", false, "Use simple (debugging) output format")
+	var (
+		query    = flag.String("q", "none", "Filter IP addresses; one of 'none', 'claimed', 'free', or 'all'")
+		location = flag.String("l", os.Getenv("CLC_LOCATION"), "Data centre alias (needed to resolve IDs)")
+		simple   = flag.Bool("simple", false, "Use simple (debugging) output format")
+	)
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options] -l <Location>  <Network-ID (hex)>\n", path.Base(os.Args[0]))

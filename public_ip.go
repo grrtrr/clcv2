@@ -31,7 +31,7 @@ func (c *Client) AddPublicIPAddress(serverId string, req *PublicIPAddress) (stat
 // @serverId: ID of the server to query.
 // @publicIp: The specific public IP to return details about.
 func (c *Client) GetPublicIPAddress(serverId, publicIp string) (res PublicIPAddress, err error) {
-	path := fmt.Sprintf("/v2/servers/%s/%s/publicIPAddresses/%s", c.AccountAlias, serverId, publicIp)
+	path := fmt.Sprintf("/v2/servers/%s/%s/publicIPAddresses/%s", c.credentials.AccountAlias, serverId, publicIp)
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }

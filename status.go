@@ -28,7 +28,7 @@ const (
 // to get called until a "succeeded" or "failed" response is returned.
 // @statusId: queue ID to query (contains location ID in the format of "wa1-<number>")
 func (c *Client) GetStatus(statusId string) (status QueueStatus, err error) {
-	var path = fmt.Sprintf("/v2/operations/%s/status/%s", c.AccountAlias, statusId)
+	var path = fmt.Sprintf("/v2/operations/%s/status/%s", c.credentials.AccountAlias, statusId)
 
 	if statusId == "" {
 		return Unknown, errors.Errorf("invalid status ID %q", statusId)

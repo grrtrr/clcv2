@@ -26,7 +26,7 @@ func (c *Client) GetLocations() (loc []DataCenter, err error) {
 // @location:   location alias of data centre to query
 // @groupLinks: whether to include 'group' type of links
 func (c *Client) GetDatacenter(location string, groupLinks bool) (res DataCenter, err error) {
-	path := fmt.Sprintf("/v2/datacenters/%s/%s?groupLinks=%t", c.AccountAlias, location, groupLinks)
+	path := fmt.Sprintf("/v2/datacenters/%s/%s?groupLinks=%t", c.credentials.AccountAlias, location, groupLinks)
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
@@ -46,7 +46,7 @@ type ComputeLimits struct {
 
 // Get the compute limits for the given data centre.
 func (c *Client) GetDatacenterComputeLimits(location string) (*ComputeLimits, error) {
-	path := fmt.Sprintf("/v2/datacenters/%s/%s/computeLimits", c.AccountAlias, location)
+	path := fmt.Sprintf("/v2/datacenters/%s/%s/computeLimits", c.credentials.AccountAlias, location)
 	res := new(ComputeLimits)
 	return res, c.getCLCResponse("GET", path, nil, res)
 }
@@ -58,7 +58,7 @@ type NetLimits struct {
 
 // Get the networking limits for the given data centre.
 func (c *Client) GetDatacenterNetworkLimits(location string) (*NetLimits, error) {
-	path := fmt.Sprintf("/v2/datacenters/%s/%s/networkLimits", c.AccountAlias, location)
+	path := fmt.Sprintf("/v2/datacenters/%s/%s/networkLimits", c.credentials.AccountAlias, location)
 	res := new(NetLimits)
 	return res, c.getCLCResponse("GET", path, nil, res)
 }
@@ -136,7 +136,7 @@ type DeploymentCapabilities struct {
 // and shared load balancer configuration are available.
 // @location:   location alias of data centre to query
 func (c *Client) GetDeploymentCapabilities(location string) (res DeploymentCapabilities, err error) {
-	path := fmt.Sprintf("/v2/datacenters/%s/%s/deploymentCapabilities", c.AccountAlias, location)
+	path := fmt.Sprintf("/v2/datacenters/%s/%s/deploymentCapabilities", c.credentials.AccountAlias, location)
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
@@ -205,7 +205,7 @@ type BareMetalCapabilities struct {
 // including the list of configuration types and the list of supported operating systems.
 // @location:   location alias of data centre to query
 func (c *Client) GetBareMetalCapabilities(location string) (res BareMetalCapabilities, err error) {
-	path := fmt.Sprintf("/v2/datacenters/%s/%s/bareMetalCapabilities", c.AccountAlias, location)
+	path := fmt.Sprintf("/v2/datacenters/%s/%s/bareMetalCapabilities", c.credentials.AccountAlias, location)
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }

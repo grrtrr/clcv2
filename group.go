@@ -45,7 +45,7 @@ type Group struct {
 // Get the details of an individual server and any sub-groups and servers that it contains.
 // @groupId: ID of the group being queried.
 func (c *Client) GetGroup(groupId string) (res Group, err error) {
-	path := fmt.Sprintf("/v2/groups/%s/%s", c.AccountAlias, groupId)
+	path := fmt.Sprintf("/v2/groups/%s/%s", c.credentials.AccountAlias, groupId)
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
@@ -233,7 +233,7 @@ type GroupBillingDetails struct {
 // Get the current and estimated charges for each server in a designated group hierarchy.
 // @groupId: ID of the group being queried.
 func (c *Client) GetGroupBillingDetails(groupId string) (res GroupBillingDetails, err error) {
-	path := fmt.Sprintf("/v2/groups/%s/%s/billing", c.AccountAlias, groupId)
+	path := fmt.Sprintf("/v2/groups/%s/%s/billing", c.credentials.AccountAlias, groupId)
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
@@ -297,7 +297,7 @@ type GroupScheduledActivity struct {
 // Get the scheduled activities associated with a group.
 // @groupId: ID of the group being queried.
 func (c *Client) GetGroupScheduledActivities(groupId string) (res []GroupScheduledActivity, err error) {
-	path := fmt.Sprintf("/v2/groups/%s/%s/ScheduledActivities", c.AccountAlias, groupId)
+	path := fmt.Sprintf("/v2/groups/%s/%s/ScheduledActivities", c.credentials.AccountAlias, groupId)
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }

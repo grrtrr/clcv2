@@ -171,7 +171,7 @@ func (c *Client) GetServerByURI(path string) (res Server, err error) {
 func (c *Client) GetServer(serverId string) (res Server, err error) {
 	// Note: there exists a second way of querying a server. If @serverId is a hex UUID,
 	//       then use "/v2/servers/%s/%s?uuid=True" instead.
-	return c.GetServerByURI(fmt.Sprintf("/v2/servers/%s/%s", c.AccountAlias, serverId))
+	return c.GetServerByURI(fmt.Sprintf("/v2/servers/%s/%s", c.credentials.AccountAlias, serverId))
 }
 
 // GetServerNets returns the networks associated with the server @s.
@@ -381,7 +381,7 @@ type ImportOVF struct {
 // Get the list of available servers that can be imported.
 // @locationId: Data center location identifier
 func (c *Client) GetServerImports(locationId string) (res []ImportOVF, err error) {
-	err = c.getCLCResponse("GET", fmt.Sprintf("/v2/vmImport/%s/%s/available", c.AccountAlias, locationId), nil, &res)
+	err = c.getCLCResponse("GET", fmt.Sprintf("/v2/vmImport/%s/%s/available", c.credentials.AccountAlias, locationId), nil, &res)
 	return
 }
 
@@ -400,7 +400,7 @@ type ServerCredentials struct {
 // Retrieve the administrator/root password on an existing server.
 // @serverId: ID of the server with the credentials to return.
 func (c *Client) GetServerCredentials(serverId string) (res ServerCredentials, err error) {
-	err = c.getCLCResponse("GET", fmt.Sprintf("/v2/servers/%s/%s/credentials", c.AccountAlias, serverId), nil, &res)
+	err = c.getCLCResponse("GET", fmt.Sprintf("/v2/servers/%s/%s/credentials", c.credentials.AccountAlias, serverId), nil, &res)
 	return
 }
 

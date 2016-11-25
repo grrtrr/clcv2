@@ -121,7 +121,7 @@ type NetworkDetails struct {
 //              - "free"    (returns details of the network as well as information about free IP addresses) or
 //              - "all"     (returns details of the network as well as information about all IP addresses).
 func (c *Client) GetNetworkDetails(datacentre, network, ipQuery string) (det NetworkDetails, err error) {
-	path := fmt.Sprintf("/v2-experimental/networks/%s/%s/%s?ipAddresses=%s", c.AccountAlias, datacentre, network, ipQuery)
+	path := fmt.Sprintf("/v2-experimental/networks/%s/%s/%s?ipAddresses=%s", c.credentials.AccountAlias, datacentre, network, ipQuery)
 	err = c.getCLCResponse("GET", path, nil, &det)
 	return
 }

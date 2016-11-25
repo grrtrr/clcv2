@@ -123,6 +123,6 @@ func (c *Client) GetVPNs() (res []SiteToSiteVPN, err error) {
 
 // GetVPN returns details of the specified Site-to-Site VPN.
 func (c *Client) GetVPN(vpnID string) (res SiteToSiteVPN, err error) {
-	err = c.getCLCResponse("GET", fmt.Sprintf("/v2/siteToSiteVpn/%s?account=%s", vpnID, c.AccountAlias), nil, &res)
+	err = c.getCLCResponse("GET", fmt.Sprintf("/v2/siteToSiteVpn/%s?account=%s", vpnID, c.credentials.AccountAlias), nil, &res)
 	return
 }
