@@ -26,7 +26,7 @@ func (c *Client) GetLocations() (loc []DataCenter, err error) {
 // @location:   location alias of data centre to query
 // @groupLinks: whether to include 'group' type of links
 func (c *Client) GetDatacenter(location string, groupLinks bool) (res DataCenter, err error) {
-	path := fmt.Sprintf("/v2/datacenters/%s/%s?groupLinks=%t", c.credentials.AccountAlias, location, groupLinks)
+	path := fmt.Sprintf("/v2/datacenters/%s/%s?groupLinks=%t", c.AccountAlias, location, groupLinks)
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }

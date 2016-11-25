@@ -45,7 +45,7 @@ type Group struct {
 // Get the details of an individual server and any sub-groups and servers that it contains.
 // @groupId: ID of the group being queried.
 func (c *Client) GetGroup(groupId string) (res Group, err error) {
-	path := fmt.Sprintf("/v2/groups/%s/%s", c.credentials.AccountAlias, groupId)
+	path := fmt.Sprintf("/v2/groups/%s/%s", c.AccountAlias, groupId)
 	err = c.getCLCResponse("GET", path, nil, &res)
 	return
 }
