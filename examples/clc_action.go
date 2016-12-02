@@ -635,8 +635,14 @@ func showServers(client *clcv2.CLIClient, servnames ...string) {
 			modifiedStr += " by " + truncate(server.ChangeInfo.ModifiedBy, 6)
 		}
 
+		// Append a tilde (~) to indicate it has snapshots
+		serverName := server.Name
+		if len(server.Details.Snapshots) > 0 {
+			serverName += "~"
+		}
+
 		table.Append([]string{
-			server.Name, grp.Name, truncate(desc, 30), truncate(server.OsType, 15),
+			serverName, grp.Name, truncate(desc, 30), truncate(server.OsType, 15),
 			strings.Join(IPs, " "),
 			fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024),
 			fmt.Sprintf("%d G", server.Details.StorageGb),
