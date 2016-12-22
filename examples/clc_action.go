@@ -211,7 +211,6 @@ func main() {
 			if err = client.ServerSetGroup(where, newParent); err != nil {
 				exit.Fatalf("failed to change the parent group on %q: %s", where, err)
 			}
-
 			fmt.Printf("Successfully changed the parent group of %s to %s.\n", where, flag.Arg(2))
 			os.Exit(0)
 		case "memory":
@@ -367,11 +366,13 @@ func main() {
 				}
 			}
 
-			if err = client.GroupSetParent(where, newParent); err != nil {
+			if where == newParent {
+				fmt.Printf("Nothing to do - source is the same as destination.\n")
+			} else if err = client.GroupSetParent(where, newParent); err != nil {
 				exit.Fatalf("failed to change the parent group on %q: %s", where, err)
+			} else {
+				fmt.Printf("Successfully changed the parent group of %s to %s.\n", where, flag.Arg(2))
 			}
-
-			fmt.Printf("Successfully changed the parent group of %s to %s.\n", where, flag.Arg(2))
 			os.Exit(0)
 		case "rename":
 			if err = client.GroupSetName(where, flag.Arg(2)); err == nil {
