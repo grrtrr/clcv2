@@ -225,7 +225,6 @@ func main() {
 		exit.Fatalf("failed to create server: %s", err)
 	}
 
-	log.Printf("Status Id: %s\n", reqID)
 	status, err := client.PollStatus(reqID, 5*time.Second)
 	if err != nil {
 		exit.Fatalf("failed to poll %s status: %s", reqID, err)
