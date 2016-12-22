@@ -76,6 +76,11 @@ type Client struct {
 	credentialsChanged func() error
 }
 
+// RegisteredAccountAlias is a read-only get method for credentials.AccountAlias
+func (c *Client) RegisteredAccountAlias() string {
+	return c.credentials.AccountAlias
+}
+
 // LoginReq is the data structure required to perform the initial CLCv2 login request.
 type LoginReq struct {
 	// Control Portal user name.

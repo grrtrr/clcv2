@@ -147,36 +147,55 @@ func main() {
 	if *net == "" {
 		log.Printf("Determining network ID used by %s ...", src.Name)
 
-		if nets, err := client.GetServerNets(src); err != nil {
+		nets, err := client.GetServerNets(src)
+		if err != nil {
 			exit.Fatalf("failed to query networks of %s: %s", src.Name, err)
-		} else if len(nets) == 0 {
+		}
+
+		if len(nets) == 0 {
 			// No network information found for the server, even though it has an IP.
 			// This can happen when the server is owned by a sub-account, and uses a
 			// network that is owned by the parent account. In this case, the sub-account
 			// is prevented from querying details of the parent account, due to insufficient
 			// permission.
-			log.Printf("Unable to determine network details - querying %s deployable networks ...", src.LocationId)
-			capa, err := client.GetDeploymentCapabilities(src.LocationId)
-			if err != nil {
-				exit.Fatalf("failed to determine %s Deployment Capabilities: %s", src.LocationId, err)
-			}
-			fmt.Println("Please specify the network ID for the clone manually via -net, using this information:")
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetAutoFormatHeaders(false)
-			table.SetAlignment(tablewriter.ALIGN_LEFT)
-			table.SetAutoWrapText(false)
+			if parentAccount := client.RegisteredAccountAlias(); client.AccountAlias != parentAccount {
+				var savedAlias = client.AccountAlias
 
-			table.SetHeader([]string{"Name", "Type", "Account", "Network ID"})
-			for _, net := range capa.DeployableNetworks {
-				table.Append([]string{net.Name, net.Type, net.AccountID, net.NetworkId})
+				log.Printf("Network ID not visible under %q account - trying %q instead ...", savedAlias, parentAccount)
+				client.AccountAlias = parentAccount
+				if nets, err = client.GetServerNets(src); err != nil {
+					exit.Fatalf("failed to query networks of %s using %q account: %s", src.Name, parentAccount, err)
+				}
+				// Restore Account Alias for remainder of program
+				client.AccountAlias = savedAlias
 			}
+			if len(nets) == 0 {
+				log.Printf("Unable to determine Network ID - querying %s deployable networks ...", src.LocationId)
+				capa, err := client.GetDeploymentCapabilities(src.LocationId)
+				if err != nil {
+					exit.Fatalf("failed to determine %s Deployment Capabilities: %s", src.LocationId, err)
+				}
+				fmt.Println("Please specify the network ID for the clone manually via -net, using this information:")
+				table := tablewriter.NewWriter(os.Stdout)
+				table.SetAutoFormatHeaders(false)
+				table.SetAlignment(tablewriter.ALIGN_LEFT)
+				table.SetAutoWrapText(false)
 
-			table.Render()
-			os.Exit(0)
-		} else if len(nets) != 1 {
+				table.SetHeader([]string{"Name", "Type", "Account", "Network ID"})
+				for _, net := range capa.DeployableNetworks {
+					table.Append([]string{net.Name, net.Type, net.AccountID, net.NetworkId})
+				}
+
+				table.Render()
+				os.Exit(0)
+			}
+		}
+
+		if len(nets) != 1 {
 			// FIXME: print server networks
 			exit.Errorf("please specify which network to use (%s uses %d)", src.Name, len(nets))
 		} else {
+			log.Printf("Using %s network %s, with gateway %s", nets[0].Type, nets[0].Cidr, nets[0].Gateway)
 			req.NetworkId = nets[0].Id
 		}
 	} else if _, err := hex.DecodeString(*net); err != nil { // not a HEX ID, treat as group name
@@ -192,7 +211,6 @@ func main() {
 	} else { // HEX ID, use directoy
 		req.NetworkId = *net
 	}
-
 
 	log.Printf("Cloning %s ...", src.Name)
 	for i := 1; ; i++ {
