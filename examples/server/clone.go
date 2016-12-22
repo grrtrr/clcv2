@@ -208,7 +208,7 @@ func main() {
 		} else {
 			req.NetworkId = netw.Id
 		}
-	} else { // HEX ID, use directoy
+	} else { // HEX ID, use directly
 		req.NetworkId = *net
 	}
 
