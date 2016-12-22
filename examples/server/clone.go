@@ -96,7 +96,7 @@ func main() {
 
 	if *seed == "" {
 		if l := len(src.Name); l > 10 { // use same naming as original by default
-			req.Name = src.Name[7 : l-1]
+			req.Name = strings.TrimRight(src.Name[7:l-1], "0")
 		} else {
 			req.Name = "CLONE"
 		}
