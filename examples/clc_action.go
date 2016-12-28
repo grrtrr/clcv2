@@ -14,6 +14,7 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/clcv2/clcv2cli"
 	"github.com/grrtrr/clcv2/utils"
 	"github.com/grrtrr/exit"
 	garbler "github.com/michaelbironneau/garbler/lib"
@@ -134,7 +135,7 @@ func main() {
 		exit.Errorf("Unsupported action %q", action)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}

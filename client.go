@@ -36,6 +36,12 @@ var (
 	// Errors returned by this package
 	ErrCredentialsInValid = errors.New("authentication credentials are stale or invalid")
 
+	// Set this to true for debugging output
+	Debug bool
+
+	// Upper bound on client operations - default timeout value
+	ClientTimeout = 180 * time.Second
+
 	// allow overriding of the %BaseURL default
 	baseURL = BaseURL
 )
@@ -145,10 +151,10 @@ func initClient(user, pass string) *Client {
 	client.requestor = &http.Client{
 		Transport: rehttp.NewTransport(nil, // default transport
 			client.retryer(MaxRetries),
-			// Note: using g_timeout as upper bound for the exponential backoff.
+			// Note: using ClientTimeout as upper bound for the exponential backoff.
 			//       This means g_timeout has to be large enough to run MaxRetries
 			//       requests with individual retries.
-			rehttp.ExpJitterDelay(StepDelay, g_timeout),
+			rehttp.ExpJitterDelay(StepDelay, ClientTimeout),
 		),
 	}
 	client.ctx, client.cancel = context.WithCancel(context.Background())
@@ -219,7 +225,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 	var reqBody io.Reader
 
 	if reqModel != nil {
-		if g_debug && c.Log != nil {
+		if Debug && c.Log != nil {
 			c.Log.Printf("reqModel %T %+v\n", reqModel, reqModel)
 		}
 
@@ -234,7 +240,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 	if resModel != nil {
 		if resType := reflect.TypeOf(resModel); resType.Kind() != reflect.Ptr {
 			return errors.Errorf("Expecting pointer to result model %T", resModel)
-		} else if g_debug && c.Log != nil {
+		} else if Debug && c.Log != nil {
 			c.Log.Printf("resModel %T %+v", resModel, resModel)
 		}
 	}
@@ -252,7 +258,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json")
 
-	if g_debug && c.Log != nil {
+	if Debug && c.Log != nil {
 		reqDump, _ := httputil.DumpRequest(req, true)
 		c.Log.Printf("%s", reqDump)
 	}
@@ -263,7 +269,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 	}
 	defer res.Body.Close()
 
-	if g_debug && c.Log != nil {
+	if Debug && c.Log != nil {
 		resDump, _ := httputil.DumpResponse(res, true)
 		c.Log.Printf("%s", resDump)
 	}
@@ -287,7 +293,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 			return errors.New("failed to re-authenticate, credentials may be invalid")
 		}
 		if _, isLoginReq := reqModel.(*LoginReq); !isLoginReq {
-			if g_debug && c.Log != nil {
+			if Debug && c.Log != nil {
 				log.Printf("credentials are stale, retrying login ...")
 			}
 			// FIXME: the following is not thread-safe (multiple concurrent clients):
@@ -295,7 +301,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 			if err = c.login(); err != nil {
 				return err
 			}
-			if g_debug && c.Log != nil {
+			if Debug && c.Log != nil {
 				log.Printf("re-authentication worked, retrying request ...")
 			}
 			if err = c.getResponse(url, verb, reqModel, resModel); err != nil {
