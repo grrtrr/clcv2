@@ -4,12 +4,13 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
@@ -27,12 +28,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
 
-	if  *oldPasswd == "" {
+	if *oldPasswd == "" {
 		fmt.Printf("Looking up existing credentials of %s ...\n", flag.Arg(0))
 
 		credentials, err := client.GetServerCredentials(flag.Arg(0))
@@ -41,7 +42,7 @@ func main() {
 		}
 
 		fmt.Printf("Existing %q password on %s: %q\n", credentials.Username,
-			   flag.Arg(0), credentials.Password)
+			flag.Arg(0), credentials.Password)
 		*oldPasswd = credentials.Password
 	}
 

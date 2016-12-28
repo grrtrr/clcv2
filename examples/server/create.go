@@ -15,6 +15,7 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/clcv2/clcv2cli"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -48,7 +49,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

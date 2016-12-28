@@ -4,13 +4,14 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"github.com/kr/pretty"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
+	"github.com/kr/pretty"
 )
 
 func main() {
@@ -21,12 +22,12 @@ func main() {
 	}
 	flag.Parse()
 
-        if flag.NArg() != 1 {
-                flag.Usage()
-                os.Exit(1)
-        }
+	if flag.NArg() != 1 {
+		flag.Usage()
+		os.Exit(1)
+	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}

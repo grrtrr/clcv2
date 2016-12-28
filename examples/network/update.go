@@ -4,18 +4,19 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
-	var location = flag.String("l", "",    "Data centre alias of the network")
-	var desc     = flag.String("desc", "", "Description of the VLAN")
-	var name     = flag.String("name", "", "User-defined name of the network")
+	var location = flag.String("l", "", "Data centre alias of the network")
+	var desc = flag.String("desc", "", "Description of the VLAN")
+	var name = flag.String("name", "", "User-defined name of the network")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Network-ID>\n", path.Base(os.Args[0]))
@@ -28,7 +29,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}

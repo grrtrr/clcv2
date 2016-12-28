@@ -4,18 +4,19 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
 	"encoding/hex"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
 	var child string /* UUID of the group to relocate */
-	var parent   = flag.String("g", "", "UUID or name of the new parent group")
+	var parent = flag.String("g", "", "UUID or name of the new parent group")
 	var location = flag.String("l", "", "Location to use if using Group Name instead of UUID")
 
 	flag.Usage = func() {
@@ -29,14 +30,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
 
 	if _, err := hex.DecodeString(flag.Arg(0)); err == nil {
 		child = flag.Arg(0)
-	} else if  *location == "" {
+	} else if *location == "" {
 		exit.Errorf("Need a location argument (-l) if not using Group UUID (%s)", flag.Arg(0))
 	} else {
 		if grp, err := client.GetGroupByName(flag.Arg(0), *location); err != nil {
@@ -50,7 +51,7 @@ func main() {
 
 	if _, err := hex.DecodeString(*parent); err == nil {
 		/* Looks like a Group UUID */
-	} else if  *location == "" {
+	} else if *location == "" {
 		exit.Errorf("Need a location argument (-l) if parent (-g %s) is not a UUID", *parent)
 	} else {
 		if grp, err := client.GetGroupByName(*parent, *location); err != nil {

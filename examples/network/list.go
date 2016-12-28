@@ -4,14 +4,15 @@
 package main
 
 import (
-	"github.com/olekukonko/tablewriter"
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"github.com/kr/pretty"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
+	"github.com/kr/pretty"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
@@ -28,7 +29,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
@@ -48,9 +49,9 @@ func main() {
 		table.SetAlignment(tablewriter.ALIGN_RIGHT)
 		table.SetAutoWrapText(false)
 
-		table.SetHeader([]string{ "CIDR", "Gateway", "VLAN", "Name", "Description", "Type", "ID" })
+		table.SetHeader([]string{"CIDR", "Gateway", "VLAN", "Name", "Description", "Type", "ID"})
 		for _, l := range networks {
-			table.Append([]string{ l.Cidr, l.Gateway, fmt.Sprint(l.Vlan), l.Name, l.Description, l.Type, l.Id })
+			table.Append([]string{l.Cidr, l.Gateway, fmt.Sprint(l.Vlan), l.Name, l.Description, l.Type, l.Id})
 		}
 		table.Render()
 	}

@@ -4,18 +4,19 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
 	"encoding/hex"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
-	var net      = flag.String("net", "", "ID or name of the Network to use (REQUIRED)")
-	var location = flag.String("l",   "", "Data centre alias (to resolve network name if not using hex ID)")
+	var net = flag.String("net", "", "ID or name of the Network to use (REQUIRED)")
+	var location = flag.String("l", "", "Data centre alias (to resolve network name if not using hex ID)")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options] <Server-Name>\n", path.Base(os.Args[0]))
@@ -28,7 +29,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
@@ -36,7 +37,7 @@ func main() {
 	/* net is supposed to be a (hex) ID, but allow network names, too */
 	if _, err := hex.DecodeString(*net); err == nil {
 		/* already looks like a HEX ID */
-	} else if  *location == "" {
+	} else if *location == "" {
 		exit.Errorf("Need a location argument (-l) if not using a network ID (%s)", *net)
 	} else {
 		fmt.Printf("Resolving network id of %q ...\n", *net)

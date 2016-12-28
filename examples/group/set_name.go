@@ -4,18 +4,19 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
 	"encoding/hex"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
-	var group string	/* UUID of the group to change */
-	var newName  = flag.String("n", "", "New name for the group")
+	var group string /* UUID of the group to change */
+	var newName = flag.String("n", "", "New name for the group")
 	var location = flag.String("l", "", "Location to use if using a Group-Name instead of a UUID")
 
 	flag.Usage = func() {
@@ -29,14 +30,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
 
 	if _, err := hex.DecodeString(flag.Arg(0)); err == nil {
 		group = flag.Arg(0)
-	} else if  *location == "" {
+	} else if *location == "" {
 		exit.Errorf("Need a location argument (-l) if not using Group UUID (%s)", flag.Arg(0))
 	} else {
 		if grp, err := client.GetGroupByName(flag.Arg(0), *location); err != nil {

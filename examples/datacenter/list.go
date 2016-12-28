@@ -4,13 +4,14 @@
 package main
 
 import (
-	"github.com/olekukonko/tablewriter"
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"strings"
 	"flag"
 	"fmt"
 	"os"
+	"strings"
+
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 
 	flag.Parse()
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
@@ -38,7 +39,7 @@ func main() {
 			table.SetAutoWrapText(false)
 
 			// See https://www.ctl.io/api-docs/v2/#getting-started-api-v20-links-framework
-			table.SetHeader([]string{ "Rel", "Href", "Verbs" } )
+			table.SetHeader([]string{"Rel", "Href", "Verbs"})
 			for _, link := range ctr.Links {
 				var verbs string
 
@@ -47,7 +48,7 @@ func main() {
 				} else {
 					verbs = strings.Join(link.Verbs, ", ")
 				}
-				table.Append([]string{ link.Rel, link.Href, verbs })
+				table.Append([]string{link.Rel, link.Href, verbs})
 			}
 			table.Render()
 		}
@@ -56,12 +57,11 @@ func main() {
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
 		table.SetAutoWrapText(false)
-		table.SetHeader([]string{ "Id", "Name", } )
+		table.SetHeader([]string{"Id", "Name"})
 
 		for _, ctr := range datacenters {
-			table.Append([]string{ ctr.Id, ctr.Name })
+			table.Append([]string{ctr.Id, ctr.Name})
 		}
 		table.Render()
 	}
 }
-

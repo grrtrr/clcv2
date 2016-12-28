@@ -4,13 +4,14 @@
 package main
 
 import (
-	"github.com/olekukonko/tablewriter"
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
@@ -23,12 +24,12 @@ func main() {
 	}
 	flag.Parse()
 
-        if flag.NArg() != 1 {
-                flag.Usage()
-                os.Exit(1)
-        }
+	if flag.NArg() != 1 {
+		flag.Usage()
+		os.Exit(1)
+	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
@@ -39,8 +40,8 @@ func main() {
 	}
 
 	fmt.Printf("Datacenter %s:\n", flag.Arg(0))
-	fmt.Printf( "Datacenter enabled:            %t\n", capa.DataCenterEnabled)
-	fmt.Printf( "VM import enabled:             %t\n", capa.ImportVMEnabled)
+	fmt.Printf("Datacenter enabled:            %t\n", capa.DataCenterEnabled)
+	fmt.Printf("VM import enabled:             %t\n", capa.ImportVMEnabled)
 	fmt.Println("Supports premium storage:     ", capa.SupportsPremiumStorage)
 	fmt.Println("Supports shared load balancer:", capa.SupportsSharedLoadBalancer)
 	fmt.Println("Supports bare metal servers:  ", capa.SupportsBareMetalServers)
@@ -58,9 +59,9 @@ func main() {
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
 		table.SetAutoWrapText(false)
 
-		table.SetHeader([]string{ "Name", "Type", "Account", "Network ID" })
+		table.SetHeader([]string{"Name", "Type", "Account", "Network ID"})
 		for _, net := range capa.DeployableNetworks {
-			table.Append([]string{ net.Name, net.Type, net.AccountID, net.NetworkId })
+			table.Append([]string{net.Name, net.Type, net.AccountID, net.NetworkId})
 		}
 
 		table.Render()
@@ -79,10 +80,10 @@ func main() {
 
 		/* Note: not displaying ReservedDrivePaths and DrivePathLength here, I don't understand their use. */
 		/* Note: not listing Capabilities here, since the table gets too large for a single screen */
-		table.SetHeader([]string{ "Name", "Description", "OS", "Storage" })
+		table.SetHeader([]string{"Name", "Description", "OS", "Storage"})
 
 		for _, tpl := range capa.Templates {
-			table.Append([]string{ tpl.Name, tpl.Description, tpl.OsType, fmt.Sprintf("%d GB", tpl.StorageSizeGB) })
+			table.Append([]string{tpl.Name, tpl.Description, tpl.OsType, fmt.Sprintf("%d GB", tpl.StorageSizeGB)})
 		}
 		table.Render()
 	}
@@ -98,11 +99,11 @@ func main() {
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
 		table.SetAutoWrapText(false)
 
-		table.SetHeader([]string{ "Type", "Description", "Id", "Lab Product Code", "Premium Product Code" })
+		table.SetHeader([]string{"Type", "Description", "Id", "Lab Product Code", "Premium Product Code"})
 
 		for _, ios := range capa.ImportableOsTypes {
-			table.Append([]string{ ios.Type, ios.Description, fmt.Sprintf("%d", ios.Id),
-				ios.LabProductCode, ios.PremiumProductCode })
+			table.Append([]string{ios.Type, ios.Description, fmt.Sprintf("%d", ios.Id),
+				ios.LabProductCode, ios.PremiumProductCode})
 		}
 		table.Render()
 	}

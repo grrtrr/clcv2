@@ -13,7 +13,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/clcv2/clcv2cli"
 	"github.com/grrtrr/exit"
 	"github.com/olekukonko/tablewriter"
 )
@@ -33,7 +33,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}

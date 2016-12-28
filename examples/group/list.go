@@ -4,14 +4,15 @@
 package main
 
 import (
-	"github.com/olekukonko/tablewriter"
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"github.com/kr/pretty"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
+	"github.com/kr/pretty"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
@@ -43,16 +44,16 @@ func main() {
 		pretty.Println(rootNode)
 	} else {
 		fmt.Printf("%s in %s (%s, %d servers), ID %s:\n", rootNode.Name, rootNode.LocationId,
-			   rootNode.Status, rootNode.Serverscount, rootNode.Id)
+			rootNode.Status, rootNode.Serverscount, rootNode.Id)
 
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
 		table.SetAutoWrapText(true)
 
-		table.SetHeader([]string{ "Name", "UUID", "Description", "#Servers", "Type"})
+		table.SetHeader([]string{"Name", "UUID", "Description", "#Servers", "Type"})
 		for _, g := range rootNode.Groups {
-			table.Append([]string{ g.Name, g.Id, g.Description, fmt.Sprint(g.Serverscount), g.Type })
+			table.Append([]string{g.Name, g.Id, g.Description, fmt.Sprint(g.Serverscount), g.Type})
 		}
 		table.Render()
 	}

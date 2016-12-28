@@ -4,22 +4,24 @@
 package main
 
 import (
-	"github.com/olekukonko/tablewriter"
-	"github.com/dustin/go-humanize"
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"github.com/kr/pretty"
 	"encoding/hex"
-	"strings"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+	"strings"
+
+	"github.com/dustin/go-humanize"
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
+	"github.com/kr/pretty"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
 	var uuid string
-	var simple   = flag.Bool("simple", false, "Use simple (debugging) output format")
+	var simple = flag.Bool("simple", false, "Use simple (debugging) output format")
 	var location = flag.String("l", "", "Location to use if using a Group-Name instead of a UUID")
 
 	flag.Usage = func() {
@@ -33,14 +35,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
 
 	if _, err := hex.DecodeString(flag.Arg(0)); err == nil {
 		uuid = flag.Arg(0)
-	} else if  *location == "" {
+	} else if *location == "" {
 		exit.Errorf("Need a location argument (-l) if not using Group UUID (%s)", flag.Arg(0))
 	} else {
 		if grp, err := client.GetGroupByName(flag.Arg(0), *location); err != nil {
@@ -110,15 +112,14 @@ func main() {
 			table.SetAlignment(tablewriter.ALIGN_LEFT)
 			table.SetAutoWrapText(true)
 
-			table.SetHeader([]string{ "Name", "UUID", "Description", "#Servers", "Type"})
+			table.SetHeader([]string{"Name", "UUID", "Description", "#Servers", "Type"})
 			for _, g := range rootNode.Groups {
-				table.Append([]string{ g.Name, g.Id, g.Description, fmt.Sprint(g.Serverscount), g.Type })
+				table.Append([]string{g.Name, g.Id, g.Description, fmt.Sprint(g.Serverscount), g.Type})
 			}
 			table.Render()
 		} else {
 			fmt.Printf("Sub-groups:    none\n")
 		}
-
 
 	}
 }

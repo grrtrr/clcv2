@@ -12,6 +12,7 @@ import (
 	"path"
 
 	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/clcv2/clcv2cli"
 	"github.com/grrtrr/clcv2/utils"
 	"github.com/grrtrr/exit"
 	"github.com/kr/pretty"
@@ -38,7 +39,7 @@ func main() {
 		exit.Errorf("Invalid IP query %q. Try -h")
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}

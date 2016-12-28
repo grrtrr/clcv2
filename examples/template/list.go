@@ -10,6 +10,7 @@ import (
 	"path"
 
 	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/clcv2/clcv2cli"
 	"github.com/grrtrr/exit"
 	"github.com/olekukonko/tablewriter"
 )
@@ -27,7 +28,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
@@ -35,7 +36,7 @@ func main() {
 	showTemplates(client, flag.Arg(0))
 }
 
-func showTemplates(client *clcv2.Client, region string) {
+func showTemplates(client *clcv2.CLIClient, region string) {
 	capa, err := client.GetDeploymentCapabilities(region)
 	if err != nil {
 		exit.Fatalf("failed to query deployment capabilities of %s: %s", region, err)

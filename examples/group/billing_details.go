@@ -4,21 +4,22 @@
 package main
 
 import (
-	"github.com/olekukonko/tablewriter"
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"github.com/kr/pretty"
 	"encoding/hex"
-	"strings"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+	"strings"
+
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
+	"github.com/kr/pretty"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
 	var uuid string
-	var simple   = flag.Bool("simple", false, "Use simple (debugging) output format")
+	var simple = flag.Bool("simple", false, "Use simple (debugging) output format")
 	var location = flag.String("l", "", "Location to use if using a Group-Name instead of a UUID")
 
 	flag.Usage = func() {
@@ -32,14 +33,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
 
 	if _, err := hex.DecodeString(flag.Arg(0)); err == nil {
 		uuid = flag.Arg(0)
-	} else if  *location == "" {
+	} else if *location == "" {
 		exit.Errorf("Need a location argument (-l) if not using Group UUID (%s)", flag.Arg(0))
 	} else {
 		if grp, err := client.GetGroupByName(flag.Arg(0), *location); err != nil {
@@ -65,7 +66,7 @@ func main() {
 			exit.Fatalf("Query result does not contain queried group %s", uuid)
 		} else {
 			fmt.Printf("Billing details of %s as of %s:\n", rootGroup.Name,
-				   bd.Date.Format("Monday, 2 Jan 2006, 15:04 MST"))
+				bd.Date.Format("Monday, 2 Jan 2006, 15:04 MST"))
 		}
 
 		for k, v := range bd.Groups {
@@ -79,11 +80,11 @@ func main() {
 			table.SetAlignment(tablewriter.ALIGN_RIGHT)
 			table.SetAutoWrapText(true)
 
-			table.SetHeader([]string{ "Server", "Template Cost", "Archive Cost", "Current Hour",
-						  "Month to Date", "Monthly Estimate" })
+			table.SetHeader([]string{"Server", "Template Cost", "Archive Cost", "Current Hour",
+				"Month to Date", "Monthly Estimate"})
 
 			for s, sbd := range v.Servers {
-				table.Append([]string{ strings.ToUpper(s),
+				table.Append([]string{strings.ToUpper(s),
 					fmt.Sprintf("$%.2f", sbd.TemplateCost),
 					fmt.Sprintf("$%.2f", sbd.ArchiveCost),
 					fmt.Sprintf("$%.2f", sbd.CurrentHour),

@@ -8,13 +8,14 @@
 package main
 
 import (
-	"github.com/olekukonko/tablewriter"
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
@@ -47,11 +48,11 @@ func main() {
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
 		table.SetAutoWrapText(true)
 
-		table.SetHeader([]string{ "Id", "Name", "Storage/GB", "#CPU", "Membory/MB" })
+		table.SetHeader([]string{"Id", "Name", "Storage/GB", "#CPU", "Membory/MB"})
 
 		for _, i := range imports {
 			table.Append([]string{
-				i.Id, i.Name, fmt.Sprint(i.StorageSizeGb),
+				i.Id, i.Name, fmt.Sprint(i.StorageSizeGB),
 				fmt.Sprint(i.CpuCount), fmt.Sprint(i.MemorySizeMb),
 			})
 		}

@@ -4,26 +4,28 @@
 package main
 
 import (
-	"github.com/olekukonko/tablewriter"
-	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/exit"
 	"encoding/hex"
-	"strings"
-	"path"
 	"flag"
 	"fmt"
 	"os"
+	"path"
+	"strings"
+
+	"github.com/grrtrr/clcv2"
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
+	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
-	var group string	/* UUID of the group to set defaults of */
-	var location = flag.String("l",   "",  "Location to use if using a Group-Name instead of a UUID")
-	var template = flag.String("t",   "",          "Name of the template to use as the source")
-	var numCpu   = flag.Int("cpu",     1,          "Number of Cpus to use (1-16)")
-	var memGB    = flag.Int("mem",     4,          "Amount of memory in GB (1-128)")
-	var net      = flag.String("net",  "",         "Name of the Network to use")
-	var primDNS  = flag.String("dns1", "8.8.8.8",  "Primary DNS to use")
-	var secDNS   = flag.String("dns2", "8.8.4.4",  "Secondary DNS to use")
+	var group string /* UUID of the group to set defaults of */
+	var location = flag.String("l", "", "Location to use if using a Group-Name instead of a UUID")
+	var template = flag.String("t", "", "Name of the template to use as the source")
+	var numCpu = flag.Int("cpu", 1, "Number of Cpus to use (1-16)")
+	var memGB = flag.Int("mem", 4, "Amount of memory in GB (1-128)")
+	var net = flag.String("net", "", "Name of the Network to use")
+	var primDNS = flag.String("dns1", "8.8.8.8", "Primary DNS to use")
+	var secDNS = flag.String("dns2", "8.8.4.4", "Secondary DNS to use")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Group Name or UUID>\n", path.Base(os.Args[0]))
@@ -36,14 +38,14 @@ func main() {
 		os.Exit(0)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
 
 	if _, err := hex.DecodeString(flag.Arg(0)); err == nil {
 		group = flag.Arg(0)
-	} else if  *location == "" {
+	} else if *location == "" {
 		exit.Errorf("Need a location argument (-l) if not using Group UUID (%s)", flag.Arg(0))
 	} else {
 		fmt.Printf("Resolving group id of %q ...\n", flag.Arg(0))
@@ -58,7 +60,7 @@ func main() {
 	if *net != "" {
 		if _, err := hex.DecodeString(*net); err == nil {
 			/* already looks like a HEX ID */
-		} else if  *location == "" {
+		} else if *location == "" {
 			exit.Errorf("Need a location argument (-l) if not using a network ID (%s)", *net)
 		} else {
 			fmt.Printf("Resolving network id of %q ...\n", *net)
@@ -92,9 +94,9 @@ func main() {
 	table.SetAlignment(tablewriter.ALIGN_RIGHT)
 	table.SetAutoWrapText(false)
 
-	table.SetHeader([]string{ "Default", "Value", "Inherited" })
+	table.SetHeader([]string{"Default", "Value", "Inherited"})
 	for k, v := range settings {
-		table.Append([]string{ strings.Title(k), fmt.Sprint(v.Value), fmt.Sprint(v.Inherited) })
+		table.Append([]string{strings.Title(k), fmt.Sprint(v.Value), fmt.Sprint(v.Inherited)})
 	}
 	table.Render()
 }

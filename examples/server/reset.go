@@ -8,12 +8,13 @@
 package main
 
 import (
-	"github.com/grrtrr/clcv2"
-	"path"
 	"flag"
-	"github.com/grrtrr/exit"
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/exit"
 )
 
 func main() {
@@ -28,7 +29,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := clcv2.NewCLIClient()
+	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
