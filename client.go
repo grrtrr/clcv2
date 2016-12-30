@@ -225,10 +225,6 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 	var reqBody io.Reader
 
 	if reqModel != nil {
-		if Debug && c.Log != nil {
-			c.Log.Printf("reqModel %T %+v\n", reqModel, reqModel)
-		}
-
 		jsonReq, err := json.Marshal(reqModel)
 		if err != nil {
 			return errors.Errorf("failed to encode request model %T %+v: %s", reqModel, reqModel, err)
@@ -240,8 +236,6 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 	if resModel != nil {
 		if resType := reflect.TypeOf(resModel); resType.Kind() != reflect.Ptr {
 			return errors.Errorf("Expecting pointer to result model %T", resModel)
-		} else if Debug && c.Log != nil {
-			c.Log.Printf("resModel %T %+v", resModel, resModel)
 		}
 	}
 
