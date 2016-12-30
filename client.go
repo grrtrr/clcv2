@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"mime"
 	"net/http"
 	"net/http/httputil"
@@ -288,7 +287,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 		}
 		if _, isLoginReq := reqModel.(*LoginReq); !isLoginReq {
 			if Debug && c.Log != nil {
-				log.Printf("credentials are stale, retrying login ...")
+				c.Log.Printf("credentials are stale, retrying login ...")
 			}
 			// FIXME: the following is not thread-safe (multiple concurrent clients):
 			c.retryingLogin = true
@@ -296,7 +295,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 				return err
 			}
 			if Debug && c.Log != nil {
-				log.Printf("re-authentication worked, retrying request ...")
+				c.Log.Printf("re-authentication worked, retrying request ...")
 			}
 			if err = c.getResponse(url, verb, reqModel, resModel); err != nil {
 				return err
