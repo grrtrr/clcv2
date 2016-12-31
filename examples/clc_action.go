@@ -178,7 +178,7 @@ func main() {
 		fmt.Printf("Networks visible to %s account in %s:\n", client.AccountAlias, strings.ToUpper(*location))
 		showNetworks(client, *location, client.AccountAlias)
 		if client.AccountAlias != client.RegisteredAccountAlias() {
-			fmt.Printf("Networks visible to %s account:\n", client.RegisteredAccountAlias())
+			fmt.Printf("Networks visible to parent %s account:\n", client.RegisteredAccountAlias())
 			showNetworks(client, *location, client.RegisteredAccountAlias())
 		}
 		os.Exit(0)
