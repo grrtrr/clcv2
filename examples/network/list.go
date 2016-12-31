@@ -8,15 +8,16 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
+	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/clcv2/clcv2cli"
 	"github.com/grrtrr/exit"
-	"github.com/kr/pretty"
 	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
-	var simple = flag.Bool("simple", false, "Use simple (debugging) output format")
+	var location string
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Location>\n", path.Base(os.Args[0]))
@@ -24,25 +25,34 @@ func main() {
 	}
 
 	flag.Parse()
-	if flag.NArg() != 1 {
-		flag.Usage()
-		os.Exit(1)
-	}
-
 	client, err := clcv2cli.NewCLIClient()
 	if err != nil {
 		exit.Fatal(err.Error())
 	}
 
-	networks, err := client.GetNetworks(flag.Arg(0))
+	if flag.NArg() != 1 {
+		location = client.LocationAlias
+	} else {
+		location = flag.Arg(0)
+	}
+
+	fmt.Printf("Networks visible to %s account in %s:\n", client.AccountAlias, strings.ToUpper(location))
+	showNetworks(client, location, client.AccountAlias)
+	if client.AccountAlias != client.RegisteredAccountAlias() {
+		fmt.Printf("Networks visible to parent %s account:\n", client.RegisteredAccountAlias())
+		showNetworks(client, location, client.RegisteredAccountAlias())
+	}
+}
+
+// showNetworks shows networks visible to @account in data centre location @location.
+func showNetworks(client *clcv2.CLIClient, location, account string) {
+	networks, err := client.GetNetworks(location, account)
 	if err != nil {
-		exit.Fatalf("failed to list networks: %s", err)
+		exit.Fatalf("failed to list networks in %s: %s", location, err)
 	}
 
 	if len(networks) == 0 {
 		println("Empty result.")
-	} else if *simple {
-		pretty.Println(networks)
 	} else {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)

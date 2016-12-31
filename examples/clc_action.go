@@ -175,7 +175,12 @@ func main() {
 		showTemplates(client, *location)
 		os.Exit(0)
 	} else if action == "networks" { /* similar, neither server nor group action; print regional networks */
-		showNetworks(client, *location)
+		fmt.Printf("Networks visible to %s account in %s:\n", client.AccountAlias, strings.ToUpper(*location))
+		showNetworks(client, *location, client.AccountAlias)
+		if client.AccountAlias != client.RegisteredAccountAlias() {
+			fmt.Printf("Networks visible to %s account:\n", client.RegisteredAccountAlias())
+			showNetworks(client, *location, client.RegisteredAccountAlias())
+		}
 		os.Exit(0)
 	} else if action == "wait" {
 		reqID = flag.Arg(1)
@@ -711,9 +716,9 @@ func addRawDisk(client *clcv2.CLIClient, servname string, diskGB uint32) (status
 	return statusId
 }
 
-// showNetworks shows available networks in data centre location @location.
-func showNetworks(client *clcv2.CLIClient, location string) {
-	networks, err := client.GetNetworks(location)
+// showNetworks shows networks visible to @account in data centre location @location.
+func showNetworks(client *clcv2.CLIClient, location, account string) {
+	networks, err := client.GetNetworks(location, account)
 	if err != nil {
 		exit.Fatalf("failed to list networks in %s: %s", location, err)
 	}

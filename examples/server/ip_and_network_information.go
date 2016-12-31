@@ -38,9 +38,9 @@ func main() {
 	}
 
 	// Get networks for the location the server resides in
-	networks, err := client.GetNetworks(server.LocationId)
+	networks, err := client.GetNetworks(server.LocationId, "")
 	if err != nil {
-		exit.Fatalf("failed to list networks: %s", err)
+		exit.Fatalf("failed to list %s networks: %s", server.LocationId, err)
 	}
 
 	var private_ips []string

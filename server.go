@@ -182,7 +182,7 @@ func (c *Client) GetServerNets(s Server) (nets []Network, err error) {
 	// In practice, the current account may be a sub-account, and the server may be
 	// using a network owned by the parent's account. If that is the case,	the results will
 	// be empty, and the credentials of the parent account are neede to obtain the details.
-	networks, err := c.GetNetworks(s.LocationId)
+	networks, err := c.GetNetworks(s.LocationId, c.AccountAlias)
 	if err != nil {
 		return nil, errors.Errorf("failed to query networks in %s: %s", s.LocationId, err)
 	} else if len(networks) == 0 {

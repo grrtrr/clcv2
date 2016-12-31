@@ -40,9 +40,13 @@ type Network struct {
 }
 
 // Get the list of networks available for a given account in a given data center.
-// @location:  The Network's home datacenter alias.
-func (c *Client) GetNetworks(location string) (nets []Network, err error) {
-	err = c.getCLCResponse("GET", fmt.Sprintf("/v2-experimental/networks/%s/%s", c.AccountAlias, location), nil, &nets)
+// @location: The Network's home datacenter alias.
+// @account:  (parent) AccountAlias to use (defaults to client's default AccountAlias)
+func (c *Client) GetNetworks(location, account string) (nets []Network, err error) {
+	if account == "" {
+		account = c.AccountAlias
+	}
+	err = c.getCLCResponse("GET", fmt.Sprintf("/v2-experimental/networks/%s/%s", account, location), nil, &nets)
 	return
 }
 
@@ -50,7 +54,7 @@ func (c *Client) GetNetworks(location string) (nets []Network, err error) {
 // @name:      Name of the network to match.
 // @location:  The Network's home datacenter alias.
 func (c *Client) GetNetworkIdByName(name, location string) (net *Network, err error) {
-	if nets, err := c.GetNetworks(location); err == nil {
+	if nets, err := c.GetNetworks(location, c.AccountAlias); err == nil {
 		for idx := range nets {
 			if nets[idx].Name == name {
 				return &nets[idx], nil
@@ -64,7 +68,7 @@ func (c *Client) GetNetworkIdByName(name, location string) (net *Network, err er
 // @cidr:      CIDR of the network to match.
 // @location:  The Network's home datacenter alias.
 func (c *Client) GetNetworkIdByCIDR(cidr, location string) (net *Network, err error) {
-	if nets, err := c.GetNetworks(location); err == nil {
+	if nets, err := c.GetNetworks(location, c.AccountAlias); err == nil {
 		for idx := range nets {
 			if nets[idx].Cidr == cidr {
 				return &nets[idx], nil
@@ -141,7 +145,7 @@ func ExtractIPs(detailsList []IpAddressDetails) (ips []string) {
 func (c *Client) GetNetworkDetailsByIp(ip, location string) (iad *IpAddressDetails, err error) {
 	var candidateNetworkIds []string
 
-	if networks, err := c.GetNetworks(location); err != nil {
+	if networks, err := c.GetNetworks(location, c.AccountAlias); err != nil {
 		return nil, err
 	} else if len(networks) == 0 {
 		return nil, errors.Errorf("No %s networks in %s available", c.AccountAlias, location)
