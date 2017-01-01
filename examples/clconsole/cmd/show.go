@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
@@ -331,6 +332,7 @@ func showServer(client *clcv2.CLIClient, servname string) {
 // @client:    authenticated CLCv2 Client
 // @servnames: server names
 func showServers(client *clcv2.CLIClient, servnames []string) {
+	var wg sync.WaitGroup
 	var truncate = func(s string, maxlen int) string {
 		if len(s) >= maxlen {
 			s = s[:maxlen]
@@ -350,61 +352,67 @@ func showServers(client *clcv2.CLIClient, servnames []string) {
 	})
 
 	for _, servname := range servnames {
-		server, err := client.GetServer(servname)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to list details of server %q: %s", servname, err)
-			continue
-		}
-
-		grp, err := client.GetGroup(server.GroupId)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to resolve %s group UUID: %s\n", servname, err)
-			return
-		}
-
-		IPs := []string{}
-		for _, ip := range server.Details.IpAddresses {
-			if ip.Public != "" {
-				IPs = append(IPs, ip.Public)
+		servname := servname
+		wg.Add(1)
+		go func() {
+			server, err := client.GetServer(servname)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to list details of server %q: %s", servname, err)
+				return
 			}
-			if ip.Internal != "" {
-				IPs = append(IPs, ip.Internal)
+
+			grp, err := client.GetGroup(server.GroupId)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to resolve %s group UUID: %s\n", servname, err)
+				return
 			}
-		}
 
-		status := server.Details.PowerState
-		if server.Details.InMaintenanceMode {
-			status = "MAINTENANCE"
-		} else if server.Status != "active" {
-			status = server.Status
-		}
+			IPs := []string{}
+			for _, ip := range server.Details.IpAddresses {
+				if ip.Public != "" {
+					IPs = append(IPs, ip.Public)
+				}
+				if ip.Internal != "" {
+					IPs = append(IPs, ip.Internal)
+				}
+			}
 
-		desc := server.Description
-		if server.IsTemplate {
-			desc = "TPL: " + desc
-		}
+			status := server.Details.PowerState
+			if server.Details.InMaintenanceMode {
+				status = "MAINTENANCE"
+			} else if server.Status != "active" {
+				status = server.Status
+			}
 
-		modifiedStr := humanize.Time(server.ChangeInfo.ModifiedDate)
-		/* The ModifiedBy field can be an email address, or an API Key (hex string) */
-		if _, err := hex.DecodeString(server.ChangeInfo.ModifiedBy); err == nil {
-			modifiedStr += " via API Key"
-		} else {
-			modifiedStr += " by " + truncate(server.ChangeInfo.ModifiedBy, 6)
-		}
+			desc := server.Description
+			if server.IsTemplate {
+				desc = "TPL: " + desc
+			}
 
-		// Append a tilde (~) to indicate it has snapshots
-		serverName := server.Name
-		if len(server.Details.Snapshots) > 0 {
-			serverName += "~"
-		}
+			modifiedStr := humanize.Time(server.ChangeInfo.ModifiedDate)
+			/* The ModifiedBy field can be an email address, or an API Key (hex string) */
+			if _, err := hex.DecodeString(server.ChangeInfo.ModifiedBy); err == nil {
+				modifiedStr += " via API Key"
+			} else {
+				modifiedStr += " by " + truncate(server.ChangeInfo.ModifiedBy, 6)
+			}
 
-		table.Append([]string{
-			serverName, grp.Name, truncate(desc, 30), truncate(server.OsType, 15),
-			strings.Join(IPs, " "),
-			fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024),
-			fmt.Sprintf("%d G", server.Details.StorageGb),
-			status, modifiedStr,
-		})
+			// Append a tilde (~) to indicate it has snapshots
+			serverName := server.Name
+			if len(server.Details.Snapshots) > 0 {
+				serverName += "~"
+			}
+
+			table.Append([]string{
+				serverName, grp.Name, truncate(desc, 30), truncate(server.OsType, 15),
+				strings.Join(IPs, " "),
+				fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024),
+				fmt.Sprintf("%d G", server.Details.StorageGb),
+				status, modifiedStr,
+			})
+			wg.Done()
+		}()
 	}
+	wg.Wait()
 	table.Render()
 }
