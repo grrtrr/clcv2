@@ -36,7 +36,7 @@ func init() {
 
 // NewCLIClient is a convenience wrapper around clcv2.NewCLIClient
 func NewCLIClient() (*clcv2.CLIClient, error) {
-	username, password, err := resolveUserAndPass()
+	username, password, err := ResolveUserAndPass(g_user, g_pass)
 	if err != nil {
 		return nil, err
 	}
@@ -52,10 +52,10 @@ func NewCLIClient() (*clcv2.CLIClient, error) {
  * 3. environment variables (CLC_USERNAME, CLC_PASSWORD),
  * 4. prompt for values
  */
-func resolveUserAndPass() (username, password string, err error) {
+func ResolveUserAndPass(userDefault, passDefault string) (username, password string, err error) {
 	var prompt string = "Username"
 
-	username = g_user
+	username = userDefault
 	if username == "" {
 		username = os.Getenv("CLC_USERNAME")
 	}
@@ -68,7 +68,7 @@ func resolveUserAndPass() (username, password string, err error) {
 		prompt = fmt.Sprintf("Password for %s", username)
 	}
 
-	password = g_pass
+	password = passDefault
 	if password == "" {
 		password = os.Getenv("CLC_PASSWORD")
 	}
