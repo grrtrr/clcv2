@@ -70,7 +70,7 @@ func main() {
 		}
 		// When the server is being powered on, it can take up to 5 minutes until
 		// the backend is able to clone it; it requires the server to be fully booted.
-		maxAttempts = 5
+		maxAttempts = 9
 		time.Sleep(1 * time.Minute)
 	}
 
