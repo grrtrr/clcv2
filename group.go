@@ -44,15 +44,16 @@ type Group struct {
 
 // Get the details of an individual server and any sub-groups and servers that it contains.
 // @groupId: ID of the group being queried.
-func (c *Client) GetGroup(groupId string) (res Group, err error) {
+func (c *Client) GetGroup(groupId string) (res *Group, err error) {
 	path := fmt.Sprintf("/v2/groups/%s/%s", c.AccountAlias, groupId)
-	err = c.getCLCResponse("GET", path, nil, &res)
+	res = new(Group)
+	err = c.getCLCResponse("GET", path, nil, res)
 	return
 }
 
 // Gets a list of all groups with the specified search criteria.
 // @location:  The data center location to query for groups.
-func (c *Client) GetGroups(location string) (rootNode Group, err error) {
+func (c *Client) GetGroups(location string) (rootNode *Group, err error) {
 	dc, err := c.GetDatacenter(location, true)
 	if err != nil {
 		return
@@ -95,12 +96,12 @@ func visitGroup(g *Group, res chan *Group, found func(*Group) bool) {
 // @found:     Function returning true if the passed Group qualifies.
 // Returns array of pointers to Group; or error on failure.
 func (c *Client) GetGroupsFiltered(location string, found func(*Group) bool) (res []*Group, err error) {
-	var rootNode Group
+	var rootNode *Group
 
 	if rootNode, err = c.GetGroups(location); err == nil {
 		resultChan := make(chan *Group)
 		go func() {
-			visitGroup(&rootNode, resultChan, found)
+			visitGroup(rootNode, resultChan, found)
 			close(resultChan)
 		}()
 		for result := range resultChan {
