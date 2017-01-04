@@ -52,6 +52,11 @@ func (s SrcRestrictions) String() string {
 	return fmt.Sprintf("[%s]", strings.Join(cidrs, ", "))
 }
 
+// Type implements pflag.Value.Type
+func (*SrcRestrictions) Type() string {
+	return "CLCv2 CIDR Source Restrictions"
+}
+
 // Set implements the flag.Value Set method for SrcRestrictions.
 func (s *SrcRestrictions) Set(val string) error {
 	_, net, err := net.ParseCIDR(val)

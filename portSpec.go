@@ -66,6 +66,11 @@ func (p PortSpecs) String() string {
 	return fmt.Sprintf("[%s]", strings.Join(specs, ", "))
 }
 
+// Type implements pflag.Value.Type
+func (*PortSpecs) Type() string {
+	return "CLCv2 Port Specifications"
+}
+
 // Set implements the flag.Value Set method for SourceRestriction.
 func (p *PortSpecs) Set(val string) error {
 	ps, err := ParsePortSpec(val)
