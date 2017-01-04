@@ -15,10 +15,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Flags
 var (
-	// Flag:  whether to display groups in tree format
-	groupFormatTree bool
+	showGroupDetails bool // whether to print group details instead of showing the contained servers
+	groupFormatTree  bool // whether to display groups in tree format
 )
+
+func init() {
+	Show.Flags().BoolVar(&showGroupDetails, "group", false, "Print groups details rather than the contained servers")
+	Show.Flags().BoolVar(&groupFormatTree, "tree", true, "Display groups in tree format")
+
+	Root.AddCommand(Show)
+}
 
 var Show = &cobra.Command{
 	Use:   "show [group|server [group|server]...]",
@@ -31,22 +39,29 @@ var Show = &cobra.Command{
 
 		// The default behaviour is to list all the servers/groups in the default data centre.
 		if len(args) == 0 {
-			groups = append(groups, "")
+			args = append(args, "")
+			showGroupDetails = true
 		}
 
-		for _, name := range args {
-			isServer, where, err := groupOrServer(name)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "ERROR (%s): %s\n", name, err)
-			} else if isServer {
-				servers = append(servers, where)
-			} else if location == "" && groupFormatTree {
-				// Printing group trees: requires to resolve the root first.
-				return errors.Errorf("Location argument (-l) is required in order to traverse nested groups.")
-			} else {
-				groups = append(groups, where)
+		if showGroupDetails {
+			for _, name := range args {
+				isServer, where, err := groupOrServer(name)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "ERROR (%s): %s\n", name, err)
+				} else if isServer {
+					servers = append(servers, where)
+				} else if location == "" && groupFormatTree {
+					// Printing group trees: requires to resolve the root first.
+					return errors.Errorf("Location argument (-l) is required in order to traverse nested groups.")
+				} else {
+					groups = append(groups, where)
+				}
 			}
+		} else if servers, err = extractServerNames(args); err != nil { // just show a list of servers
+			fmt.Fprintf(os.Stderr, "Failed to extract server names: %s\n", err)
+			return nil
 		}
+
 		// Aggregate displaying of servers
 		if l := len(servers); l == 1 {
 			showServerByName(client, servers[0])
@@ -81,12 +96,6 @@ var Show = &cobra.Command{
 		}
 		return nil
 	},
-}
-
-func init() {
-	Show.Flags().BoolVarP(&groupFormatTree, "tree", "t", true, "Display groups in tree format")
-
-	Root.AddCommand(Show)
 }
 
 // groupOrServer decides whether @name refers to a CLCv2 hardware group or a server.
