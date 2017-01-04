@@ -26,42 +26,53 @@ const (
 // It is usually called after running a batch job and receiving the job identifier from the
 // status link (e.g. Power On Server, Create Server, etc.) and will typically continue
 // to get called until a "succeeded" or "failed" response is returned.
-// @statusId: queue ID to query (contains location ID in the format of "wa1-<number>")
-func (c *Client) GetStatus(statusId string) (status QueueStatus, err error) {
-	var path = fmt.Sprintf("/v2/operations/%s/status/%s", c.AccountAlias, statusId)
+// @statusID: queue ID to query (contains location ID in the format of "wa1-<number>")
+func (c *Client) GetStatus(statusID string) (status QueueStatus, err error) {
+	var path = fmt.Sprintf("/v2/operations/%s/status/%s", c.AccountAlias, statusID)
 
-	if statusId == "" {
-		return Unknown, errors.Errorf("invalid status ID %q", statusId)
+	if statusID == "" {
+		return Unknown, errors.Errorf("invalid status ID %q", statusID)
 	}
 	err = c.getCLCResponse("GET", path, nil, &struct{ Status *QueueStatus }{&status})
 	return
 }
 
-// PollStatus polls the queue status of @statusId until it reaches either %Succeeded or %Failed.
-// @statusId:     queue ID to query
-// @pollInterval: wait interval between poll attemps, use 0 for one-shot operation
+// PollStatus polls the queue status of @ID and logs progress to stdout.
 // NOTE: since this logs to stdout, it is suitable only for terminal-based applications!
-func (c *Client) PollStatus(statusId string, pollInterval time.Duration) (QueueStatus, error) {
+func (c *Client) PollStatus(statusID string, intvl time.Duration) (QueueStatus, error) {
+	return c.PollStatusFn(statusID, intvl,
+		func(s QueueStatus) { // periodically log to stdout
+			log.Printf("%s: %s", statusID, s)
+		})
+}
+
+// PollStatusFn polls the queue status of @statusID until it reaches either %Succeeded or %Failed.
+// @statusID: queue ID to query
+// @intvl:    wait interval between poll attemps, use 0 for one-shot operation
+// @cb:       callback to call whenever status changes during polling
+func (c *Client) PollStatusFn(statusID string, intvl time.Duration, cb func(QueueStatus)) (QueueStatus, error) {
 	for prevStatus := Unknown; ; {
-		status, err := c.GetStatus(statusId)
+		status, err := c.GetStatus(statusID)
 		if err != nil {
-			return Unknown, errors.Errorf("failed to query status of status ID %d: %s", statusId, err)
+			return Unknown, errors.Errorf("failed to query queue status of %s: %s", statusID, err)
 		}
-		if status != prevStatus { // periodically log to stdout
-			log.Printf("%s: %s", statusId, status)
+		if status != prevStatus {
+			if cb != nil {
+				cb(status)
+			}
 			prevStatus = status
 		}
-		if pollInterval == 0 || status == Succeeded || status == Failed {
+		if intvl == 0 || status == Succeeded || status == Failed {
 			return status, nil
 		}
-		time.Sleep(pollInterval)
+		time.Sleep(intvl)
 	}
 }
 
-// AwaitCompletion waits until @statusId completes. It is meant for automated (non-interactive)
+// AwaitCompletion waits until @statusID completes. It is meant for automated (non-interactive)
 // monitoring and thus also continually checks whether the context has been canceled (unlike PollStatus).
-// @statusId: queue ID to query
-func (c *Client) AwaitCompletion(statusId string) (QueueStatus, error) {
+// @statusID: queue ID to query
+func (c *Client) AwaitCompletion(statusID string) (QueueStatus, error) {
 	const waitIntvl = 1 * time.Second
 	var done <-chan struct{}
 
@@ -78,8 +89,8 @@ func (c *Client) AwaitCompletion(statusId string) (QueueStatus, error) {
 			return Unknown, c.ctx.Err()
 		case <-timer.C:
 			timer.Stop()
-			if status, err := c.GetStatus(statusId); err != nil {
-				return Unknown, errors.Errorf("unable to query status of %s: %s", statusId, err)
+			if status, err := c.GetStatus(statusID); err != nil {
+				return Unknown, errors.Errorf("unable to query status of %s: %s", statusID, err)
 			} else if status == Succeeded || status == Failed {
 				return status, nil
 			}
@@ -103,14 +114,14 @@ type StatusLink struct {
 
 // Like getCLCResponse, but extract the Status Id from the Links array contained in the response.
 // Accordingly, since only the status Id is returned, this function does not take a @resModel.
-func (c *Client) getStatus(verb, path string, reqModel interface{}) (statusId string, err error) {
+func (c *Client) getStatus(verb, path string, reqModel interface{}) (statusID string, err error) {
 	var sl StatusLink
 
 	if err = c.getCLCResponse(verb, path, reqModel, &sl); err == nil {
 		if sl.Rel != "status" {
 			err = errors.Errorf("Link information Rel-type not set to 'status' in %+v", sl)
 		} else {
-			statusId = sl.Id
+			statusID = sl.Id
 		}
 	}
 	return
@@ -164,9 +175,9 @@ func (c *Client) getStatusResponse(verb, path string, useArray bool, reqModel in
 	return
 }
 
-// Wrap getStatusResponse() to only extract the statusId contained in the 'status' link
+// Wrap getStatusResponse() to only extract the statusID contained in the 'status' link
 // @verb, @path, @useArray, @reqModel: as in getStatusResponse
-func (c *Client) getStatusResponseId(verb, path string, useArray bool, reqModel interface{}) (statusId string, err error) {
+func (c *Client) getStatusResponseId(verb, path string, useArray bool, reqModel interface{}) (statusID string, err error) {
 	var status StatusResponse
 	var link *Link
 
@@ -175,7 +186,7 @@ func (c *Client) getStatusResponseId(verb, path string, useArray bool, reqModel 
 		return
 	}
 	if link, err = extractLink(status.Links, "status"); err == nil {
-		statusId = link.Id
+		statusID = link.Id
 	}
 	return
 }

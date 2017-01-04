@@ -40,7 +40,6 @@ var Show = &cobra.Command{
 				fmt.Fprintf(os.Stderr, "ERROR (%s): %s\n", name, err)
 			} else if isServer {
 				servers = append(servers, where)
-
 			} else if location == "" && groupFormatTree {
 				// Printing group trees: requires to resolve the root first.
 				return errors.Errorf("Location argument (-l) is required in order to traverse nested groups.")
@@ -90,10 +89,12 @@ func init() {
 	Root.AddCommand(Show)
 }
 
-// groupOrServer decides whether @where refers to a CLCv2 hardware group or a server.
+// groupOrServer decides whether @name refers to a CLCv2 hardware group or a server.
 // It indicates the result via a returned boolean flag, and resolves @where into @id.
-func groupOrServer(where string) (isServer bool, id string, err error) {
-	if where == "" { /* Empty argument requests to list all entries in the default data centre. */
+func groupOrServer(name string) (isServer bool, id string, err error) {
+	// Strip trailing slashes that hint at a group name (but are not part of the CLC name).
+	if where := strings.TrimRight(name, "/"); where == "" {
+		// An emtpy name by default refers to all entries in the default data centre.
 		return false, "", nil
 	} else if _, errHex := hex.DecodeString(where); errHex == nil {
 		/* If the first argument decodes as a hex value, assume it is a Hardware Group UUID */
@@ -355,6 +356,7 @@ func showServers(client *clcv2.CLIClient, servnames []string) {
 		servname := servname
 		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			server, err := client.GetServer(servname)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to list details of server %q: %s", servname, err)
@@ -410,7 +412,6 @@ func showServers(client *clcv2.CLIClient, servnames []string) {
 				fmt.Sprintf("%d G", server.Details.StorageGb),
 				status, modifiedStr,
 			})
-			wg.Done()
 		}()
 	}
 	wg.Wait()
