@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	// Flags
-	groupFormatTree bool // whether to display groups in tree format
+	// Flag:  whether to display groups in tree format
+	groupFormatTree bool
 )
 
 var Show = &cobra.Command{
@@ -49,7 +49,7 @@ var Show = &cobra.Command{
 		}
 		// Aggregate displaying of servers
 		if l := len(servers); l == 1 {
-			showServer(client, servers[0])
+			showServerByName(client, servers[0])
 		} else if l > 1 {
 			showServers(client, servers)
 		}
@@ -207,16 +207,19 @@ func showNestedGroup(client *clcv2.CLIClient, root *clcv2.Group) {
 	clcv2.VisitGroupHierarchy(root, groupPrinter, "")
 }
 
-// Show details of a single server
+// Show details of a single server @name
 // @client:    authenticated CLCv2 Client
 // @servname:  server name
-func showServer(client *clcv2.CLIClient, servname string) {
-	server, err := client.GetServer(servname)
-	if err != nil {
+func showServerByName(client *clcv2.CLIClient, servname string) {
+	if server, err := client.GetServer(servname); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to list details of server %q: %s\n", servname, err)
-		return
+	} else {
+		showServer(client, server)
 	}
+}
 
+// Show details of a single server
+func showServer(client *clcv2.CLIClient, server clcv2.Server) {
 	grp, err := client.GetGroup(server.GroupId)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to resolve group UUID: %s", err)
