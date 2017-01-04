@@ -99,7 +99,7 @@ var Clone = &cobra.Command{
 			MemoryGB:             src.Details.MemoryMb >> 10,
 			GroupId:              src.GroupId,
 			SourceServerId:       src.Name,
-			PrimaryDns:           primDNS,
+			PrimaryDns:           cloneFlags.primDNS,
 			SecondaryDns:         cloneFlags.secDNS,
 			Password:             credentials.Password,
 			SourceServerPassword: credentials.Password,
@@ -211,18 +211,18 @@ var Clone = &cobra.Command{
 				log.Printf("Using %s network %s, with gateway %s", nets[0].Type, nets[0].Cidr, nets[0].Gateway)
 				req.NetworkId = nets[0].Id
 			}
-		} else if _, err := hex.DecodeString(net); err != nil { // not a HEX ID, treat as group name
-			log.Printf("Resolving network ID of %q in %s ...", net, src.LocationId)
+		} else if _, err := hex.DecodeString(cloneFlags.net); err != nil { // not a HEX ID, treat as group name
+			log.Printf("Resolving network ID of %q in %s ...", cloneFlags.net, src.LocationId)
 
-			if netw, err := client.GetNetworkIdByName(net, src.LocationId); err != nil {
-				exit.Fatalf("failed to resolve network name %q: %s", net, err)
+			if netw, err := client.GetNetworkIdByName(cloneFlags.net, src.LocationId); err != nil {
+				exit.Fatalf("failed to resolve network name %q: %s", cloneFlags.net, err)
 			} else if netw == nil {
-				exit.Fatalf("unable to resolve network name %q in %s - maybe use hex ID?", net, src.LocationId)
+				exit.Fatalf("unable to resolve network name %q in %s - maybe use hex ID?", cloneFlags.net, src.LocationId)
 			} else {
 				req.NetworkId = netw.Id
 			}
 		} else { // HEX ID, use directly
-			req.NetworkId = net
+			req.NetworkId = cloneFlags.net
 		}
 
 		for i := 1; ; i++ {
@@ -239,7 +239,7 @@ var Clone = &cobra.Command{
 		log.Printf("Cloning %s: %s", src.Name, reqID)
 
 		status, err := client.PollStatusFn(reqID, intvl, func(s clcv2.QueueStatus) {
-			log.Printf("Cloning %s => %s/%s..%s..: %s", source, dest, src.LocationId, cloneFlags.seed, s)
+			log.Printf("Cloning %s => %s/%s..%s..: %s", source, dest, src.LocationId, req.Name, s)
 		})
 		if err != nil {
 			exit.Fatalf("failed to poll %s status: %s", reqID, err)

@@ -13,8 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Flags
-var (
+var createFlags struct {
 	hwGroup    string        // hardware group to create server in
 	srcServer  string        // source server/template to create from
 	srcPass    string        // when using a source-server, use this password
@@ -29,27 +28,27 @@ var (
 	memGB      uint32        // amount of memory in GB
 	extraDrv   uint32        // extra amount of storage in GB
 	ttl        time.Duration // time span (counting from time of creation) until server gets deleted
-)
+}
 
 func init() {
-	Create.Flags().StringVarP(&hwGroup, "group", "g", "", "UUID or name (if unique) of the HW group to add this server to")
-	Create.Flags().StringVar(&srcServer, "src", "", "The name of a source-server, or a template, to create from")
-	Create.Flags().StringVar(&srcPass, "srcPass", "", "When cloning from a source-server, use this password")
-	Create.Flags().StringVarP(&seed, "seed", "s", "AUTO", "The seed for the server name")
-	Create.Flags().StringVar(&desc, "desc", "", "Textual description of the server")
+	Create.Flags().StringVarP(&createFlags.hwGroup, "group", "g", "", "UUID or name (if unique) of the HW group to add this server to")
+	Create.Flags().StringVar(&createFlags.srcServer, "src", "", "The name of a source-server, or a template, to create from")
+	Create.Flags().StringVar(&createFlags.srcPass, "createFlags.srcPass", "", "When cloning from a source-server, use this createFlags.password")
+	Create.Flags().StringVarP(&createFlags.seed, "createFlags.seed", "s", "AUTO", "The createFlags.seed for the server name")
+	Create.Flags().StringVar(&createFlags.desc, "createFlags.desc", "", "Textual description of the server")
 
-	Create.Flags().StringVar(&net, "net", "", "ID or name of the Network to use")
-	Create.Flags().StringVar(&primDNS, "dns1", "8.8.8.8", "Primary DNS to use")
-	Create.Flags().StringVar(&secDNS, "dns2", "8.8.4.4", "Secondary DNS to use")
+	Create.Flags().StringVar(&createFlags.net, "createFlags.net", "", "ID or name of the Network to use")
+	Create.Flags().StringVar(&createFlags.primDNS, "dns1", "8.8.8.8", "Primary DNS to use")
+	Create.Flags().StringVar(&createFlags.secDNS, "dns2", "8.8.4.4", "Secondary DNS to use")
 
-	Create.Flags().StringVar(&password, "pass", "", "Desired password. Leave blank to auto-generate")
-	Create.Flags().StringVar(&serverType, "type", "standard", "The type of server to create (standard, hyperscale, or bareMetal)")
+	Create.Flags().StringVar(&createFlags.password, "pass", "", "Desired createFlags.password. Leave blank to auto-generate")
+	Create.Flags().StringVar(&createFlags.serverType, "type", "standard", "The type of server to create (standard, hyperscale, or bareMetal)")
 
-	Create.Flags().Uint8Var(&numCpu, "cpu", 1, "Number of Cpus to use")
-	Create.Flags().Uint32Var(&memGB, "memory", 4, "Amount of memory in GB")
-	Create.Flags().Uint32Var(&extraDrv, "drive", 0, "Extra storage (in GB) to add to server as a raw disk")
+	Create.Flags().Uint8Var(&createFlags.numCpu, "cpu", 1, "Number of Cpus to use")
+	Create.Flags().Uint32Var(&createFlags.memGB, "memory", 4, "Amount of memory in GB")
+	Create.Flags().Uint32Var(&createFlags.extraDrv, "drive", 0, "Extra storage (in GB) to add to server as a raw disk")
 
-	Create.Flags().DurationVar(&ttl, "ttl", 0, "Time span (counting from time of creation) until server gets deleted")
+	Create.Flags().DurationVar(&createFlags.ttl, "createFlags.ttl", 0, "Time span (counting from time of creation) until server gets deleted")
 
 	Root.AddCommand(Create)
 }
@@ -58,82 +57,82 @@ var Create = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new server from a template",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if hwGroup == "" {
+		if createFlags.hwGroup == "" {
 			return errors.Errorf("Need a hardware group to create the server in (--group)")
-		} else if srcServer == "" {
+		} else if createFlags.srcServer == "" {
 			return errors.Errorf("Need a source server or template ID (--src)")
 		}
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		// hwGroup may be hex uuid or group name
-		if _, err := hex.DecodeString(hwGroup); err != nil {
-			log.Printf("Resolving ID of Hardware Group %q ...", hwGroup)
+		// createFlags.hwGroup may be hex uuid or group name
+		if _, err := hex.DecodeString(createFlags.hwGroup); err != nil {
+			log.Printf("Resolving ID of Hardware Group %q ...", createFlags.hwGroup)
 
-			if group, err := client.GetGroupByName(hwGroup, location); err != nil {
-				log.Fatalf("failed to resolve group name %q: %s", hwGroup, err)
+			if group, err := client.GetGroupByName(createFlags.hwGroup, location); err != nil {
+				log.Fatalf("failed to resolve group name %q: %s", createFlags.hwGroup, err)
 			} else if group == nil {
-				log.Fatalf("no group named %q was found in %s", hwGroup, location)
+				log.Fatalf("no group named %q was found in %s", createFlags.hwGroup, location)
 			} else {
-				hwGroup = group.Id
+				createFlags.hwGroup = group.Id
 			}
 		}
 
-		// net is supposed to be a (hex) ID, but allow network names, too
-		if net != "" {
-			if _, err := hex.DecodeString(net); err == nil {
+		// createFlags.net is supposed to be a (hex) ID, but allow network names, too
+		if createFlags.net != "" {
+			if _, err := hex.DecodeString(createFlags.net); err == nil {
 				/* already looks like a HEX ID */
 			} else if location == "" {
-				log.Fatalf("Need a location argument (-l) if not using a network ID (%s)", net)
+				log.Fatalf("Need a location argument (-l) if not using a network ID (%s)", createFlags.net)
 			} else {
-				log.Printf("resolving network id of %q ...", net)
+				log.Printf("resolving network id of %q ...", createFlags.net)
 
-				if netw, err := client.GetNetworkIdByName(net, location); err != nil {
-					log.Fatalf("failed to resolve network name %q: %s", net, err)
+				if netw, err := client.GetNetworkIdByName(createFlags.net, location); err != nil {
+					log.Fatalf("failed to resolve network name %q: %s", createFlags.net, err)
 				} else if netw == nil {
-					log.Fatalf("No network named %q was found in %s", net, location)
+					log.Fatalf("No network named %q was found in %s", createFlags.net, location)
 				} else {
-					net = netw.Id
+					createFlags.net = netw.Id
 				}
 			}
 		}
 
 		req := clcv2.CreateServerReq{
 			// Name of the server to create. Alphanumeric characters and dashes only.
-			Name: seed,
+			Name: createFlags.seed,
 
 			// User-defined description of this server
-			Description: desc,
+			Description: createFlags.desc,
 
 			// ID of the parent HW group.
-			GroupId: hwGroup,
+			GroupId: createFlags.hwGroup,
 
-			// ID of the server to use a source. May be the ID of a srcServer, or when cloning, an existing server ID.
-			SourceServerId: srcServer,
+			// ID of the server to use a source. May be the ID of a createFlags.srcServer, or when cloning, an existing server ID.
+			SourceServerId: createFlags.srcServer,
 
 			// The primary DNS to set on the server
-			PrimaryDns: primDNS,
+			PrimaryDns: createFlags.primDNS,
 
 			// The secondary DNS to set on the server
-			SecondaryDns: secDNS,
+			SecondaryDns: createFlags.secDNS,
 
 			// ID of the network to which to deploy the server.
-			NetworkId: net,
+			NetworkId: createFlags.net,
 
 			// Password of administrator or root user on server.
-			Password: password,
+			Password: createFlags.password,
 
 			// Password of the source server, used only when creating a clone from an existing server.
-			SourceServerPassword: srcPass,
+			SourceServerPassword: createFlags.srcPass,
 
 			// Number of processors to configure the server with (1-16)
-			Cpu: int(numCpu),
+			Cpu: int(createFlags.numCpu),
 
 			// Number of GB of memory to configure the server with (1-128)
-			MemoryGB: int(memGB),
+			MemoryGB: int(createFlags.memGB),
 
 			// Whether to create a 'standard', 'hyperscale', or 'bareMetal' server
-			Type: serverType,
+			Type: createFlags.serverType,
 
 			// FIXME: the following are not populated in this request:
 			// - IpAddress
@@ -149,15 +148,15 @@ var Create = &cobra.Command{
 			// - OsType
 		}
 
-		if extraDrv != 0 {
+		if createFlags.extraDrv != 0 {
 			req.AdditionalDisks = append(req.AdditionalDisks,
-				clcv2.ServerAdditionalDisk{SizeGB: extraDrv, Type: "raw"})
+				clcv2.ServerAdditionalDisk{SizeGB: createFlags.extraDrv, Type: "raw"})
 		}
 
 		// Date/time that the server should be deleted.
-		if ttl != 0 {
+		if createFlags.ttl != 0 {
 			req.Ttl = new(time.Time)
-			*req.Ttl = time.Now().Add(ttl)
+			*req.Ttl = time.Now().Add(createFlags.ttl)
 		}
 
 		// The CreateServer request resolves the server name at the end.
