@@ -40,10 +40,8 @@ func (c *Client) GetStatus(statusID string) (status QueueStatus, err error) {
 // PollStatus polls the queue status of @ID and logs progress to stdout.
 // NOTE: since this logs to stdout, it is suitable only for terminal-based applications!
 func (c *Client) PollStatus(statusID string, intvl time.Duration) (QueueStatus, error) {
-	return c.PollStatusFn(statusID, intvl,
-		func(s QueueStatus) { // periodically log to stdout
-			log.Printf("%s: %s", statusID, s)
-		})
+	return c.PollStatusFn(statusID, intvl, // periodically log to stdout
+		func(s QueueStatus) { log.Printf("%s: %s", statusID, s) })
 }
 
 // PollStatusFn polls the queue status of @statusID until it reaches either %Succeeded or %Failed.

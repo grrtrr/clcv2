@@ -11,8 +11,10 @@ import (
 )
 
 var Rawdisk = &cobra.Command{
-	Use:   "rawdisk <server> <sizeGB>",
-	Short: "Adds @sizeGB of storage as 'raw' disk to @server",
+	Use:     "rawdisk <server> <sizeGB>",
+	Aliases: []string{"storage", "disk"},
+	Short:   "Add storage to server",
+	Long:    "Adds @sizeGB of storage as 'raw' disk to @server",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 2 {
 			return errors.Errorf("Need a server name and a disk size in GB")

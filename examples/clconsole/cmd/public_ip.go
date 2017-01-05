@@ -32,8 +32,8 @@ func init() {
 }
 
 var PublicIP = &cobra.Command{
-	Use:     "public <serverName>",
-	Aliases: []string{"public_ip", "pip"},
+	Use:     "ip <serverName>",
+	Aliases: []string{"public-ip"},
 	Short:   "Add a public IP to a server",
 	PreRunE: checkArgs(1, "Need a server name"),
 	Run: func(cmd *cobra.Command, args []string) {

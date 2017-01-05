@@ -9,13 +9,10 @@ import (
 	"time"
 
 	"github.com/grrtrr/clcv2"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 var createFlags struct {
-	hwGroup    string        // hardware group to create server in
-	srcServer  string        // source server/template to create from
 	srcPass    string        // when using a source-server, use this password
 	seed       string        // 4-6 character name seed for the server name
 	desc       string        // description of the server
@@ -31,8 +28,6 @@ var createFlags struct {
 }
 
 func init() {
-	Create.Flags().StringVarP(&createFlags.hwGroup, "group", "g", "", "UUID or name (if unique) of the HW group to add this server to")
-	Create.Flags().StringVar(&createFlags.srcServer, "src", "", "The name of a source-server, or a template, to create from")
 	Create.Flags().StringVar(&createFlags.srcPass, "createFlags.srcPass", "", "When cloning from a source-server, use this createFlags.password")
 	Create.Flags().StringVarP(&createFlags.seed, "createFlags.seed", "s", "AUTO", "The createFlags.seed for the server name")
 	Create.Flags().StringVar(&createFlags.desc, "createFlags.desc", "", "Textual description of the server")
@@ -54,27 +49,23 @@ func init() {
 }
 
 var Create = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new server from a template",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if createFlags.hwGroup == "" {
-			return errors.Errorf("Need a hardware group to create the server in (--group)")
-		} else if createFlags.srcServer == "" {
-			return errors.Errorf("Need a source server or template ID (--src)")
-		}
-		return nil
-	},
+	Use:     "create  <source|template name>  <destFolder>",
+	Short:   "Create server from template/source",
+	Long:    "Create a new server from @srcName (server or template) and put it into @dstFolder",
+	PreRunE: checkArgs(2, "Need a source (template) name and a destination folder"),
 	Run: func(cmd *cobra.Command, args []string) {
-		// createFlags.hwGroup may be hex uuid or group name
-		if _, err := hex.DecodeString(createFlags.hwGroup); err != nil {
-			log.Printf("Resolving ID of Hardware Group %q ...", createFlags.hwGroup)
+		var srcServer, hwGroup = args[0], args[1]
 
-			if group, err := client.GetGroupByName(createFlags.hwGroup, location); err != nil {
-				log.Fatalf("failed to resolve group name %q: %s", createFlags.hwGroup, err)
+		// hwGroup may be hex uuid or group name
+		if _, err := hex.DecodeString(hwGroup); err != nil {
+			log.Printf("Resolving ID of Hardware Group %q ...", hwGroup)
+
+			if group, err := client.GetGroupByName(hwGroup, location); err != nil {
+				log.Fatalf("failed to resolve group name %q: %s", hwGroup, err)
 			} else if group == nil {
-				log.Fatalf("no group named %q was found in %s", createFlags.hwGroup, location)
+				log.Fatalf("no group named %q was found in %s", hwGroup, location)
 			} else {
-				createFlags.hwGroup = group.Id
+				hwGroup = group.Id
 			}
 		}
 
@@ -105,10 +96,10 @@ var Create = &cobra.Command{
 			Description: createFlags.desc,
 
 			// ID of the parent HW group.
-			GroupId: createFlags.hwGroup,
+			GroupId: hwGroup,
 
-			// ID of the server to use a source. May be the ID of a createFlags.srcServer, or when cloning, an existing server ID.
-			SourceServerId: createFlags.srcServer,
+			// ID of the server to use a source. May be the ID of a srcServer, or when cloning, an existing server ID.
+			SourceServerId: srcServer,
 
 			// The primary DNS to set on the server
 			PrimaryDns: createFlags.primDNS,

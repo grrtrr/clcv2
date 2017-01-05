@@ -51,7 +51,8 @@ func init() {
 
 var Clone = &cobra.Command{
 	Use:     "clone  <srcName>  <destination>",
-	Short:   "Clone source server @srcName and put it into the @destination folder",
+	Short:   "Clone existing server",
+	Long:    "Clone source server @srcName and put it into the @destination folder",
 	PreRunE: checkArgs(2, "Need a source server and a destination folder"),
 	Run: func(cmd *cobra.Command, args []string) {
 		var (
