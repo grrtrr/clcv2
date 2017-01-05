@@ -121,7 +121,7 @@ func (c *Client) GetGroupFiltered(location string, found func(*Group) bool) (res
 	} else if len(groups) == 1 {
 		res = groups[0]
 	} else if len(groups) > 1 {
-		return nil, errors.Errorf("ambiguous - %d matching groups found at %s", len(groups), location)
+		return nil, errors.Errorf("ambiguous - %d matching groups found in %s", len(groups), location)
 	}
 	return
 }

@@ -10,6 +10,7 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/clcv2/utils"
+	"github.com/grrtrr/exit"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -18,12 +19,14 @@ import (
 // Flags
 var (
 	showGroupDetails bool // whether to print group details instead of showing the contained servers
-	groupFormatTree  bool // whether to display groups in tree format
+	showGroupTree    bool // whether to display groups in tree format
+	showIP           bool // whether to just display server IPs (implies showGroupTree and showGroupDetails)
 )
 
 func init() {
-	Show.Flags().BoolVar(&showGroupDetails, "group", false, "Print groups details rather than the contained servers")
-	Show.Flags().BoolVar(&groupFormatTree, "tree", true, "Display groups in tree format")
+	Show.Flags().BoolVar(&showGroupDetails, "group", false, "Print group details rather than the contained servers")
+	Show.Flags().BoolVar(&showGroupTree, "tree", true, "Display nested group structure in tree format")
+	Show.Flags().BoolVar(&showIP, "ips", true, "Print group structure with server IPs (implies --group and --tree)")
 
 	Root.AddCommand(Show)
 }
@@ -34,8 +37,16 @@ var Show = &cobra.Command{
 	Long:  "Display detailed server/group information. Group information requires -l to be set.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var servers, groups []string
+		var groupPrinter = printGroupStructure
 		var root *clcv2.Group
 		var err error
+
+		// Showing IP information implies printing the nested group structure
+		if showIP {
+			showGroupTree = true
+			showGroupDetails = true
+			groupPrinter = printGroupWithServerIPs
+		}
 
 		// The default behaviour is to list all the servers/groups in the default data centre.
 		if len(args) == 0 {
@@ -47,10 +58,10 @@ var Show = &cobra.Command{
 			for _, name := range args {
 				isServer, where, err := groupOrServer(name)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "ERROR (%s): %s\n", name, err)
+					fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 				} else if isServer {
 					servers = append(servers, where)
-				} else if location == "" && groupFormatTree {
+				} else if location == "" && showGroupTree {
 					// Printing group trees: requires to resolve the root first.
 					return errors.Errorf("Location argument (-l) is required in order to traverse nested groups.")
 				} else {
@@ -70,14 +81,14 @@ var Show = &cobra.Command{
 		}
 
 		for _, uuid := range groups {
-			if (uuid == "" || groupFormatTree) && root == nil {
+			if (uuid == "" || showGroupTree) && root == nil {
 				root, err = client.GetGroups(location)
 				if err != nil {
 					return errors.Errorf("Failed to look up groups at %s: %s", location, err)
 				}
 			}
 
-			if groupFormatTree {
+			if showGroupTree {
 				start := root
 				if uuid != "" {
 					start = clcv2.FindGroupNode(root, func(g *clcv2.Group) bool { return g.Id == uuid })
@@ -85,7 +96,9 @@ var Show = &cobra.Command{
 						return errors.Errorf("Failed to look up UUID %s in %s - is this the correct value?", uuid, location)
 					}
 				}
-				showNestedGroup(client, start)
+
+				clcv2.VisitGroupHierarchy(root, groupPrinter, "")
+
 			} else if uuid == "" {
 				showGroup(client, root)
 			} else if rootNode, err := client.GetGroup(uuid); err != nil {
@@ -112,9 +125,9 @@ func groupOrServer(name string) (isServer bool, id string, err error) {
 		return true, strings.ToUpper(where), nil
 	} else if location != "" { /* Fallback: assume it is a group */
 		if group, err := client.GetGroupByName(where, location); err != nil {
-			err = errors.Errorf("failed to resolve group name %q: %s", where, err)
+			return false, where, errors.Errorf("failed to resolve group name %q: %s", where, err)
 		} else if group == nil {
-			err = errors.Errorf("no group named %q was found in %s", where, location)
+			return false, where, errors.Errorf("no group named %q was found in %s", where, location)
 		} else {
 			return false, group.Id, nil
 		}
@@ -189,31 +202,51 @@ func showGroup(client *clcv2.CLIClient, root *clcv2.Group) {
 	}
 }
 
-// Show nested group details
-// @client: authenticated CLCv2 Client
-// @root:   root group node to start at
-func showNestedGroup(client *clcv2.CLIClient, root *clcv2.Group) {
-	var groupPrinter = func(g *clcv2.Group, arg interface{}) interface{} {
-		var indent = arg.(string)
-		var groupLine string
+// clcv2.VisitGroupHierarchy callback function to print nested group structure
+func printGroupStructure(g *clcv2.Group, arg interface{}) interface{} {
+	var indent = arg.(string)
+	var groupLine string
 
-		if g.Type == "default" {
-			groupLine = fmt.Sprintf("%s%s/", indent, g.Name)
-		} else {
-			groupLine = fmt.Sprintf("%s[%s]/", indent, g.Name)
-		}
-		fmt.Printf("%-70s %s\n", groupLine, g.Id)
-
-		/* Nested entries: */
-		for _, l := range g.Links {
-			if l.Rel == "server" {
-				fmt.Printf("%s", indent+"    ")
-				fmt.Printf("%s\n", l.Id)
-			}
-		}
-		return indent + "    "
+	if g.Type == "default" {
+		groupLine = fmt.Sprintf("%s%s/", indent, g.Name)
+	} else {
+		groupLine = fmt.Sprintf("%s[%s]/", indent, g.Name)
 	}
-	clcv2.VisitGroupHierarchy(root, groupPrinter, "")
+	fmt.Printf("%-70s %s\n", groupLine, g.Id)
+
+	/* Nested entries: */
+	for _, l := range g.Links {
+		if l.Rel == "server" {
+			fmt.Printf("%s", indent+"    ")
+			fmt.Printf("%s\n", l.Id)
+		}
+	}
+	return indent + "    "
+}
+
+// clcv2.VisitGroupHierarchy callback function to print servers along with their IP addresses
+// NOTE: requires 'client' variable to be in enclosing scope
+func printGroupWithServerIPs(g *clcv2.Group, arg interface{}) interface{} {
+	var indent = arg.(string)
+
+	if g.Type == "default" {
+		fmt.Printf("%s%s/\n", indent, g.Name)
+	} else {
+		fmt.Printf("%s[%s]/\n", indent, g.Name)
+	}
+
+	for _, l := range g.Links {
+		if l.Rel == "server" {
+			ips, err := client.GetServerIPs(l.Id)
+			if err != nil {
+				exit.Fatalf("failed to get IPs of %q in %s: %s", l.Id, g.Name, err)
+			}
+
+			servLine := fmt.Sprintf("%s%s", indent+"    ", l.Id)
+			fmt.Printf("%-50s %s\n", servLine, strings.Join(ips, ", "))
+		}
+	}
+	return indent + "    "
 }
 
 // Show details of a single server @name
