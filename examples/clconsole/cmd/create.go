@@ -28,11 +28,11 @@ var createFlags struct {
 }
 
 func init() {
-	Create.Flags().StringVar(&createFlags.srcPass, "createFlags.srcPass", "", "When cloning from a source-server, use this createFlags.password")
-	Create.Flags().StringVarP(&createFlags.seed, "createFlags.seed", "s", "AUTO", "The createFlags.seed for the server name")
-	Create.Flags().StringVar(&createFlags.desc, "createFlags.desc", "", "Textual description of the server")
+	Create.Flags().StringVar(&createFlags.srcPass, "srcPass", "", "When cloning from a source-server, use this createFlags.password")
+	Create.Flags().StringVarP(&createFlags.seed, "seed", "s", "AUTO", "The createFlags.seed for the server name")
+	Create.Flags().StringVar(&createFlags.desc, "desc", "", "Textual description of the server")
 
-	Create.Flags().StringVar(&createFlags.net, "createFlags.net", "", "ID or name of the Network to use")
+	Create.Flags().StringVar(&createFlags.net, "net", "", "ID or name of the Network to use")
 	Create.Flags().StringVar(&createFlags.primDNS, "dns1", "8.8.8.8", "Primary DNS to use")
 	Create.Flags().StringVar(&createFlags.secDNS, "dns2", "8.8.4.4", "Secondary DNS to use")
 
@@ -43,7 +43,7 @@ func init() {
 	Create.Flags().Uint32Var(&createFlags.memGB, "memory", 4, "Amount of memory in GB")
 	Create.Flags().Uint32Var(&createFlags.extraDrv, "drive", 0, "Extra storage (in GB) to add to server as a raw disk")
 
-	Create.Flags().DurationVar(&createFlags.ttl, "createFlags.ttl", 0, "Time span (counting from time of creation) until server gets deleted")
+	Create.Flags().DurationVar(&createFlags.ttl, "ttl", 0, "Time span (counting from time of creation) until server gets deleted")
 
 	Root.AddCommand(Create)
 }
