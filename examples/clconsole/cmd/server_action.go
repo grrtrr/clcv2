@@ -91,10 +91,9 @@ func init() {
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:     "revert  [group|server [group|server]...]",
-		Aliases: []string{"restore"},
-		Short:   "Revert server(s) to snapshot",
-		Long:    "Revert server(s) to last snapshot (error condition if no snapshot exists)",
+		Use:   "revert  [group|server [group|server]...]",
+		Short: "Revert server(s) to snapshot",
+		Long:  "Revert server(s) to last snapshot (error condition if no snapshot exists)",
 		Run: func(cmd *cobra.Command, args []string) {
 			serverCmd("delete snapshot", client.RevertToSnapshot, args)
 		}})

@@ -30,7 +30,7 @@ var Delete = &cobra.Command{
 					if reqID, err = client.DeleteServer(where); err != nil {
 						fmt.Fprintf(os.Stderr, "ERROR deleting server %s: %s\n", name, err)
 					} else {
-						log.Printf("Deleting server %s: %s", name, reqID)
+						log.Printf("Deleting server %s: %s\n", name, reqID)
 					}
 				} else {
 					if reqID, err = client.DeleteGroup(where); err != nil {
