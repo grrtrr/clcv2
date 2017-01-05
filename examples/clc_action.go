@@ -326,9 +326,9 @@ func main() {
 			exit.Fatalf("failed to look up groups at %s: %s", *location, err)
 		}
 
-		start = &root
+		start = root
 		if where != "" {
-			start = clcv2.FindGroupNode(start, func(g *clcv2.Group) bool {
+			start = clcv2.FindGroupNode(root, func(g *clcv2.Group) bool {
 				return g.Id == where
 			})
 			if start == nil {
