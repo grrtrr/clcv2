@@ -16,11 +16,11 @@ func init() {
 			if isServer, where, err := groupOrServer(args[0]); err != nil {
 				fmt.Printf("Failed to look up group %s: %s\n", args[0], err)
 			} else if isServer {
-				fmt.Printf("ERROR: %q does not look like a group name\n")
+				fmt.Printf("ERROR: %q does not look like a group name\n", args[0])
 			} else if err := client.GroupSetName(where, args[1]); err != nil {
 				fmt.Printf("ERROR: failed to rename %s: %s\n", args[0], err)
 			} else {
-				fmt.Printf("Successfully renamed %s into %s.\n", args[0], args[1])
+				fmt.Printf("Successfully renamed %s into %s\n", args[0], args[1])
 			}
 		},
 	})
