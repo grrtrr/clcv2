@@ -20,8 +20,9 @@ func init() {
 				fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 			} else if len(servers) > 0 {
 				var eg errgroup.Group
-				var table = tablewriter.NewWriter(os.Stdout)
+				var numEntries int
 
+				table := tablewriter.NewWriter(os.Stdout)
 				table.SetAutoFormatHeaders(false)
 				table.SetAlignment(tablewriter.ALIGN_LEFT)
 				table.SetAutoWrapText(true)
@@ -33,12 +34,15 @@ func init() {
 							fmt.Fprintf(os.Stderr, "ERROR (%s): %s\n", name, err)
 						} else {
 							table.Append([]string{name, creds.Username, creds.Password})
+							numEntries++
 						}
 						return err
 					})
 				}
 				_ = eg.Wait()
-				table.Render()
+				if numEntries > 0 {
+					table.Render()
+				}
 			}
 		},
 	})

@@ -6,6 +6,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +25,7 @@ func die(format string, a ...interface{}) {
 func checkArgs(nargs int, errMsg string) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if len(args) != nargs {
-			return fmt.Errorf(errMsg)
+			return errors.Errorf(errMsg)
 		}
 		return nil
 	}
