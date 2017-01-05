@@ -96,9 +96,7 @@ var Show = &cobra.Command{
 						return errors.Errorf("Failed to look up UUID %s in %s - is this the correct value?", uuid, location)
 					}
 				}
-
-				clcv2.VisitGroupHierarchy(root, groupPrinter, "")
-
+				clcv2.VisitGroupHierarchy(start, groupPrinter, "")
 			} else if uuid == "" {
 				showGroup(client, root)
 			} else if rootNode, err := client.GetGroup(uuid); err != nil {
