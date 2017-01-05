@@ -26,7 +26,7 @@ var (
 func init() {
 	Show.Flags().BoolVar(&showGroupDetails, "group", false, "Print group details rather than the contained servers")
 	Show.Flags().BoolVar(&showGroupTree, "tree", true, "Display nested group structure in tree format")
-	Show.Flags().BoolVar(&showIP, "ips", true, "Print group structure with server IPs (implies --group and --tree)")
+	Show.Flags().BoolVar(&showIP, "ips", false, "Print group structure with server IPs (implies --group and --tree)")
 
 	Root.AddCommand(Show)
 }
