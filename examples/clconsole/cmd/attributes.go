@@ -62,7 +62,7 @@ func init() {
 		Short:   "Set or generate server password",
 		Long:    "Sets a new password for @server if provided, or generates a paranoid 'garbler' password",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if l := len(args); l != 1 || l != 2 {
+			if l := len(args); l != 1 && l != 2 {
 				return errors.Errorf("Need a server name and optionally a new password")
 			}
 			return nil
