@@ -13,40 +13,42 @@ import (
 
 func init() {
 	Root.AddCommand(&cobra.Command{
-		Use:     "on [group|server [group|server]...]",
-		Aliases: []string{"start", "up"},
-		Short:   "Power on server(s) in parallel",
+		Use:     "on  [group|server [group|server]...]",
+		Aliases: []string{"start", "power-on", "up"},
+		Short:   "Power on server(s)",
 		Long:    "Powers on server(s), or resume from paused state",
 		Run: func(cmd *cobra.Command, args []string) {
 			serverCmd("power-on", client.PowerOnServer, args)
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:   "off [group|server [group|server]...]",
-		Short: "Hard/forced server power-off",
-		Long:  "Does a forceful power-off of servers (as opposed to OS-level shutdown)",
+		Use:     "off  [group|server [group|server]...]",
+		Aliases: []string{"power-off"},
+		Short:   "Power-off server(s)",
+		Long:    "Do a forceful power-off of server(s) (as opposed to a soft OS-level shutdown)",
 		Run: func(cmd *cobra.Command, args []string) {
 			serverCmd("power-off", client.PowerOffServer, args)
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:     "pause [group|server [group|server]...]",
+		Use:     "pause  [group|server [group|server]...]",
 		Aliases: []string{"suspend"},
-		Short:   "Pause (suspends) server(s)",
+		Short:   "Pause server(s)",
+		Long:    "Pause (suspend) server(s); can be resumed via 'on'",
 		Run: func(cmd *cobra.Command, args []string) {
 			serverCmd("pause", client.PauseServer, args)
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:   "reset [group|server [group|server]...]",
-		Short: "Hard/forced server power-cycle",
+		Use:   "reset  [group|server [group|server]...]",
+		Short: "Reset server(s)",
 		Long:  "Performs hard/forced power-cycle, like pressing the physical 'reset' button",
 		Run: func(cmd *cobra.Command, args []string) {
 			serverCmd("reset", client.ResetServer, args)
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:   "reboot [group|server [group|server]...]",
+		Use:   "reboot  [group|server [group|server]...]",
 		Short: "Reboot server(s)",
 		Long:  "Soft (OS-level) reboot",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -54,45 +56,45 @@ func init() {
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:     "shutdown [group|server [group|server]...]",
+		Use:     "shutdown  [group|server [group|server]...]",
 		Aliases: []string{"stop"},
 		Short:   "Shutdown server(s)",
-		Long:    "Soft (OS-level) shutdown, followed by power-off for each server in parallel",
+		Long:    "Soft (OS-level) shutdown, followed by power-off",
 		Run: func(cmd *cobra.Command, args []string) {
 			serverCmd("shutdown", client.ShutdownServer, args)
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:   "archive [group|server [group|server]...]",
+		Use:   "archive  [group|server [group|server]...]",
 		Short: "Archive server(s)",
-		Long:  "Places server(s) into the special 'Archive' folder in the data centre",
+		Long:  "Place server(s) into the special 'Archive' folder in the data centre",
 		Run: func(cmd *cobra.Command, args []string) {
 			serverCmd("archive", client.ArchiveServer, args)
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:     "snapshot [group|server [group|server]...]",
+		Use:     "snapshot  [group|server [group|server]...]",
 		Aliases: []string{"snap"},
-		Short:   "Create new server snapshot",
-		Long:    "Create a new server snapshot, replacing existing snapshots; for all servers in parallel",
+		Short:   "Snapshot server(s)",
+		Long:    "Create new server snapshot, replacing older snapshots if they exist",
 		Run: func(cmd *cobra.Command, args []string) {
-			serverCmd("delete snapshot", client.SnapshotServer, args)
+			serverCmd("snapshot", client.SnapshotServer, args)
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:     "delsnapshot [group|server [group|server]...]",
-		Aliases: []string{"delsnap"},
-		Short:   "Delete server snapshot",
-		Long:    "Delete server snapshot if it exists, or indicate 'no snapshot' otherwise; for all servers in parallel",
+		Use:     "delsnap  [group|server [group|server]...]",
+		Aliases: []string{"delete-snapshot"},
+		Short:   "Delete snapshot of server(s)",
+		Long:    "Delete server snapshot if it exists (error condition of no snapshot exists)",
 		Run: func(cmd *cobra.Command, args []string) {
 			serverCmd("delete snapshot", client.DeleteSnapshot, args)
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:     "revert [group|server [group|server]...]",
+		Use:     "revert  [group|server [group|server]...]",
 		Aliases: []string{"restore"},
-		Short:   "Revert server(s) to last snapshot",
-		Long:    "Revert server(s) to last snapshot. Error condition if no snapshot exists",
+		Short:   "Revert server(s) to snapshot",
+		Long:    "Revert server(s) to last snapshot (error condition if no snapshot exists)",
 		Run: func(cmd *cobra.Command, args []string) {
 			serverCmd("delete snapshot", client.RevertToSnapshot, args)
 		}})

@@ -29,8 +29,8 @@ func init() {
 }
 
 var Show = &cobra.Command{
-	Use:   "show [group|server [group|server]...]",
-	Short: "Show current status of server(s)/groups(s)",
+	Use:   "show  [group|server [group|server]...]",
+	Short: "Show server(s)/groups(s)",
 	Long:  "Display detailed server/group information. Group information requires -l to be set.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var servers, groups []string

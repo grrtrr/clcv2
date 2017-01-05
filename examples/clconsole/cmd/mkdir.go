@@ -9,7 +9,7 @@ import (
 
 var MkDir = &cobra.Command{
 	Use:     "mkdir <newFolder>  <parentGroup>",
-	Short:   "Create a new folder (hardware group)",
+	Short:   "Create a new folder",
 	Long:    "Create a new folder @newFolder (hardware group) inside @parentGroup",
 	PreRunE: checkArgs(2, "Need folder names for new group and parent group"),
 	Run: func(cmd *cobra.Command, args []string) {

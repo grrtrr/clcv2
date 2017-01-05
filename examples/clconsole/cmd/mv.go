@@ -10,7 +10,8 @@ import (
 
 var mv = &cobra.Command{
 	Use:     "mv  <server|group>  <destination>",
-	Short:   "Move group/server to different folder",
+	Short:   "Move to a different folder",
+	Long:    "Move group or server to a different folder (hardware group)",
 	PreRunE: checkArgs(2, "Need folder names for source server/group and destination group"),
 	Run: func(cmd *cobra.Command, args []string) {
 		if isServer, newParent, err := groupOrServer(args[1]); err != nil {
