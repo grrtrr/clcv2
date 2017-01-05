@@ -65,14 +65,6 @@ func init() {
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:   "archive  [group|server [group|server]...]",
-		Short: "Archive server(s)",
-		Long:  "Place server(s) into the special 'Archive' folder in the data centre",
-		Run: func(cmd *cobra.Command, args []string) {
-			serverCmd("archive", client.ArchiveServer, args)
-		}})
-
-	Root.AddCommand(&cobra.Command{
 		Use:     "snapshot  [group|server [group|server]...]",
 		Aliases: []string{"snap"},
 		Short:   "Snapshot server(s)",
