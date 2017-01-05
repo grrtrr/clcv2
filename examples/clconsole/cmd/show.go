@@ -54,7 +54,7 @@ var Show = &cobra.Command{
 			showGroupDetails = true
 		}
 
-		if showGroupDetails {
+		if showGroupDetails || showGroupTree {
 			for _, name := range args {
 				isServer, where, err := groupOrServer(name)
 				if err != nil {
