@@ -13,22 +13,22 @@ import (
 
 func init() {
 	Root.AddCommand(&cobra.Command{
-		Use:     "networks [location]",
-		Aliases: []string{"net"},
+		Use:     "networks  [location]",
+		Aliases: []string{"nets", "net"},
 		Short:   "Show available networks",
-		Long:    "Show networks available to current account. If @location argument is present, it overrides the default data centre location.",
+		Long:    "Show networks available to current account. If @location argument is present, it overrides the default data centre (region)k.",
 		Run: func(cmd *cobra.Command, args []string) {
-			var dataCentre = location
+			var region = location
 
 			if len(args) > 0 {
-				dataCentre = args[0]
+				region = args[0]
 			}
 
-			fmt.Printf("Networks visible to %s account in %s:\n", client.AccountAlias, strings.ToUpper(dataCentre))
-			showNetworks(client, dataCentre, client.AccountAlias)
+			fmt.Printf("Networks visible to %s account in %s:\n", client.AccountAlias, strings.ToUpper(region))
+			showNetworks(client, region, client.AccountAlias)
 			if client.AccountAlias != client.RegisteredAccountAlias() {
 				fmt.Printf("Networks visible to parent %s account:\n", client.RegisteredAccountAlias())
-				showNetworks(client, dataCentre, client.RegisteredAccountAlias())
+				showNetworks(client, region, client.RegisteredAccountAlias())
 			}
 		},
 	})
