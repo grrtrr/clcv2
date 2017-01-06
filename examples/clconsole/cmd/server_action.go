@@ -87,7 +87,7 @@ func init() {
 		Short: "Revert server(s) to snapshot",
 		Long:  "Revert server(s) to last snapshot (error condition if no snapshot exists)",
 		Run: func(cmd *cobra.Command, args []string) {
-			serverCmd("delete snapshot", client.RevertToSnapshot, args)
+			serverCmd("revert to snapshot", client.RevertToSnapshot, args)
 		}})
 }
 
