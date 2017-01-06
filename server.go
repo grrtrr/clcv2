@@ -185,8 +185,8 @@ func (c *Client) GetServerNets(s Server) (nets []Network, err error) {
 	networks, err := c.GetNetworks(s.LocationId, c.AccountAlias)
 	if err != nil {
 		return nil, errors.Errorf("failed to query networks in %s: %s", s.LocationId, err)
-	} else if len(networks) == 0 {
-		return nil, errors.Errorf("failed to query network information in %s", s.LocationId)
+	} else if len(networks) == 0 { // nothing found
+		return nil, nil
 	}
 
 	for idx := range s.Details.IpAddresses {
