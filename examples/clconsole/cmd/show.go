@@ -51,7 +51,6 @@ var Show = &cobra.Command{
 		// The default behaviour is to list all the servers/groups in the default data centre.
 		if len(args) == 0 {
 			args = append(args, "")
-			showGroupDetails = true
 		}
 
 		if showGroupDetails || showGroupTree {
