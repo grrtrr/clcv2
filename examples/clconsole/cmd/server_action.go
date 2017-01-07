@@ -149,7 +149,7 @@ func extractServerNames(args []string) (ret []string, err error) {
 			if where != "" {
 				start = clcv2.FindGroupNode(root, func(g *clcv2.Group) bool { return g.Id == where })
 				if start == nil {
-					return nil, errors.Errorf("Failed to look up UUID %s in %s - is this the correct value?", where, location)
+					return nil, errors.Errorf("Failed to look up group %q in %s - is the location correct?", where, location)
 				}
 			}
 			clcv2.VisitGroupHierarchy(start, groupCallback, nil)
