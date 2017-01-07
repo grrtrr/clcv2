@@ -25,7 +25,7 @@ var (
 
 func init() {
 	Show.Flags().BoolVar(&showGroupDetails, "group", false, "Print group details rather than the contained servers")
-	Show.Flags().BoolVar(&showGroupTree, "tree", true, "Display nested group structure in tree format")
+	Show.Flags().BoolVar(&showGroupTree, "tree", false, "Display nested group structure in tree format")
 	Show.Flags().BoolVar(&showIP, "ips", false, "Print group structure with server IPs (implies --group and --tree)")
 
 	Root.AddCommand(Show)
@@ -51,6 +51,7 @@ var Show = &cobra.Command{
 		// The default behaviour is to list all the servers/groups in the default data centre.
 		if len(args) == 0 {
 			args = append(args, "")
+			showGroupTree = true
 		}
 
 		if showGroupDetails || showGroupTree {
@@ -92,7 +93,7 @@ var Show = &cobra.Command{
 				if uuid != "" {
 					start = clcv2.FindGroupNode(root, func(g *clcv2.Group) bool { return g.Id == uuid })
 					if start == nil {
-						return errors.Errorf("Failed to look up UUID %s in %s - is this the correct value?", uuid, location)
+						return errors.Errorf("Failed to look up group %q in %s - is the location correct?", uuid, location)
 					}
 				}
 				clcv2.VisitGroupHierarchy(start, groupPrinter, "")
@@ -128,13 +129,12 @@ func groupOrServer(name string) (isServer bool, id string, err error) {
 		} else {
 			return false, group.Id, nil
 		}
-		err = errors.Errorf("unable to resolve group name %q in %s", where, location)
+		return false, "", errors.Errorf("unable to resolve group name %q in %s", where, location)
 	} else if location == "" {
-		err = errors.Errorf("%q looks like a group name - need a location (-l argument) to resolve it.", where)
+		return false, "", errors.Errorf("%q looks like a group name - need a location (-l argument) to resolve it", where)
 	} else {
-		err = errors.Errorf("unable to determine whether %q is a server or a group", where)
+		return false, "", errors.Errorf("unable to determine whether %q is a server or a group", where)
 	}
-	return
 }
 
 // showGroup displays details of Hardware Group folder @root
