@@ -3,24 +3,47 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/grrtrr/exit"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 var MkDir = &cobra.Command{
-	Use:     "mkdir <newFolder>  <parentGroup>",
-	Short:   "Create a new folder",
-	Long:    "Create a new folder @newFolder (hardware group) inside @parentGroup",
-	PreRunE: checkArgs(2, "Need folder names for new group and parent group"),
+	Use:   "mkdir <new-folder>  [parent-folder]",
+	Short: "Create a new folder",
+	Long:  "Create a new folder (hardware group). If no parent-folder is specified, create new folder at the root of current data centre (-l argument)",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if l := len(args); l < 1 || l > 2 {
+			return errors.Errorf("Need at least a name for a folder to create (parent folder name is optional")
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		if isServer, where, err := groupOrServer(args[1]); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to look up parent group %s: %s\n", args[1], err)
-		} else if isServer {
-			fmt.Fprintf(os.Stderr, "Does not look like a group name - %q\n", args[1])
-		} else if g, err := client.CreateGroup(args[0], where, fmt.Sprintf("New subfolder %s", args[0]), nil); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to create %s/%s: %s\n", args[1], args[0], err)
+		var parentGroup string
+
+		if l := len(args); l == 2 {
+			if isServer, uuid, err := groupOrServer(args[1]); err != nil {
+				exit.Fatalf("failed to look up parent group %s: %s", args[1], err)
+			} else if isServer {
+				exit.Errorf("%q does not look like a (parent) group name", args[1])
+			} else {
+				parentGroup = uuid
+			}
+		} else if location == "" {
+			exit.Errorf("need a location argument (-l) if no parent folder is given")
+		} else if root, err := client.GetGroups(location); err != nil {
+			exit.Fatalf("ailed to look up group root folder in %s: %s", location, err)
 		} else {
-			fmt.Printf("New subfolder of %s: %q (UUID: %s)\n", args[1], g.Name, g.Id)
+			fmt.Printf("Creating %q at at %s data centre root (%q)\n", args[0], strings.ToUpper(location), root.Name)
+			parentGroup = root.Id
+		}
+
+		if g, err := client.CreateGroup(args[0], parentGroup, fmt.Sprintf("New subfolder %s", args[0]), nil); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create folder %s: %s\n", args[0], err)
+		} else {
+			fmt.Printf("New folder %q  with UUID %s\n", g.Name, g.Id)
 		}
 	},
 }
