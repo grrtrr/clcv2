@@ -225,6 +225,7 @@ func printGroupStructure(g *clcv2.Group, arg interface{}) interface{} {
 // NOTE: requires 'client' variable to be in enclosing scope
 func printGroupWithServerIPs(g *clcv2.Group, arg interface{}) interface{} {
 	var indent = arg.(string)
+	var wg sync.WaitGroup
 
 	if g.Type == "default" {
 		fmt.Printf("%s%s/\n", indent, g.Name)
@@ -234,15 +235,21 @@ func printGroupWithServerIPs(g *clcv2.Group, arg interface{}) interface{} {
 
 	for _, l := range g.Links {
 		if l.Rel == "server" {
-			ips, err := client.GetServerIPs(l.Id)
-			if err != nil {
-				exit.Fatalf("failed to get IPs of %q in %s: %s", l.Id, g.Name, err)
-			}
+			l := l
+			wg.Add(1)
+			go func() {
+				ips, err := client.GetServerIPs(l.Id)
+				if err != nil {
+					exit.Fatalf("failed to get IPs of %q in %s: %s", l.Id, g.Name, err)
+				}
 
-			servLine := fmt.Sprintf("%s%s", indent+"    ", l.Id)
-			fmt.Printf("%-50s %s\n", servLine, strings.Join(ips, ", "))
+				servLine := fmt.Sprintf("%s%s", indent+"    ", l.Id)
+				fmt.Printf("%-50s %s\n", servLine, strings.Join(ips, ", "))
+				wg.Done()
+			}()
 		}
 	}
+	wg.Wait()
 	return indent + "    "
 }
 
