@@ -47,7 +47,7 @@ var Show = &cobra.Command{
 		if showIP {
 			showGroupTree = true
 			showGroupDetails = true
-			nodeCallback = processNode
+			nodeCallback = queryServerState
 		}
 
 		// The default behaviour is to list all the servers/groups in the default data centre.
@@ -116,7 +116,7 @@ var Show = &cobra.Command{
 }
 
 // groupOrServer decides whether @name refers to a CLCv2 hardware group or a server.
-// It indicates the result via a returned boolean flag, and resolves @where into @id.
+// It indicates the result via a returned boolean flag, and resolves @name into @id.
 func groupOrServer(name string) (isServer bool, id string, err error) {
 	// Strip trailing slashes that hint at a group name (but are not part of the CLC name).
 	if where := strings.TrimRight(name, "/"); where == "" {
@@ -209,10 +209,10 @@ func showGroup(client *clcv2.CLIClient, root *clcv2.Group) {
 func printGroupStructure(g *clcv2.GroupInfo, indent string) {
 	var groupLine string
 
-	if g.Type == "default" {
-		groupLine = fmt.Sprintf("%s%s/", indent, g.Name)
-	} else { // 'Archive' or similar: make it stand out
+	if g.Type != "default" { // 'Archive' or similar: make it stand out
 		groupLine = fmt.Sprintf("%s[%s]/", indent, g.Name)
+	} else {
+		groupLine = fmt.Sprintf("%s%s/", indent, g.Name)
 	}
 
 	fmt.Printf("%-70s %s\n", groupLine, g.ID)
@@ -227,9 +227,9 @@ func printGroupStructure(g *clcv2.GroupInfo, indent string) {
 	}
 }
 
-// processNode processes a single clcv2.GroupInfo node in isolation, possibly querying additional information
+// queryServerState processes a single clcv2.GroupInfo node in isolation, adding server information
 // NOTE: requires 'client' variable to be in enclosing scope
-func processNode(ctx context.Context, node *clcv2.GroupInfo) error {
+func queryServerState(ctx context.Context, node *clcv2.GroupInfo) error {
 	var serverEntries = make(chan string)
 	var g, gctx = errgroup.WithContext(ctx)
 
