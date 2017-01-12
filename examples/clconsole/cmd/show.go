@@ -1,16 +1,18 @@
 package cmd
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"os"
 	"strings"
 	"sync"
 
+	"golang.org/x/sync/errgroup"
+
 	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/clcv2/utils"
-	"github.com/grrtrr/exit"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -36,6 +38,7 @@ var Show = &cobra.Command{
 	Short: "Show server(s)/groups(s)",
 	Long:  "Display detailed server/group information. Group information requires -l to be set.",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var nodeCallback func(context.Context, *clcv2.GroupInfo) error
 		var servers, groups []string
 		var root *clcv2.Group
 		var err error
@@ -44,6 +47,7 @@ var Show = &cobra.Command{
 		if showIP {
 			showGroupTree = true
 			showGroupDetails = true
+			nodeCallback = processNode
 		}
 
 		// The default behaviour is to list all the servers/groups in the default data centre.
@@ -94,11 +98,11 @@ var Show = &cobra.Command{
 						return errors.Errorf("Failed to look up group %q in %s - is the location correct?", uuid, location)
 					}
 				}
-				if showIP {
-					printGroupWithServerIPs(start, "")
-				} else {
-					printGroupStructure(start, "")
+				tree, err := clcv2.WalkGroupHierarchy(context.TODO(), start, nodeCallback)
+				if err != nil {
+					return errors.Errorf("failed to process %s group hierarchy: %s", location, err)
 				}
+				printGroupStructure(tree, "")
 			} else if uuid == "" {
 				showGroup(client, root)
 			} else if rootNode, err := client.GetGroup(uuid); err != nil {
@@ -202,30 +206,70 @@ func showGroup(client *clcv2.CLIClient, root *clcv2.Group) {
 }
 
 // Pretty-printer for traversal of nested group structure.
-func printGroupStructure(g *clcv2.Group, indent string) {
+func printGroupStructure(g *clcv2.GroupInfo, indent string) {
 	var groupLine string
 
 	if g.Type == "default" {
 		groupLine = fmt.Sprintf("%s%s/", indent, g.Name)
-	} else {
+	} else { // 'Archive' or similar: make it stand out
 		groupLine = fmt.Sprintf("%s[%s]/", indent, g.Name)
 	}
-	fmt.Printf("%-70s %s\n", groupLine, g.Id)
 
-	/* Nested entries: */
-	for _, l := range g.Links {
-		if l.Rel == "server" {
-			fmt.Printf("%s", indent+"    ")
-			fmt.Printf("%s\n", l.Id)
-		}
+	fmt.Printf("%-70s %s\n", groupLine, g.ID)
+
+	for _, s := range g.Servers {
+		fmt.Printf("%s%s\n", indent+"    ", s)
 	}
-	for idx := range g.Groups {
-		printGroupStructure(&g.Groups[idx], indent+"    ")
+
+	//	sort.Sort(g.Groups)
+	for _, g := range g.Groups {
+		printGroupStructure(g, indent+"    ")
 	}
 }
 
-// Group structure pretty-printer which also displays IP addresses of servers.
+// processNode processes a single clcv2.GroupInfo node in isolation, possibly querying additional information
 // NOTE: requires 'client' variable to be in enclosing scope
+func processNode(ctx context.Context, node *clcv2.GroupInfo) error {
+	var serverEntries = make(chan string)
+	g, ctx := errgroup.WithContext(ctx)
+
+	for _, id := range node.Servers {
+		id := id
+		g.Go(func() error {
+			srv, err := client.GetServer(id)
+			if err != nil {
+				return errors.Errorf("failed to get %q server information: %s", id, err)
+			}
+
+			servLine := id
+			if srv.Details.PowerState == "started" {
+				servLine += "*"
+			}
+
+			select {
+			case serverEntries <- fmt.Sprintf("%-50s %s", servLine, strings.Join(srv.IPs(), ", ")):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+			return nil
+		})
+	}
+
+	go func() {
+		g.Wait()
+		close(serverEntries)
+	}()
+
+	node.Servers = node.Servers[:0]
+	for srv := range serverEntries {
+		node.Servers = append(node.Servers, srv)
+	}
+	return g.Wait()
+}
+
+/*
+// Group structure pretty-printer which also displays IP addresses of servers.
+
 func printGroupWithServerIPs(g *clcv2.Group, indent string) {
 	var wg sync.WaitGroup
 
@@ -257,6 +301,7 @@ func printGroupWithServerIPs(g *clcv2.Group, indent string) {
 		printGroupWithServerIPs(&g.Groups[idx], indent+"    ")
 	}
 }
+*/
 
 // Show details of a single server @name
 // @client:    authenticated CLCv2 Client
