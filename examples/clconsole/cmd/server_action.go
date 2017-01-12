@@ -128,13 +128,17 @@ func serverCmd(action string, hdlr func(string) (string, error), args []string) 
 // - for group names, it recursively collects all server names contained in the group
 func extractServerNames(args []string) (ret []string, err error) {
 	var root *clcv2.Group
-	var groupCallback = func(g *clcv2.Group, arg interface{}) interface{} {
+	var groupVisitor func(g *clcv2.Group)
+
+	groupVisitor = func(g *clcv2.Group) {
 		for _, l := range g.Links {
 			if l.Rel == "server" {
 				ret = append(ret, l.Id)
 			}
 		}
-		return nil
+		for idx := range g.Groups {
+			groupVisitor(&g.Groups[idx])
+		}
 	}
 
 	for _, name := range args {
@@ -152,7 +156,7 @@ func extractServerNames(args []string) (ret []string, err error) {
 					return nil, errors.Errorf("Failed to look up group %q in %s - is the location correct?", where, location)
 				}
 			}
-			clcv2.VisitGroupHierarchy(start, groupCallback, nil)
+			groupVisitor(start)
 		}
 	}
 	return ret, nil

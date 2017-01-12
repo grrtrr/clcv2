@@ -37,7 +37,6 @@ var Show = &cobra.Command{
 	Long:  "Display detailed server/group information. Group information requires -l to be set.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var servers, groups []string
-		var groupPrinter = printGroupStructure
 		var root *clcv2.Group
 		var err error
 
@@ -45,7 +44,6 @@ var Show = &cobra.Command{
 		if showIP {
 			showGroupTree = true
 			showGroupDetails = true
-			groupPrinter = printGroupWithServerIPs
 		}
 
 		// The default behaviour is to list all the servers/groups in the default data centre.
@@ -96,7 +94,11 @@ var Show = &cobra.Command{
 						return errors.Errorf("Failed to look up group %q in %s - is the location correct?", uuid, location)
 					}
 				}
-				clcv2.VisitGroupHierarchy(start, groupPrinter, "")
+				if showIP {
+					printGroupWithServerIPs(start, "")
+				} else {
+					printGroupStructure(start, "")
+				}
 			} else if uuid == "" {
 				showGroup(client, root)
 			} else if rootNode, err := client.GetGroup(uuid); err != nil {
@@ -199,9 +201,8 @@ func showGroup(client *clcv2.CLIClient, root *clcv2.Group) {
 	}
 }
 
-// clcv2.VisitGroupHierarchy callback function to print nested group structure
-func printGroupStructure(g *clcv2.Group, arg interface{}) interface{} {
-	var indent = arg.(string)
+// Pretty-printer for traversal of nested group structure.
+func printGroupStructure(g *clcv2.Group, indent string) {
 	var groupLine string
 
 	if g.Type == "default" {
@@ -218,13 +219,14 @@ func printGroupStructure(g *clcv2.Group, arg interface{}) interface{} {
 			fmt.Printf("%s\n", l.Id)
 		}
 	}
-	return indent + "    "
+	for idx := range g.Groups {
+		printGroupStructure(&g.Groups[idx], indent+"    ")
+	}
 }
 
-// clcv2.VisitGroupHierarchy callback function to print servers along with their IP addresses
+// Group structure pretty-printer which also displays IP addresses of servers.
 // NOTE: requires 'client' variable to be in enclosing scope
-func printGroupWithServerIPs(g *clcv2.Group, arg interface{}) interface{} {
-	var indent = arg.(string)
+func printGroupWithServerIPs(g *clcv2.Group, indent string) {
 	var wg sync.WaitGroup
 
 	if g.Type == "default" {
@@ -250,7 +252,10 @@ func printGroupWithServerIPs(g *clcv2.Group, arg interface{}) interface{} {
 		}
 	}
 	wg.Wait()
-	return indent + "    "
+
+	for idx := range g.Groups {
+		printGroupWithServerIPs(&g.Groups[idx], indent+"    ")
+	}
 }
 
 // Show details of a single server @name

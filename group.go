@@ -20,7 +20,7 @@ type Group struct {
 	// Data center location identifier
 	LocationId string
 
-	//Group type which could include system types like "archive"
+	// Group type, which could include system types like "archive"
 	Type string
 
 	// Describes if group is online or not
@@ -42,7 +42,7 @@ type Group struct {
 	CustomFields []CustomField
 }
 
-// Get the details of an individual server and any sub-groups and servers that it contains.
+// Get the details of an individual group and any sub-groups (and servers) that it contains.
 // @groupId: ID of the group being queried.
 func (c *Client) GetGroup(groupId string) (res *Group, err error) {
 	path := fmt.Sprintf("/v2/groups/%s/%s", c.AccountAlias, groupId)
@@ -199,18 +199,6 @@ func (c *Client) RestoreGroup(groupId, targetGroupId string) (statusId string, e
 	return c.getStatusResponseId("POST", path, false, &struct {
 		TargetGroupId string `json:"targetGroupId"`
 	}{targetGroupId})
-}
-
-// VisitGroupHierarchy calls @f with initial argument @arg recursively for all groups underneath @root.
-// @root: root of the group tree to visit
-// @fn:   function that consumes a group and @arg, returning the (modified) @arg value
-// @arg:  initial argument to pass to @fn
-func VisitGroupHierarchy(root *Group, fn func(*Group, interface{}) interface{}, arg interface{}) {
-	arg = fn(root, arg)
-
-	for idx := range root.Groups {
-		VisitGroupHierarchy(&root.Groups[idx], fn, arg)
-	}
 }
 
 /*
