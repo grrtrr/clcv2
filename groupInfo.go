@@ -1,4 +1,5 @@
-// Recursive, parallel processing of group trees.
+// Recursive, parallel processing of group trees, to speed up processing.
+//
 // Code closely based on the following examples:
 // https://godoc.org/golang.org/x/sync/errgroup (parallel MD5 summation)
 // https://golang.org/src/path/filepath/path.go#L393 (recursive filesystem walk)
@@ -12,6 +13,11 @@ import (
 
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
+)
+
+const (
+	// How many GroupInfo tree nodes to process in parallel
+	numTreeProcessors = 20
 )
 
 // GroupInfo aggregates information to print the group tree
@@ -100,8 +106,7 @@ func WalkGroupHierarchy(
 
 	// Process nodes in parallel, using a fixed number of goroutines.
 	processedNodes := make(chan GroupInfo)
-	const numDigesters = 20
-	for i := 0; i < numDigesters; i++ {
+	for i := 0; i < numTreeProcessors; i++ {
 		g.Go(func() error {
 			for node := range nodes {
 				if cb != nil {

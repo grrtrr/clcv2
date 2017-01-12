@@ -231,7 +231,7 @@ func printGroupStructure(g *clcv2.GroupInfo, indent string) {
 // NOTE: requires 'client' variable to be in enclosing scope
 func processNode(ctx context.Context, node *clcv2.GroupInfo) error {
 	var serverEntries = make(chan string)
-	g, ctx := errgroup.WithContext(ctx)
+	var g, gctx = errgroup.WithContext(ctx)
 
 	for _, id := range node.Servers {
 		id := id
@@ -248,8 +248,8 @@ func processNode(ctx context.Context, node *clcv2.GroupInfo) error {
 
 			select {
 			case serverEntries <- fmt.Sprintf("%-50s %s", servLine, strings.Join(srv.IPs(), ", ")):
-			case <-ctx.Done():
-				return ctx.Err()
+			case <-gctx.Done():
+				return gctx.Err()
 			}
 			return nil
 		})
@@ -266,42 +266,6 @@ func processNode(ctx context.Context, node *clcv2.GroupInfo) error {
 	}
 	return g.Wait()
 }
-
-/*
-// Group structure pretty-printer which also displays IP addresses of servers.
-
-func printGroupWithServerIPs(g *clcv2.Group, indent string) {
-	var wg sync.WaitGroup
-
-	if g.Type == "default" {
-		fmt.Printf("%s%s/\n", indent, g.Name)
-	} else {
-		fmt.Printf("%s[%s]/\n", indent, g.Name)
-	}
-
-	for _, l := range g.Links {
-		if l.Rel == "server" {
-			l := l
-			wg.Add(1)
-			go func() {
-				ips, err := client.GetServerIPs(l.Id)
-				if err != nil {
-					exit.Fatalf("failed to get IPs of %q in %s: %s", l.Id, g.Name, err)
-				}
-
-				servLine := fmt.Sprintf("%s%s", indent+"    ", l.Id)
-				fmt.Printf("%-50s %s\n", servLine, strings.Join(ips, ", "))
-				wg.Done()
-			}()
-		}
-	}
-	wg.Wait()
-
-	for idx := range g.Groups {
-		printGroupWithServerIPs(&g.Groups[idx], indent+"    ")
-	}
-}
-*/
 
 // Show details of a single server @name
 // @client:    authenticated CLCv2 Client
