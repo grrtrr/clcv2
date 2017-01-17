@@ -59,7 +59,7 @@ func main() {
 
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetAutoFormatHeaders(false)
-	table.SetAlignment(tablewriter.ALIGN_CENTRE)
+	table.SetAlignment(tablewriter.ALIGN_CENTER)
 	table.SetAutoWrapText(false)
 	table.SetHeader([]string{"Server",
 		fmt.Sprintf("Usage on %s", day.Format("Mon, Jan 2 2006")),

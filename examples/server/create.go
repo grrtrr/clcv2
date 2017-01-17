@@ -270,7 +270,7 @@ func showServer(client *clcv2.CLIClient, server clcv2.Server) {
 
 		table = tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
-		table.SetAlignment(tablewriter.ALIGN_CENTRE)
+		table.SetAlignment(tablewriter.ALIGN_CENTER)
 		table.SetAutoWrapText(true)
 
 		table.SetHeader([]string{fmt.Sprintf("Snapshots of %s", server.Name)})

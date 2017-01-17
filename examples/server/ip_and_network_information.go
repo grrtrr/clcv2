@@ -60,7 +60,7 @@ func main() {
 	if len(public_ips) > 0 {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
-		table.SetAlignment(tablewriter.ALIGN_CENTRE)
+		table.SetAlignment(tablewriter.ALIGN_CENTER)
 		table.SetAutoWrapText(true)
 		table.SetHeader([]string{"Public IP", "Via"})
 		for _, ip := range public_ips {
@@ -72,7 +72,7 @@ func main() {
 
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetAutoFormatHeaders(false)
-	table.SetAlignment(tablewriter.ALIGN_CENTRE)
+	table.SetAlignment(tablewriter.ALIGN_CENTER)
 	table.SetAutoWrapText(true)
 
 	table.SetHeader([]string{fmt.Sprintf("%s IP", server.Name),

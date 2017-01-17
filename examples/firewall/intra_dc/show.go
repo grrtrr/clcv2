@@ -40,7 +40,7 @@ func main() {
 	fmt.Printf("Details of intra-datacenter Firewall Policy %s at %s:\n", flag.Arg(1), strings.ToUpper(flag.Arg(0)))
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetAutoFormatHeaders(false)
-	table.SetAlignment(tablewriter.ALIGN_CENTRE)
+	table.SetAlignment(tablewriter.ALIGN_CENTER)
 	table.SetAutoWrapText(true)
 
 	table.SetHeader([]string{"Source", "Destination", "Ports",
