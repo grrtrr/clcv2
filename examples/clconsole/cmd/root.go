@@ -60,8 +60,8 @@ var (
 func init() {
 	Root.PersistentFlags().StringVarP(&user, "username", "u", os.Getenv("CLC_USERNAME"), "CLC Login Username")
 	Root.PersistentFlags().StringVarP(&pass, "password", "p", os.Getenv("CLC_PASSWORD"), "CLC Login Password")
-	Root.PersistentFlags().StringVarP(&account, "account", "a", os.Getenv("CLC_ACCOUNT"), "CLC Login Password")
-	Root.PersistentFlags().StringVarP(&location, "location", "l", os.Getenv("CLC_LOCATION"), "CLC Account Alias to use (instead of default)")
+	Root.PersistentFlags().StringVarP(&account, "account", "a", os.Getenv("CLC_ACCOUNT"), "CLC account to use (instead of default)")
+	Root.PersistentFlags().StringVarP(&location, "location", "l", os.Getenv("CLC_LOCATION"), "CLC data centre to use (instead of default)")
 
 	Root.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Produce debug output")
 	Root.PersistentFlags().DurationVarP(&intvl, "poll-interval", "i", 1*time.Second, "Poll interval for status updates (use 0 to disable)")
