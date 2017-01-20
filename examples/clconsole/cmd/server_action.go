@@ -142,12 +142,14 @@ func extractServerNames(args []string) (ret []string, err error) {
 	}
 
 	for _, name := range args {
-		if isServer, where, err := groupOrServer(name); isServer {
+		if isServer, where, err := groupOrServer(name); err != nil {
+			return nil, err
+		} else if isServer {
 			ret = append(ret, where)
 		} else if location == "" {
 			return nil, errors.Errorf("Location argument (-l) is required in order to traverse group %s", name)
 		} else if root, err = client.GetGroups(location); err != nil {
-			return nil, errors.Errorf("Failed to look up groups at %s: %s\n", location, err)
+			return nil, errors.Errorf("Failed to look up groups at %s: %s", location, err)
 		} else {
 			start := root
 			if where != "" {
