@@ -56,6 +56,7 @@ var Show = &cobra.Command{
 		case 1:
 			// Allow user to specify data center name as only argument
 			if regexp.MustCompile(`^[[:alpha:]]{2}\d$`).MatchString(args[0]) {
+				location = args[0]
 				args = append(args[:0], "")
 				showGroupTree = true
 			}
