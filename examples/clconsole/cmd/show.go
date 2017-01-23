@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -51,8 +52,15 @@ var Show = &cobra.Command{
 			nodeCallback = queryServerState
 		}
 
-		// The default behaviour is to list all the servers/groups in the default data centre.
-		if len(args) == 0 {
+		switch l := len(args); l {
+		case 1:
+			// Allow user to specify data center name as only argument
+			if regexp.MustCompile(`^[[:alpha:]]{2}\d$`).MatchString(args[0]) {
+				args = append(args[:0], "")
+				showGroupTree = true
+			}
+		case 0:
+			// The default behaviour is to list all the servers/groups in the default data centre.
 			args = append(args, "")
 			showGroupTree = true
 		}
