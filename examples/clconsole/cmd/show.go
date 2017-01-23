@@ -34,9 +34,10 @@ func init() {
 }
 
 var Show = &cobra.Command{
-	Use:   "show  [group|server [group|server]...]",
-	Short: "Show server(s)/groups(s)",
-	Long:  "Display detailed server/group information. Group information requires -l to be set.",
+	Use:     "ls  [group|server [group|server]...]",
+	Aliases: []string{"dir", "show"},
+	Short:   "Show server(s)/groups(s)",
+	Long:    "Display detailed server/group information. Group information requires -l to be set.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var nodeCallback func(context.Context, *clcv2.GroupInfo) error
 		var servers, groups []string
