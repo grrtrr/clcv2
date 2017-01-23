@@ -11,9 +11,10 @@ import (
 )
 
 var MkDir = &cobra.Command{
-	Use:   "mkdir <new-folder>  [parent-folder]",
-	Short: "Create a new folder",
-	Long:  "Create a new folder (hardware group). If no parent-folder is specified, create new folder at the root of current data centre (-l argument)",
+	Use:     "mkdir <new-folder>  [parent-folder]",
+	Aliases: []string{"md"},
+	Short:   "Create a new folder",
+	Long:    "Create a new folder (hardware group). If no parent-folder is specified, create new folder at the root of current data centre (-l argument)",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if l := len(args); l < 1 || l > 2 {
 			return errors.Errorf("Need at least a name for a folder to create (parent folder name is optional")
