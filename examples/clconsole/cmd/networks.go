@@ -13,8 +13,8 @@ import (
 
 func init() {
 	Root.AddCommand(&cobra.Command{
-		Use:     "networks  [location]",
-		Aliases: []string{"nets", "net"},
+		Use:     "nets  [location]",
+		Aliases: []string{"networks", "net"},
 		Short:   "Show available networks",
 		Long:    "Show networks available to current account. If @location argument is present, it overrides the default data centre (region)k.",
 		Run: func(cmd *cobra.Command, args []string) {
