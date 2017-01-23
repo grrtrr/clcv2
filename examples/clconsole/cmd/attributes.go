@@ -15,8 +15,36 @@ import (
 
 func init() {
 	Root.AddCommand(&cobra.Command{
+		Use:     "cpu  <server> <numCPU>",
+		Aliases: []string{"cores"},
+		Short:   "Set server #CPU",
+		Long:    "Sets the number of CPUs on @serverCPU to @numCPU",
+		Example: "cpu WA1GRRT-W12-29 4",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 2 {
+				return errors.Errorf("Need a <server> and a <#CPUs> argument")
+			} else if _, err := strconv.ParseUint(args[1], 10, 8); err != nil {
+				return errors.Errorf("Invalid numCPU value %q", args[1])
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Setting %s #CPUs to %s ...\n", args[0], args[1])
+			if reqID, err := client.ServerSetCpus(args[0], args[1]); err != nil {
+				exit.Fatalf("failed to change the number of CPUs on %q: %s", args[0], err)
+			} else {
+				log.Printf("%s changing number-of-CPUs: %s", args[0], reqID)
+
+				client.PollStatusFn(reqID, intvl, func(s clcv2.QueueStatus) {
+					log.Printf("%s changing number-of-CPUs: %s", args[0], s)
+				})
+			}
+		},
+	})
+
+	Root.AddCommand(&cobra.Command{
 		Use:     "memory  <server> <memoryGB>",
-		Aliases: []string{"mem"},
+		Aliases: []string{"mem", "ram"},
 		Short:   "Set server memory",
 		Long:    "Sets the memory of @server to size @memoryGB",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -30,7 +58,7 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("Setting %s memory to %s GB ...\n", args[0], args[1])
 			if reqID, err := client.ServerSetMemory(args[0], args[1]); err != nil {
-				exit.Fatalf("failed to change the amount of Memory on %q: %s", args[0], err)
+				exit.Fatalf("failed to change the amount of memory on %q: %s", args[0], err)
 			} else {
 				log.Printf("%s changing memory size: %s", args[0], reqID)
 

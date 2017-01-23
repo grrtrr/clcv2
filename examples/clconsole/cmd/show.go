@@ -242,7 +242,11 @@ func queryServerState(ctx context.Context, node *clcv2.GroupInfo) error {
 			}
 
 			servLine := id
-			if srv.Details.PowerState == "started" {
+			if len(srv.Details.Snapshots) > 0 { // add a tilde to indicate it has a snapshot
+				servLine += "~"
+			}
+
+			if srv.Details.PowerState == "started" { // add an asterisk to indicate it's on
 				servLine += "*"
 			}
 
