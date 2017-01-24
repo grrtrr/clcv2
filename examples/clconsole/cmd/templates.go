@@ -9,26 +9,35 @@ import (
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
 	"github.com/olekukonko/tablewriter"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 var templateFlags struct {
 	csv bool // Whether to output in CSV format
+	sep Rune // Separator for @csv output
 }
 
 func init() {
+	templateFlags.sep.Set(",")
 	ShowTemplates.Flags().BoolVar(&templateFlags.csv, "csv", false, "Whether to output in CSV format, or a pretty-printed table")
+	ShowTemplates.Flags().VarP(&templateFlags.sep, "sep", "s", "Field separator for use with CSV option")
 
 	Root.AddCommand(ShowTemplates)
 }
 
 var ShowTemplates = &cobra.Command{
 	Use:     "templates  [location]",
-	Aliases: []string{"templ"},
+	Aliases: []string{"templ", "tp"},
 	Short:   "List available templates",
 	Long:    "List templates available in a given region. If @location argument is present, it overrides the default region.",
 	Run: func(cmd *cobra.Command, args []string) {
-		var region = location // global flag
+		var (
+			region       = location                            // global flag
+			templateData = func(tpl clcv2.Template) []string { // print a single table/CSV row
+				return []string{tpl.Name, tpl.Description, tpl.OsType, fmt.Sprintf("%d GB", tpl.StorageSizeGB)}
+			}
+		)
 
 		if len(args) > 0 {
 			region = args[0]
@@ -45,6 +54,7 @@ var ShowTemplates = &cobra.Command{
 		if templateFlags.csv {
 			var w = csv.NewWriter(os.Stdout)
 
+			w.Comma = rune(templateFlags.sep)
 			if err := w.Write(header); err != nil {
 				exit.Fatalf("failed to write CSV header: %s", err)
 			}
@@ -74,7 +84,20 @@ var ShowTemplates = &cobra.Command{
 	},
 }
 
-// helper function to print a single table/CSV row
-func templateData(tpl clcv2.Template) []string {
-	return []string{tpl.Name, tpl.Description, tpl.OsType, fmt.Sprintf("%d GB", tpl.StorageSizeGB)}
+// Rune implements the pflag.Value interface (pflag has no 'rune' type)
+type Rune rune
+
+func (r Rune) Type() string   { return "rune" }
+func (r Rune) String() string { return fmt.Sprintf("%q", rune(r)) }
+
+func (r *Rune) Set(s string) error {
+	var sep string
+	if len(s) == 0 {
+		return errors.Errorf("can not set rune from empty string")
+	} else if _, err := fmt.Sscanf(`"`+s+`"`, "%q", &sep); err != nil {
+		return errors.Errorf("invalid input: %q", s)
+	} else {
+		*r = Rune(([]rune(sep))[0])
+	}
+	return nil
 }
