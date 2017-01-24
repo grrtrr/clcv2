@@ -1,5 +1,8 @@
 package cmd
 
+/*
+ * Setting/changing Server Attributes
+ */
 import (
 	"fmt"
 	"log"

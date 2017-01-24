@@ -96,29 +96,7 @@ type DeploymentCapabilities struct {
 	}
 
 	// Collection of available templates in the data center that can be used to create servers
-	Templates []struct {
-		// Underlying unique name for the template
-		Name string
-
-		// Description of the template at it appears in the Control Portal UI
-		Description string
-
-		// FIXME: the following appears in the output, but is not documented
-		OsType string
-
-		// The amount of storage allocated for the primary OS root drive
-		StorageSizeGB int
-
-		// List of capabilities supported by this specific OS template
-		// (example: whether adding CPU or memory requires a reboot or not)
-		Capabilities []string
-
-		// List of drive path names reserved by the OS that can't be used to name user-defined drives
-		ReservedDrivePaths []string
-
-		// Length of the string for naming a drive path, if applicable
-		DrivePathLength int
-	}
+	Templates []Template
 
 	// Collection of available OS types that can be imported as virtual machines.
 	ImportableOsTypes []struct {
@@ -129,6 +107,31 @@ type DeploymentCapabilities struct {
 		LabProductCode     string
 		PremiumProductCode string
 	}
+}
+
+// Template contains information about VM templates available in a given data centre.
+type Template struct {
+	// Underlying unique name for the template
+	Name string
+
+	// Description of the template at it appears in the Control Portal UI
+	Description string
+
+	// FIXME: the following appears in the output, but is not documented
+	OsType string
+
+	// The amount of storage allocated for the primary OS root drive
+	StorageSizeGB int
+
+	// List of capabilities supported by this specific OS template
+	// (example: whether adding CPU or memory requires a reboot or not)
+	Capabilities []string
+
+	// List of drive path names reserved by the OS that can't be used to name user-defined drives
+	ReservedDrivePaths []string
+
+	// Length of the string for naming a drive path, if applicable
+	DrivePathLength int
 }
 
 // Get the list of capabilities that a specific data center supports for a given account,

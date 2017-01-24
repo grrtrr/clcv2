@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// cloneFlags contains flags similar to createFlags, which is why both are separate structs
 var cloneFlags struct {
 	hwGroup    string        // hardware group to create server in
 	srcServer  string        // source server/template to create from
@@ -35,7 +36,6 @@ var cloneFlags struct {
 }
 
 func init() {
-	// Flags - overlap/shared with create
 	Clone.Flags().StringVar(&cloneFlags.net, "net", "", "ID or name of the Network to use (if different from source)")
 	Clone.Flags().StringVar(&cloneFlags.primDNS, "dns1", "8.8.8.8", "Primary DNS to use")
 	Clone.Flags().StringVar(&cloneFlags.secDNS, "dns2", "8.8.4.4", "Secondary DNS to use")

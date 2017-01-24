@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// createFlags wraps the flags used by create
 var createFlags struct {
 	srcPass    string        // when using a source-server, use this password
 	seed       string        // 4-6 character name seed for the server name
