@@ -411,12 +411,6 @@ func showServer(client *clcv2.CLIClient, server clcv2.Server) {
 // @servnames: server names
 func showServers(client *clcv2.CLIClient, servnames []string) {
 	var wg sync.WaitGroup
-	var truncate = func(s string, maxlen int) string {
-		if len(s) >= maxlen {
-			s = s[:maxlen]
-		}
-		return s
-	}
 
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetAutoFormatHeaders(false)

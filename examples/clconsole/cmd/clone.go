@@ -94,8 +94,8 @@ var Clone = &cobra.Command{
 			exit.Fatalf("failed to obtain the credentials of server %q: %s", src.Name, err)
 		}
 
+		// Request
 		req := clcv2.CreateServerReq{
-			Name:                 cloneFlags.seed,
 			Cpu:                  src.Details.Cpu,
 			MemoryGB:             src.Details.MemoryMb >> 10,
 			GroupId:              src.GroupId,
@@ -108,13 +108,17 @@ var Clone = &cobra.Command{
 			Type: src.Type,
 		}
 
+		// Derive the name seed for the new server
 		if cloneFlags.seed == "" {
 			if l := len(src.Name); l > 10 { // use same naming as original by default
-				req.Name = strings.TrimRight(src.Name[7:l-1], "0")
+				cloneFlags.seed = strings.TrimRight(src.Name[7:l-1], "0")
 			} else {
-				req.Name = "CLONE"
+				cloneFlags.seed = "CLONE"
 			}
 		}
+		// The name seed must not be longer than 6 characters
+		req.Name = truncate(cloneFlags.seed, 6)
+		log.Printf("Using %q as name seed", req.Name)
 
 		if cloneFlags.numCpu != 0 {
 			req.Cpu = int(cloneFlags.numCpu)

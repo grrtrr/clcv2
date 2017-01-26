@@ -30,3 +30,11 @@ func checkArgs(nargs int, errMsg string) func(cmd *cobra.Command, args []string)
 		return nil
 	}
 }
+
+// truncate ensures that the length of @s does not exceed @maxlen
+func truncate(s string, maxlen int) string {
+	if len(s) >= maxlen {
+		s = s[:maxlen]
+	}
+	return s
+}

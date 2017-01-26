@@ -66,7 +66,7 @@ func init() {
 
 	Root.AddCommand(&cobra.Command{
 		Use:     "snapshot  [group|server [group|server]...]",
-		Aliases: []string{"snap"},
+		Aliases: []string{"snap", "sn"},
 		Short:   "Snapshot server(s)",
 		Long:    "Create new server snapshot, replacing older snapshots if they exist",
 		Run: func(cmd *cobra.Command, args []string) {
