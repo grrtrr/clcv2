@@ -179,13 +179,22 @@ func (c *Client) GetServerNets(s Server) (nets []Network, err error) {
 	var seen = make(map[string]bool) /* map { networkId -> bool */
 
 	// The GetNetworks() call returns only the networks visible to the current account.
-	// In practice, the current account may be a sub-account, and the server may be
-	// using a network owned by the parent's account. If that is the case,	the results will
-	// be empty, and the credentials of the parent account are neede to obtain the details.
 	networks, err := c.GetNetworks(s.LocationId, c.AccountAlias)
 	if err != nil {
-		return nil, errors.Errorf("failed to query networks in %s: %s", s.LocationId, err)
-	} else if len(networks) == 0 { // nothing found
+		return nil, errors.Errorf("failed to query %s networks in %s: %s", c.AccountAlias, s.LocationId, err)
+	}
+
+	// In practice, the current account may be a sub-account, and the server may be
+	// using a network owned by the parent's account. If that is the case,	the results will
+	// be empty, and the credentials of the parent account are needed to obtain the details.
+	if parentAcct := c.RegisteredAccountAlias(); parentAcct != c.AccountAlias {
+		if parentNetworks, err := c.GetNetworks(s.LocationId, parentAcct); err != nil {
+			return nil, errors.Errorf("failed to query %s networks in %s: %s", parentAcct, s.LocationId, err)
+		} else {
+			networks = append(networks, parentNetworks...)
+		}
+	}
+	if len(networks) == 0 { // nothing found
 		return nil, nil
 	}
 

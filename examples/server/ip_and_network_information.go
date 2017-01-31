@@ -38,7 +38,7 @@ func main() {
 	}
 
 	// Get networks for the location the server resides in
-	networks, err := client.GetNetworks(server.LocationId, "")
+	networks, err := client.GetServerNets(server)
 	if err != nil {
 		exit.Fatalf("failed to list %s networks: %s", server.LocationId, err)
 	}

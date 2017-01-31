@@ -53,42 +53,61 @@ func (c *Client) GetNetworks(location, account string) (nets []Network, err erro
 // Get the network Id by the network name
 // @name:      Name of the network to match.
 // @location:  The Network's home datacenter alias.
-func (c *Client) GetNetworkIdByName(name, location string) (net *Network, err error) {
-	if nets, err := c.GetNetworks(location, c.AccountAlias); err == nil {
-		for idx := range nets {
-			if nets[idx].Name == name {
-				return &nets[idx], nil
-			}
+func (c *Client) GetNetworkIdByName(name, location string) (*Network, error) {
+	nets, err := c.GetNetworks(location, c.AccountAlias)
+	if err != nil {
+		return nil, err
+	}
+	for idx := range nets {
+		if nets[idx].Name == name {
+			return &nets[idx], nil
 		}
 	}
-	return
+	return nil, nil
 }
 
 // Get the network Id by CIDR
 // @cidr:      CIDR of the network to match.
 // @location:  The Network's home datacenter alias.
-func (c *Client) GetNetworkIdByCIDR(cidr, location string) (net *Network, err error) {
-	if nets, err := c.GetNetworks(location, c.AccountAlias); err == nil {
-		for idx := range nets {
-			if nets[idx].Cidr == cidr {
-				return &nets[idx], nil
-			}
+func (c *Client) GetNetworkIdByCIDR(cidr, location string) (*Network, error) {
+	nets, err := c.GetNetworks(location, c.AccountAlias)
+	if err != nil {
+		return nil, err
+	}
+	for idx := range nets {
+		if nets[idx].Cidr == cidr {
+			return &nets[idx], nil
 		}
 	}
-	return
+	return nil, nil
 }
 
-// Utility routine to look up a network by member IP @ips in @networks.
+//
+func (c *Client) GetNetworkIdByIP(ip, location string) (*Network, error) {
+	if ipAddr := net.ParseIP(ip); ipAddr == nil {
+		return nil, errors.Errorf("invalid IP address %s", ip)
+	}
+	/*
+			if _, net, err := net.ParseCIDR(networks[i].Cidr); err != nil {
+			return nil, errors.Errorf("failed to parse CIDR %s: %s", networks[i].Cidr, err)
+		} else if net.Contains(ipAddr) {
+			return &networks[i], nil
+		}
+	*/
+	return nil, nil
+}
+
+// Utility routine to look up a network by member IP @ip in @networks.
 // Return pointer to matching network if found, else nil.
-func NetworkByIP(ips string, networks []Network) (*Network, error) {
-	ip := net.ParseIP(ips)
-	if ip == nil {
-		return nil, errors.Errorf("Invalid IP address %s", ips)
+func NetworkByIP(ip string, networks []Network) (*Network, error) {
+	ipAddr := net.ParseIP(ip)
+	if ipAddr == nil {
+		return nil, errors.Errorf("invalid IP address %s", ip)
 	}
 	for i := range networks {
 		if _, net, err := net.ParseCIDR(networks[i].Cidr); err != nil {
 			return nil, errors.Errorf("failed to parse CIDR %s: %s", networks[i].Cidr, err)
-		} else if net.Contains(ip) {
+		} else if net.Contains(ipAddr) {
 			return &networks[i], nil
 		}
 	}
