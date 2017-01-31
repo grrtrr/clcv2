@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/hex"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"path"
@@ -83,33 +84,40 @@ func setLocationBasedOnServerName(serverName string) {
 
 }
 
-// resolveNet attempts to resolve @s into a hexadecimal ID of a network in @location.
+// resolveNet attempts to resolve @s into a Network in @location.
 // It supports hex ID, CIDR, IP address, or network name.
 // NOTE: requires global @client to be initialized
-func resolveNet(s, location string) (string, error) {
-	var netw *clcv2.Network
-
-	if _, err := hex.DecodeString(s); err == nil {
+func resolveNet(s, location string) (netw *clcv2.Network, err error) {
+	if _, err = hex.DecodeString(s); err == nil {
 		/* already looks like a HEX ID */
-		return s, nil
+		return nil, nil
 	} else if _, network, err := net.ParseCIDR(s); err == nil { // CIDR string
-		if netw, err = client.GetNetworkIdByCIDR(s, location); err != nil {
-			return "", errors.Errorf("failed to look up CIDR %q in %s: %s",
+		log.Printf("Looking up network for CIDR %s in %s", network, location)
+		if netw, err = client.GetNetworkIdByCIDR(network.String(), location); err != nil {
+			return nil, errors.Errorf("failed to look up CIDR %q in %s: %s",
 				network, location, err)
+		} else if netw == nil {
+			return nil, errors.Errorf("no network matching %s found in %s",
+				s, location)
 		}
 	} else if ip := net.ParseIP(s); ip != nil { // IP address (without CIDR netmask)
+		log.Printf("Looking up network for IP %s in %s", s, location)
 		if netw, err = client.GetNetworkIdByIP(s, location); err != nil {
-			return "", errors.Errorf("failed to look up IP %q in %s: %s",
+			return nil, errors.Errorf("failed to look up IP %q in %s: %s",
 				ip, location, err)
+		} else if netw == nil {
+			return nil, errors.Errorf("no network containing %s found in %s",
+				s, location)
 		}
 	} else { // network name
+		log.Printf("Looking up network named %q in %s", s, location)
 		if netw, err = client.GetNetworkIdByName(s, location); err != nil {
-			return "", errors.Errorf("failed to look up network %q in %s: %s",
+			return nil, errors.Errorf("failed to look up network %q in %s: %s",
 				s, location, err)
+			return nil, errors.Errorf("no network named %q found in %s",
+				s, location)
 		}
 	}
-	if netw == nil {
-		return "", errors.Errorf("no network matching %q found in %s", s, location)
-	}
-	return netw.Id, nil
+	log.Printf("Found network %s with gateway %s (ID %s)", netw.Cidr, netw.Gateway, netw.Id)
+	return netw, nil
 }

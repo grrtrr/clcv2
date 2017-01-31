@@ -33,13 +33,18 @@ func init() {
 			Short: "Add a secondary NIC to server",
 			Long:  "Add a secondary NIC to @server on network @net (using network ID, CIDR, or IP)",
 			Run: func(cmd *cobra.Command, args []string) {
-				netID, err := resolveNet(args[1], location)
+				var server, netID = args[0], args[1]
+
+				network, err := resolveNet(netID, location)
 				if err != nil {
-					exit.Errorf("failed to resolve %s: %s", args[1], err)
+					exit.Errorf("failed to resolve %s: %s", netID, err)
+				} else if network != nil {
+					netID = network.Id
 				}
-				log.Printf("Adding %s NIC on network %s ...")
-				if err = client.ServerAddNic(args[0], netID, addNICFlags.ip); err != nil {
-					exit.Fatalf("failed to add NIC to %s: %s", args[0], err)
+
+				log.Printf("Adding %s NIC on network %s ...", server, netID)
+				if err = client.ServerAddNic(server, netID, addNICFlags.ip); err != nil {
+					log.Fatalf("failed to add NIC to %s: %s", server, err)
 				}
 			},
 		}
@@ -50,13 +55,18 @@ func init() {
 			Short:   "Remove secondary NIC from server",
 			Long:    "Remove secondary NIC identified by @net (network ID, CIDR, or IP) from @serverName",
 			Run: func(cmd *cobra.Command, args []string) {
-				netID, err := resolveNet(args[1], location)
+				var server, netID = args[0], args[1]
+
+				network, err := resolveNet(netID, location)
 				if err != nil {
-					exit.Errorf("failed to resolve %s: %s", args[1], err)
+					exit.Errorf("failed to resolve %s: %s", netID, err)
+				} else if network != nil {
+					netID = network.Id
 				}
-				log.Printf("Deleting %s NIC on network %s ...", args[0], netID)
-				if err = client.ServerDelNic(args[0], netID); err != nil {
-					exit.Fatalf("failed to remove NIC from %s: %s", args[0], err)
+
+				log.Printf("Deleting %s NIC on network %s ...", server, netID)
+				if err = client.ServerDelNic(server, netID); err != nil {
+					log.Fatalf("failed to remove NIC from %s: %s", server, err)
 				}
 			},
 		}
