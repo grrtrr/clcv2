@@ -31,6 +31,8 @@ var (
 )
 
 func init() {
+	// Do not sort the commands alphabetically
+	cobra.EnableCommandSorting = false
 
 	Root.PersistentFlags().StringVarP(&user, "username", "u", os.Getenv("CLC_USERNAME"), "CLC Login Username")
 	Root.PersistentFlags().StringVarP(&pass, "password", "p", os.Getenv("CLC_PASSWORD"), "CLC Login Password")

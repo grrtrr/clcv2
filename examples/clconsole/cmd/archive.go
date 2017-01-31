@@ -55,7 +55,7 @@ func init() {
 
 	Root.AddCommand(&cobra.Command{
 		Use:     "restore  <group|server>  <destination folder>",
-		Short:   "Restore server/group into destination folder",
+		Short:   "Restore server/group from archive",
 		Long:    "Restore server/group from the special CLC 'Archive' folder into designated destination folder",
 		PreRunE: checkArgs(2, "Need server/group name and a destination folder for the restoration"),
 		Run: func(cmd *cobra.Command, args []string) {
