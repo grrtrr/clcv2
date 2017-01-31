@@ -75,8 +75,7 @@ func init() {
 	Root.AddCommand(&cobra.Command{
 		Use:     "desc  <server>",
 		Aliases: []string{"description"},
-		Short:   "Power-off server(s)",
-		Long:    "Do a forceful power-off of server(s) (as opposed to a soft OS-level shutdown)",
+		Short:   "Change server description",
 		PreRunE: checkArgs(2, "Need a server name and a new description for the server"),
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("Setting %s description to to %q.\n", args[0], args[1])
@@ -88,8 +87,8 @@ func init() {
 	})
 
 	Root.AddCommand(&cobra.Command{
-		Use:     "password  <server>  [password]",
-		Aliases: []string{"pass", "set-pass"},
+		Use:     "pass  <server>  [password]",
+		Aliases: []string{"password", "set-pass"},
 		Short:   "Set or generate server password",
 		Long:    "Sets a new password for @server if provided, or generates a paranoid 'garbler' password",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
