@@ -11,8 +11,8 @@ import (
 )
 
 var Delete = &cobra.Command{
-	Use:     "delete  [group|server [group|server]...]",
-	Aliases: []string{"remove", "rm", "del"},
+	Use:     "rm  [group|server [group|server]...]",
+	Aliases: []string{"remove", "del"},
 	Short:   "Delete server(s)/group(s) (CAUTION)",
 	Long:    "Completely and irreversibly removes servers/groups - USE WITH CAUTION",
 	RunE: func(cmd *cobra.Command, args []string) error {
