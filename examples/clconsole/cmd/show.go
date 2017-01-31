@@ -38,6 +38,12 @@ var Show = &cobra.Command{
 	Aliases: []string{"dir", "show"},
 	Short:   "Show server(s)/groups(s)",
 	Long:    "Display detailed server/group information. Group information requires -l to be set.",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if location == "" {
+			fmt.Fprintf(os.Stderr, "Note: no location argument (-l) given, defaulting to %s.\n", client.LocationAlias)
+			location = client.LocationAlias
+		}
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var nodeCallback func(context.Context, *clcv2.GroupInfo) error
 		var servers, groups []string

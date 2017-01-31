@@ -40,6 +40,9 @@ var ShowTemplates = &cobra.Command{
 
 		if len(args) > 0 {
 			region = args[0]
+		} else if region == "" {
+			fmt.Fprintf(os.Stderr, "Note: no location argument (-l) given, defaulting to %s.\n", client.LocationAlias)
+			region = client.LocationAlias
 		}
 
 		capa, err := client.GetDeploymentCapabilities(region)
