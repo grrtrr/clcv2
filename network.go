@@ -50,50 +50,56 @@ func (c *Client) GetNetworks(location, account string) (nets []Network, err erro
 	return
 }
 
-// Get the network Id by the network name
-// @name:      Name of the network to match.
-// @location:  The Network's home datacenter alias.
+// GetNetworkIdByName looks up a network by @name in @location
 func (c *Client) GetNetworkIdByName(name, location string) (*Network, error) {
-	nets, err := c.GetNetworks(location, c.AccountAlias)
-	if err != nil {
-		return nil, err
-	}
-	for idx := range nets {
-		if nets[idx].Name == name {
-			return &nets[idx], nil
-		}
-	}
-	return nil, nil
+	return c.LookupMatchingNet(location, func(n *Network) bool { return n.Name == name })
 }
 
-// Get the network Id by CIDR
-// @cidr:      CIDR of the network to match.
-// @location:  The Network's home datacenter alias.
+// GetNetworkIdByCIDR looks up a network by @cidr in @location.
 func (c *Client) GetNetworkIdByCIDR(cidr, location string) (*Network, error) {
-	nets, err := c.GetNetworks(location, c.AccountAlias)
-	if err != nil {
-		return nil, err
-	}
-	for idx := range nets {
-		if nets[idx].Cidr == cidr {
-			return &nets[idx], nil
-		}
-	}
-	return nil, nil
+	return c.LookupMatchingNet(location, func(n *Network) bool { return n.Cidr == cidr })
 }
 
-//
+// GetNetworkIdByIP tries to find a network matching @ip in @location.
 func (c *Client) GetNetworkIdByIP(ip, location string) (*Network, error) {
-	if ipAddr := net.ParseIP(ip); ipAddr == nil {
+	ipAddr := net.ParseIP(ip)
+	if ipAddr == nil {
 		return nil, errors.Errorf("invalid IP address %s", ip)
 	}
-	/*
-			if _, net, err := net.ParseCIDR(networks[i].Cidr); err != nil {
-			return nil, errors.Errorf("failed to parse CIDR %s: %s", networks[i].Cidr, err)
-		} else if net.Contains(ipAddr) {
-			return &networks[i], nil
+	return c.LookupMatchingNet(location, func(n *Network) bool {
+		_, network, err := net.ParseCIDR(n.Cidr)
+		if err != nil {
+			panic(errors.Errorf("invalid CIDR address in %+v: %s", n, err))
 		}
-	*/
+		return network.Contains(ipAddr)
+	})
+}
+
+// LookupMatchingNet looks up a network in the scope of @c for which @matches returns true.
+func (c *Client) LookupMatchingNet(location string, matches func(*Network) bool) (*Network, error) {
+	// First pass: try the (lowest) scope of the given account alias
+	nets, err := c.GetNetworks(location, c.AccountAlias)
+	if err != nil {
+		return nil, errors.Errorf("failed to lookup up %s networks in %s: %s",
+			c.AccountAlias, location, err)
+	}
+	for idx := range nets {
+		if matches(&nets[idx]) {
+			return &nets[idx], nil
+		}
+	}
+	// Second pass: check the parent account, if any
+	if parentAcct := c.RegisteredAccountAlias(); parentAcct != c.AccountAlias {
+		if nets, err = c.GetNetworks(location, parentAcct); err != nil {
+			return nil, errors.Errorf("failed to lookup up %s networks in %s: %s",
+				parentAcct, location, err)
+		}
+		for idx := range nets {
+			if matches(&nets[idx]) {
+				return &nets[idx], nil
+			}
+		}
+	}
 	return nil, nil
 }
 

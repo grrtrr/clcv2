@@ -194,6 +194,7 @@ func (c *Client) GetServerNets(s Server) (nets []Network, err error) {
 			networks = append(networks, parentNetworks...)
 		}
 	}
+
 	if len(networks) == 0 { // nothing found
 		return nil, nil
 	}

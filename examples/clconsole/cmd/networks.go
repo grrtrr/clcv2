@@ -22,6 +22,8 @@ func init() {
 
 			if len(args) > 0 {
 				region = args[0]
+			} else if region == "" {
+				region = client.LocationAlias
 			}
 
 			fmt.Printf("Networks visible to %s account in %s:\n", client.AccountAlias, strings.ToUpper(region))
