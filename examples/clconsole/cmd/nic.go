@@ -1,11 +1,8 @@
 package cmd
 
 import (
-	"encoding/hex"
 	"fmt"
-	"net"
 
-	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -35,37 +32,6 @@ func init() {
 // addNICFlags
 var addNICFlags struct {
 	ip string // IP address to assign to the secondary NIC
-}
-
-// resolveNet attempts to resolve @s into a hexadecimal ID of a network in @location.
-// It supports hex ID, CIDR, IP address, or network name.
-// NOTE: requires global @client to be initialized
-func resolveNet(s, location string) (string, error) {
-	var netw *clcv2.Network
-
-	if _, err := hex.DecodeString(s); err == nil {
-		/* already looks like a HEX ID */
-		return s, nil
-	} else if _, network, err := net.ParseCIDR(s); err == nil { // CIDR string
-		if netw, err = client.GetNetworkIdByCIDR(s, location); err != nil {
-			return "", errors.Errorf("failed to look up CIDR %q in %s: %s",
-				network, location, err)
-		}
-	} else if ip := net.ParseIP(s); ip != nil { // IP address (without CIDR netmask)
-		if netw, err = client.GetNetworkIdByIP(s, location); err != nil {
-			return "", errors.Errorf("failed to look up IP %q in %s: %s",
-				ip, location, err)
-		}
-	} else { // network name
-		if netw, err = client.GetNetworkIdByName(s, location); err != nil {
-			return "", errors.Errorf("failed to look up network %q in %s: %s",
-				s, location, err)
-		}
-	}
-	if netw == nil {
-		return "", errors.Errorf("no network matching %q found in %s", s, location)
-	}
-	return netw.Id, nil
 }
 
 var addNIC = &cobra.Command{
@@ -102,17 +68,4 @@ var removeNIC = &cobra.Command{
 		}
 		return nil
 	},
-}
-
-// parseNetIP attempts to parse @s as one of
-// - CIDR address (address/mask)
-// - network address (IP address without mask)
-func parseNetIP(s string) (*net.IPNet, error) {
-	if ip, network, err := net.ParseCIDR(s); err == nil {
-		return network, err
-	} else if ip = net.ParseIP(s); ip != nil {
-		mask := ip.DefaultMask()
-		return &net.IPNet{IP: ip.Mask(mask), Mask: mask}, nil
-	}
-	return nil, fmt.Errorf("invalid IP/CIDR string %q", s)
 }

@@ -3,10 +3,12 @@ package cmd
 import (
 	"encoding/hex"
 	"fmt"
+	"net"
 	"os"
 	"path"
 	"strings"
 
+	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/clcv2/utils"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -73,11 +75,41 @@ func groupOrServer(name string) (isServer bool, id string, err error) {
 // setLocationBasedOnServerName corrects the global location value based on @serverName
 func setLocationBasedOnServerName(serverName string) {
 	if srvLoc := utils.ExtractLocationFromServerName(serverName); location == "" {
-		fmt.Fprintf(os.Stderr, "Setting location based on server name %q\n", serverName)
 		location = srvLoc
 	} else if strings.ToUpper(location) != srvLoc {
 		fmt.Fprintf(os.Stderr, "Correcting location from %q to %q based on server %s\n", location, srvLoc, serverName)
 		location = srvLoc
 	}
 
+}
+
+// resolveNet attempts to resolve @s into a hexadecimal ID of a network in @location.
+// It supports hex ID, CIDR, IP address, or network name.
+// NOTE: requires global @client to be initialized
+func resolveNet(s, location string) (string, error) {
+	var netw *clcv2.Network
+
+	if _, err := hex.DecodeString(s); err == nil {
+		/* already looks like a HEX ID */
+		return s, nil
+	} else if _, network, err := net.ParseCIDR(s); err == nil { // CIDR string
+		if netw, err = client.GetNetworkIdByCIDR(s, location); err != nil {
+			return "", errors.Errorf("failed to look up CIDR %q in %s: %s",
+				network, location, err)
+		}
+	} else if ip := net.ParseIP(s); ip != nil { // IP address (without CIDR netmask)
+		if netw, err = client.GetNetworkIdByIP(s, location); err != nil {
+			return "", errors.Errorf("failed to look up IP %q in %s: %s",
+				ip, location, err)
+		}
+	} else { // network name
+		if netw, err = client.GetNetworkIdByName(s, location); err != nil {
+			return "", errors.Errorf("failed to look up network %q in %s: %s",
+				s, location, err)
+		}
+	}
+	if netw == nil {
+		return "", errors.Errorf("no network matching %q found in %s", s, location)
+	}
+	return netw.Id, nil
 }
