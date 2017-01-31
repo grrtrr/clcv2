@@ -42,10 +42,10 @@ func init() {
 	Root.PersistentFlags().DurationVar(&timeout, "timeout", 180*time.Second, "Client default timeout")
 
 	// Initialize client needed by the sub-commands
-	clcv2.Debug = debug
-	clcv2.ClientTimeout = timeout
-
 	cobra.OnInitialize(func() {
+		clcv2.Debug = debug
+		clcv2.ClientTimeout = timeout
+
 		username, password, err := clcv2cli.ResolveUserAndPass(user, pass)
 		if err != nil {
 			exit.Errorf("failed to resolve username/password: %s", err)
