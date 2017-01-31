@@ -13,7 +13,6 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/clcv2/utils"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -123,34 +122,6 @@ var Show = &cobra.Command{
 		}
 		return nil
 	},
-}
-
-// groupOrServer decides whether @name refers to a CLCv2 hardware group or a server.
-// It indicates the result via a returned boolean flag, and resolves @name into @id.
-func groupOrServer(name string) (isServer bool, id string, err error) {
-	// Strip trailing slashes that hint at a group name (but are not part of the CLC name).
-	if where := strings.TrimRight(name, "/"); where == "" {
-		// An emtpy name by default refers to all entries in the default data centre.
-		return false, "", nil
-	} else if _, errHex := hex.DecodeString(where); errHex == nil {
-		/* If the first argument decodes as a hex value, assume it is a Hardware Group UUID */
-		return false, where, nil
-	} else if utils.LooksLikeServerName(where) { /* Starts with a location identifier and is not hex ... */
-		return true, strings.ToUpper(where), nil
-	} else if location != "" { /* Fallback: assume it is a group */
-		if group, err := client.GetGroupByName(where, location); err != nil {
-			return false, where, errors.Errorf("failed to resolve group name %q: %s", where, err)
-		} else if group == nil {
-			return false, where, errors.Errorf("no group named %q was found in %s", where, location)
-		} else {
-			return false, group.Id, nil
-		}
-		return false, "", errors.Errorf("unable to resolve group name %q in %s", where, location)
-	} else if location == "" {
-		return false, "", errors.Errorf("%q looks like a group name - need a location (-l argument) to resolve it", where)
-	} else {
-		return false, "", errors.Errorf("unable to determine whether %q is a server or a group", where)
-	}
 }
 
 // showGroup displays details of Hardware Group folder @root

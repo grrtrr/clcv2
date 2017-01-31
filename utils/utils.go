@@ -5,6 +5,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/olekukonko/tablewriter"
@@ -24,10 +25,10 @@ func LooksLikeServerName(s string) bool {
 	return serverRegexp.MatchString(s)
 }
 
-// Extract the Location prefix from @serverName
+// Extract the Location prefix from @serverName, return in upper-case if found.
 func ExtractLocationFromServerName(serverName string) string {
 	if m := serverRegexp.FindStringSubmatch(serverName); m != nil {
-		return m[1]
+		return strings.ToUpper(m[1])
 	}
 	return ""
 }
