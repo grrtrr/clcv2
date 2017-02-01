@@ -114,6 +114,7 @@ func resolveNet(s, location string) (netw *clcv2.Network, err error) {
 		if netw, err = client.GetNetworkIdByName(s, location); err != nil {
 			return nil, errors.Errorf("failed to look up network %q in %s: %s",
 				s, location, err)
+		} else if netw == nil {
 			return nil, errors.Errorf("no network named %q found in %s",
 				s, location)
 		}
