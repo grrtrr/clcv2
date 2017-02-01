@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/clcv2/utils"
+	"github.com/segmentio/go-prompt"
 )
 
 // Global (commandline flag) variables
@@ -36,10 +36,8 @@ func init() {
 
 // NewCLIClient is a convenience wrapper around clcv2.NewCLIClient
 func NewCLIClient() (*clcv2.CLIClient, error) {
-	username, password, err := ResolveUserAndPass(g_user, g_pass)
-	if err != nil {
-		return nil, err
-	}
+	var username, password = ResolveUserAndPass(g_user, g_pass)
+
 	clcv2.Debug = g_debug
 	clcv2.ClientTimeout = g_timeout
 	return clcv2.NewCLIClient(username, password, g_acct)
@@ -52,30 +50,24 @@ func NewCLIClient() (*clcv2.CLIClient, error) {
  * 3. environment variables (CLC_USERNAME, CLC_PASSWORD),
  * 4. prompt for values
  */
-func ResolveUserAndPass(userDefault, passDefault string) (username, password string, err error) {
-	var prompt string = "Username"
+func ResolveUserAndPass(userDefault, passDefault string) (username, password string) {
+	var promptStr string = "Username"
 
-	username = userDefault
-	if username == "" {
+	if username = userDefault; username == "" {
 		username = os.Getenv("CLC_USERNAME")
 	}
 	if username == "" {
-		if username, err = utils.PromptInput(prompt); err != nil {
-			return
-		}
-		prompt = "Password"
+		username = prompt.StringRequired(promptStr)
+		promptStr = "Password"
 	} else {
-		prompt = fmt.Sprintf("Password for %s", username)
+		promptStr = fmt.Sprintf("Password for %s", username)
 	}
 
-	password = passDefault
-	if password == "" {
+	if password = passDefault; password == "" {
 		password = os.Getenv("CLC_PASSWORD")
 	}
 	if password == "" {
-		if password, err = utils.GetPass(prompt); err != nil {
-			return
-		}
+		password = prompt.PasswordMasked(promptStr)
 	}
-	return
+	return username, password
 }

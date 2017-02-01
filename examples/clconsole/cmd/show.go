@@ -40,7 +40,6 @@ var Show = &cobra.Command{
 	Long:    "Display detailed server/group information. Group information requires -l to be set.",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if location == "" {
-			fmt.Fprintf(os.Stderr, "Note: no location argument (-l) given, defaulting to %s.\n", client.LocationAlias)
 			location = client.LocationAlias
 		}
 	},

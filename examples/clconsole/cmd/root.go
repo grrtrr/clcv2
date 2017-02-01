@@ -45,13 +45,11 @@ func init() {
 
 	// Initialize client needed by the sub-commands
 	cobra.OnInitialize(func() {
+		var username, password = clcv2cli.ResolveUserAndPass(user, pass)
+		var err error
+
 		clcv2.Debug = debug
 		clcv2.ClientTimeout = timeout
-
-		username, password, err := clcv2cli.ResolveUserAndPass(user, pass)
-		if err != nil {
-			exit.Errorf("failed to resolve username/password: %s", err)
-		}
 
 		client, err = clcv2.NewCLIClient(username, password, account)
 		if err != nil {
