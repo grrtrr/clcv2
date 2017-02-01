@@ -10,7 +10,7 @@ import (
 
 func init() {
 	var (
-		nic = &cobra.Command{
+		nic = &cobra.Command{ // Top-level NIC command
 			Use:   "nic",
 			Short: "Manage server NICs",
 			Long:  "Add or remove server secondary network interface",

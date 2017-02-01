@@ -256,7 +256,7 @@ var Clone = &cobra.Command{
 		} else if status == clcv2.Failed {
 			exit.Fatalf("failed to clone %s (will show up as 'under construction')", server.Name)
 		}
-		log.Printf("New server name: %s\n", server.Name)
-		log.Printf("Server Password: \"%s\"\n", credentials.Password)
+		log.Printf("New server %q, with password %q:", server.Name, credentials.Password)
+		showServer(client, server)
 	},
 }

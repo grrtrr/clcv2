@@ -27,7 +27,7 @@ func init() {
 
 var ShowTemplates = &cobra.Command{
 	Use:     "templates  [location]",
-	Aliases: []string{"templ", "tp"},
+	Aliases: []string{"templ", "tpl"},
 	Short:   "List available templates",
 	Long:    "List templates available in a given region. If @location argument is present, it overrides the default region.",
 	Run: func(cmd *cobra.Command, args []string) {

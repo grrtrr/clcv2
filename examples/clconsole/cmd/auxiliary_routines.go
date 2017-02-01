@@ -78,7 +78,7 @@ func setLocationBasedOnServerName(serverName string) {
 	if srvLoc := utils.ExtractLocationFromServerName(serverName); location == "" {
 		location = srvLoc
 	} else if strings.ToUpper(location) != srvLoc {
-		fmt.Fprintf(os.Stderr, "Correcting location from %q to %q based on server %s\n", location, srvLoc, serverName)
+		fmt.Fprintf(os.Stderr, "Correcting location from %q to %q for server %s\n", location, srvLoc, serverName)
 		location = srvLoc
 	}
 

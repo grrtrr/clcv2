@@ -56,8 +56,8 @@ func init() {
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:     "shutdown  [group|server [group|server]...]",
-		Aliases: []string{"stop"},
+		Use:     "halt  [group|server [group|server]...]",
+		Aliases: []string{"shutdown", "stop"},
 		Short:   "Shutdown server(s)",
 		Long:    "Soft (OS-level) shutdown, followed by power-off",
 		Run: func(cmd *cobra.Command, args []string) {

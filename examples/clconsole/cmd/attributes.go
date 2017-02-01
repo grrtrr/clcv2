@@ -46,8 +46,8 @@ func init() {
 	})
 
 	Root.AddCommand(&cobra.Command{
-		Use:     "memory  <server> <memoryGB>",
-		Aliases: []string{"mem", "ram"},
+		Use:     "mem  <server> <memoryGB>",
+		Aliases: []string{"memory", "ram"},
 		Short:   "Set server memory",
 		Long:    "Sets the memory of @server to size @memoryGB",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
