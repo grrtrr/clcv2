@@ -25,23 +25,13 @@ type CLIClient struct {
 // - CLC_LOCATION: takes precedence over default LocationAlias
 // - CLC_BASE_URL: overrides the API URL (for testing)
 func NewCLIClient(user, pass, account string) (*CLIClient, error) {
-	var client = &CLIClient{initClient(user, pass)}
+	var client = &CLIClient{newClient()}
+
+	client.LoginReq = LoginReq{user, pass}
 
 	client.credentialsChanged = client.saveCredentials
 	if Debug {
 		client.Log = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
-	}
-
-	// Set/override %baseURL (experimental).
-	if envURL := os.Getenv("CLC_BASE_URL"); envURL != "" {
-		url, err := url.Parse(envURL)
-		if err != nil {
-			return nil, err
-		}
-		if url.Scheme == "" {
-			url.Scheme = "https"
-		}
-		baseURL = url.String()
 	}
 
 	if err := client.loadCredentials(); err != nil {
@@ -62,6 +52,18 @@ func NewCLIClient(user, pass, account string) (*CLIClient, error) {
 		client.LocationAlias = location
 	} else {
 		client.LocationAlias = client.credentials.LocationAlias
+	}
+
+	// Set/override %baseURL (experimental).
+	if envURL := os.Getenv("CLC_BASE_URL"); envURL != "" {
+		url, err := url.Parse(envURL)
+		if err != nil {
+			return nil, err
+		}
+		if url.Scheme == "" {
+			url.Scheme = "https"
+		}
+		baseURL = url.String()
 	}
 
 	return client, nil
@@ -109,18 +111,20 @@ func (c *CLIClient) saveCredentials() error {
 }
 
 // Return the default path for commandline-client credentials file.
+// It defaults to .clc_credentials.json in the user's home directory, and can be overridden
+// via the $CLC_CREDENTIALS environment variable.
 func defaultCredentialsPath() string {
 	if env := os.Getenv("CLC_CREDENTIALS"); env != "" {
 		return env
 	}
 	u, err := user.Current()
 	if err != nil {
-		panic(errors.Errorf("failed to look up current user: %s", err))
+		log.Fatalf("failed to look up current user: %s", err)
 	}
 	return path.Join(u.HomeDir, ".clc_credentials.json")
 }
 
 // Remove (stale) credentials
-func (c *CLIClient) destroyCredentials() {
+func destroyCredentials() {
 	os.Remove(defaultCredentialsPath())
 }
