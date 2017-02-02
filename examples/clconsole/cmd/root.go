@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"path"
 	"time"
 
 	"github.com/grrtrr/clcv2"
@@ -11,29 +12,22 @@ import (
 )
 
 var (
-	Root = &cobra.Command{
-		Use: "clconsole",
-	}
+	// Top-level command
+	Root = &cobra.Command{Use: path.Base(os.Args[0])}
 
-	// Client, authenticated via PersistentPreRunE
+	// Client, authenticated via OnInitialize
 	client *clcv2.CLIClient
 
 	// Flags:
-
-	user, pass string // username and password
-	account    string // default account alias
-	location   string // default data centre location
-
-	debug bool // enable debug mode
-
-	intvl   time.Duration // poll interval for statistics updates
-	timeout time.Duration // client timeout
+	user, pass string        // username and password
+	account    string        // default account alias
+	location   string        // default data centre location
+	debug      bool          // enable debug mode
+	intvl      time.Duration // poll interval for statistics updates
+	timeout    time.Duration // client timeout
 )
 
 func init() {
-	// Do not sort the commands alphabetically
-	cobra.EnableCommandSorting = false
-
 	Root.PersistentFlags().StringVarP(&user, "username", "u", os.Getenv("CLC_USERNAME"), "CLC Login Username")
 	Root.PersistentFlags().StringVarP(&pass, "password", "p", os.Getenv("CLC_PASSWORD"), "CLC Login Password")
 	Root.PersistentFlags().StringVarP(&account, "account", "a", os.Getenv("CLC_ACCOUNT"), "CLC account to use (instead of default)")
