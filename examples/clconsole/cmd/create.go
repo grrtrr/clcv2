@@ -61,10 +61,10 @@ var Create = &cobra.Command{
 		if _, err := hex.DecodeString(hwGroup); err != nil {
 			log.Printf("Resolving ID of Hardware Group %q ...", hwGroup)
 
-			if group, err := client.GetGroupByName(hwGroup, location); err != nil {
+			if group, err := client.GetGroupByName(hwGroup, conf.Location); err != nil {
 				log.Fatalf("failed to resolve group name %q: %s", hwGroup, err)
 			} else if group == nil {
-				log.Fatalf("no group named %q was found in %s", hwGroup, location)
+				log.Fatalf("no group named %q was found in %s", hwGroup, conf.Location)
 			} else {
 				hwGroup = group.Id
 			}
@@ -74,15 +74,15 @@ var Create = &cobra.Command{
 		if createFlags.net != "" {
 			if _, err := hex.DecodeString(createFlags.net); err == nil {
 				/* already looks like a HEX ID */
-			} else if location == "" {
+			} else if conf.Location == "" {
 				log.Fatalf("Need a location argument (-l) if not using a network ID (%s)", createFlags.net)
 			} else {
 				log.Printf("resolving network id of %q ...", createFlags.net)
 
-				if netw, err := client.GetNetworkIdByName(createFlags.net, location); err != nil {
+				if netw, err := client.GetNetworkIdByName(createFlags.net, conf.Location); err != nil {
 					log.Fatalf("failed to resolve network name %q: %s", createFlags.net, err)
 				} else if netw == nil {
-					log.Fatalf("No network named %q was found in %s", createFlags.net, location)
+					log.Fatalf("No network named %q was found in %s", createFlags.net, conf.Location)
 				} else {
 					createFlags.net = netw.Id
 				}

@@ -18,19 +18,15 @@ func init() {
 		Short:   "Show available networks",
 		Long:    "Show networks available to current account. If @location argument is present, it overrides the default data centre (region).",
 		Run: func(cmd *cobra.Command, args []string) {
-			var region = location
-
 			if len(args) > 0 {
-				region = args[0]
-			} else if region == "" {
-				region = client.LocationAlias
+				conf.Location = args[0]
 			}
 
-			fmt.Printf("Networks visible to %s account in %s:\n", client.AccountAlias, strings.ToUpper(region))
-			showNetworks(client, region, client.AccountAlias)
+			fmt.Printf("Networks visible to %s account in %s:\n", client.AccountAlias, strings.ToUpper(conf.Location))
+			showNetworks(client, conf.Location, client.AccountAlias)
 			if client.AccountAlias != client.RegisteredAccountAlias() {
 				fmt.Printf("Networks visible to parent account %s:\n", client.RegisteredAccountAlias())
-				showNetworks(client, region, client.RegisteredAccountAlias())
+				showNetworks(client, conf.Location, client.RegisteredAccountAlias())
 			}
 		},
 	})

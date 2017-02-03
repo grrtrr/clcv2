@@ -31,27 +31,22 @@ var ShowTemplates = &cobra.Command{
 	Short:   "List available templates",
 	Long:    "List templates available in a given region. If @location argument is present, it overrides the default region.",
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			region       = location                            // global flag
-			templateData = func(tpl clcv2.Template) []string { // print a single table/CSV row
-				return []string{tpl.Name, tpl.Description, tpl.OsType, fmt.Sprintf("%d GB", tpl.StorageSizeGB)}
-			}
-		)
-
-		if len(args) > 0 {
-			region = args[0]
-		} else if region == "" {
-			region = client.LocationAlias
+		var templateData = func(tpl clcv2.Template) []string { // print a single table/CSV row
+			return []string{tpl.Name, tpl.Description, tpl.OsType, fmt.Sprintf("%d GB", tpl.StorageSizeGB)}
 		}
 
-		capa, err := client.GetDeploymentCapabilities(region)
+		if len(args) > 0 {
+			conf.Location = args[0]
+		}
+
+		capa, err := client.GetDeploymentCapabilities(conf.Location)
 		if err != nil {
-			exit.Fatalf("failed to query deployment capabilities of %s: %s", region, err)
+			exit.Fatalf("failed to query deployment capabilities of %s: %s", conf.Location, err)
 		}
 
 		/* Note: not displaying ReservedDrivePaths and DrivePathLength here, I don't understand their use. */
 		/* Note: not listing Capabilities here, since the table gets too large for a single screen */
-		header := []string{fmt.Sprintf("%s Template Name", strings.ToUpper(region)), "Description", "OS", "Storage"}
+		header := []string{fmt.Sprintf("%s Template Name", strings.ToUpper(conf.Location)), "Description", "OS", "Storage"}
 		if templateFlags.csv {
 			var w = csv.NewWriter(os.Stdout)
 

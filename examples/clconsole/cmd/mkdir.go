@@ -32,12 +32,12 @@ var MkDir = &cobra.Command{
 			} else {
 				parentGroup = uuid
 			}
-		} else if location == "" {
+		} else if conf.Location == "" {
 			exit.Errorf("need a location argument (-l) if no parent folder is given")
-		} else if root, err := client.GetGroups(location); err != nil {
-			exit.Fatalf("ailed to look up group root folder in %s: %s", location, err)
+		} else if root, err := client.GetGroups(conf.Location); err != nil {
+			exit.Fatalf("ailed to look up group root folder in %s: %s", conf.Location, err)
 		} else {
-			fmt.Printf("Creating %q at at %s data centre root (%q)\n", args[0], strings.ToUpper(location), root.Name)
+			fmt.Printf("Creating %q at at %s data centre root (%q)\n", args[0], strings.ToUpper(conf.Location), root.Name)
 			parentGroup = root.Id
 		}
 

@@ -146,16 +146,16 @@ func extractServerNames(args []string) (ret []string, err error) {
 			return nil, err
 		} else if isServer {
 			ret = append(ret, where)
-		} else if location == "" {
+		} else if conf.Location == "" {
 			return nil, errors.Errorf("Location argument (-l) is required in order to traverse group %s", name)
-		} else if root, err = client.GetGroups(location); err != nil {
-			return nil, errors.Errorf("Failed to look up groups at %s: %s", location, err)
+		} else if root, err = client.GetGroups(conf.Location); err != nil {
+			return nil, errors.Errorf("Failed to look up groups at %s: %s", conf.Location, err)
 		} else {
 			start := root
 			if where != "" {
 				start = clcv2.FindGroupNode(root, func(g *clcv2.Group) bool { return g.Id == where })
 				if start == nil {
-					return nil, errors.Errorf("Failed to look up group %q in %s - is the location correct?", where, location)
+					return nil, errors.Errorf("Failed to look up group %q in %s - is the location correct?", where, conf.Location)
 				}
 			}
 			groupVisitor(start)

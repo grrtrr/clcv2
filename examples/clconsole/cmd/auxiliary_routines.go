@@ -57,16 +57,16 @@ func groupOrServer(name string) (isServer bool, id string, err error) {
 	} else if utils.LooksLikeServerName(where) { /* Starts with a location identifier and is not hex ... */
 		setLocationBasedOnServerName(where)
 		return true, strings.ToUpper(where), nil
-	} else if location != "" { /* Fallback: assume it is a group */
-		if group, err := client.GetGroupByName(where, location); err != nil {
+	} else if conf.Location != "" { /* Fallback: assume it is a group */
+		if group, err := client.GetGroupByName(where, conf.Location); err != nil {
 			return false, where, errors.Errorf("failed to resolve group name %q: %s", where, err)
 		} else if group == nil {
-			return false, where, errors.Errorf("no group named %q was found in %s", where, location)
+			return false, where, errors.Errorf("no group named %q was found in %s", where, conf.Location)
 		} else {
 			return false, group.Id, nil
 		}
-		return false, "", errors.Errorf("unable to resolve group name %q in %s", where, location)
-	} else if location == "" {
+		return false, "", errors.Errorf("unable to resolve group name %q in %s", where, conf.Location)
+	} else if conf.Location == "" {
 		return false, "", errors.Errorf("%q looks like a group name - need a location (-l argument) to resolve it", where)
 	} else {
 		return false, "", errors.Errorf("unable to determine whether %q is a server or a group", where)
@@ -75,11 +75,11 @@ func groupOrServer(name string) (isServer bool, id string, err error) {
 
 // setLocationBasedOnServerName corrects the global location value based on @serverName
 func setLocationBasedOnServerName(serverName string) {
-	if srvLoc := utils.ExtractLocationFromServerName(serverName); location == "" {
-		location = srvLoc
-	} else if strings.ToUpper(location) != srvLoc {
-		fmt.Fprintf(os.Stderr, "Correcting location from %q to %q for server %s\n", location, srvLoc, serverName)
-		location = srvLoc
+	if srvLoc := utils.ExtractLocationFromServerName(serverName); conf.Location == "" {
+		conf.Location = srvLoc
+	} else if strings.ToUpper(conf.Location) != srvLoc {
+		fmt.Fprintf(os.Stderr, "Correcting location from %q to %q for server %s\n", conf.Location, srvLoc, serverName)
+		conf.Location = srvLoc
 	}
 
 }
@@ -91,6 +91,8 @@ func resolveNet(s, location string) (netw *clcv2.Network, err error) {
 	if _, err = hex.DecodeString(s); err == nil {
 		/* already looks like a HEX ID */
 		return nil, nil
+	} else if location == "" {
+		return nil, errors.Errorf("need a location argument (-l) to resolve network %q", s)
 	} else if _, network, err := net.ParseCIDR(s); err == nil { // CIDR string
 		log.Printf("Looking up network for CIDR %s in %s", network, location)
 		if netw, err = client.GetNetworkIdByCIDR(network.String(), location); err != nil {

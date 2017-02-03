@@ -38,11 +38,6 @@ var Show = &cobra.Command{
 	Aliases: []string{"dir", "show"},
 	Short:   "Show server(s)/groups(s)",
 	Long:    "Display detailed server/group information. Group information requires -l to be set.",
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if location == "" {
-			location = client.LocationAlias
-		}
-	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var nodeCallback func(context.Context, *clcv2.GroupInfo) error
 		var servers, groups []string
@@ -60,7 +55,7 @@ var Show = &cobra.Command{
 		case 1:
 			// Allow user to specify data center name as only argument
 			if regexp.MustCompile(`^[[:alpha:]]{2}\d$`).MatchString(args[0]) {
-				location = args[0]
+				conf.Location = args[0]
 				args = append(args[:0], "")
 				showGroupTree = true
 			}
@@ -77,7 +72,7 @@ var Show = &cobra.Command{
 					fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 				} else if isServer {
 					servers = append(servers, where)
-				} else if location == "" && showGroupTree {
+				} else if conf.Location == "" && showGroupTree {
 					// Printing group trees: requires to resolve the root first.
 					return errors.Errorf("Location argument (-l) is required in order to traverse nested groups.")
 				} else {
@@ -98,9 +93,9 @@ var Show = &cobra.Command{
 
 		for _, uuid := range groups {
 			if (uuid == "" || showGroupTree) && root == nil {
-				root, err = client.GetGroups(location)
+				root, err = client.GetGroups(conf.Location)
 				if err != nil {
-					return errors.Errorf("Failed to look up groups at %s: %s", location, err)
+					return errors.Errorf("Failed to look up groups at %s: %s", conf.Location, err)
 				}
 			}
 
@@ -109,12 +104,12 @@ var Show = &cobra.Command{
 				if uuid != "" {
 					start = clcv2.FindGroupNode(root, func(g *clcv2.Group) bool { return g.Id == uuid })
 					if start == nil {
-						return errors.Errorf("Failed to look up group %q in %s - is the location correct?", uuid, location)
+						return errors.Errorf("Failed to look up group %q in %s - is the location correct?", uuid, conf.Location)
 					}
 				}
 				tree, err := clcv2.WalkGroupHierarchy(context.TODO(), start, nodeCallback)
 				if err != nil {
-					return errors.Errorf("failed to process %s group hierarchy: %s", location, err)
+					return errors.Errorf("failed to process %s group hierarchy: %s", conf.Location, err)
 				}
 				printGroupStructure(tree, "")
 			} else if uuid == "" {

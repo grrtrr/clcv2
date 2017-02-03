@@ -36,7 +36,7 @@ func init() {
 			Run: func(cmd *cobra.Command, args []string) {
 				var server, netID = args[0], args[1]
 
-				network, err := resolveNet(netID, location)
+				network, err := resolveNet(netID, conf.Location)
 				if err != nil {
 					exit.Errorf("failed to resolve %s: %s", netID, err)
 				} else if network != nil {
@@ -59,7 +59,7 @@ func init() {
 			Run: func(cmd *cobra.Command, args []string) {
 				var server, netID = args[0], args[1]
 
-				network, err := resolveNet(netID, location)
+				network, err := resolveNet(netID, conf.Location)
 				if err != nil {
 					exit.Errorf("failed to resolve %s: %s", netID, err)
 				} else if network != nil {

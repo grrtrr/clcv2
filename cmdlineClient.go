@@ -33,10 +33,10 @@ type CLIClient struct {
 
 // ClientConfig encapsulates a commandline-client configuration file
 type ClientConfig struct {
-	Username     string `yaml:"User"`        // CLC portal username
-	Password     string `yaml:"Password"`    // CLC portal password (FIXME: store encrypted)
-	LastAccount  string `yaml:"Account"`     // account that was used last time
-	LastLocation string `yaml:"Data Centre"` // data centre that was used last time
+	Username string `yaml:"User"`        // CLC portal username
+	Password string `yaml:"Password"`    // CLC portal password (FIXME: store encrypted)
+	Account  string `yaml:"Account"`     // account that was used last time
+	Location string `yaml:"Data Centre"` // data centre that was used last time
 }
 
 // NewCLIClient returns an authenticated commandline client.
@@ -83,8 +83,8 @@ func NewCLIClient(conf *ClientConfig) (*CLIClient, error) {
 	}
 
 	// Set/override AccountAlias
-	if conf.LastAccount != "" {
-		client.AccountAlias = conf.LastAccount
+	if conf.Account != "" {
+		client.AccountAlias = conf.Account
 	} else if account := os.Getenv("CLC_ACCOUNT"); account != "" {
 		client.AccountAlias = account
 	} else {
@@ -92,8 +92,8 @@ func NewCLIClient(conf *ClientConfig) (*CLIClient, error) {
 	}
 
 	// Set/override LocationAlias
-	if conf.LastLocation != "" {
-		client.LocationAlias = conf.LastLocation
+	if conf.Location != "" {
+		client.LocationAlias = conf.Location
 	} else if location := os.Getenv("CLC_LOCATION"); location != "" {
 		client.LocationAlias = location
 	} else {
@@ -178,9 +178,9 @@ func configFromCliGo() (*ClientConfig, error) {
 		}
 
 		return &ClientConfig{
-			Username:     cliGoData["user"].(string),
-			Password:     cliGoData["password"].(string),
-			LastLocation: cliGoData["defaultdatacenter"].(string),
+			Username: cliGoData["user"].(string),
+			Password: cliGoData["password"].(string),
+			Location: cliGoData["defaultdatacenter"].(string),
 		}, nil
 	}
 	return nil, nil
