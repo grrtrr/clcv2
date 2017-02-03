@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/grrtrr/clcv2"
-	"github.com/grrtrr/clcv2/clcv2cli"
 	"github.com/grrtrr/exit"
 	"github.com/spf13/cobra"
 )
@@ -27,6 +26,11 @@ var (
 	timeout    time.Duration // client timeout
 )
 
+// Exit handler: ensure that the updated configuration is saved on program termination
+func ExitHandler() {
+	client.SaveConfig()
+}
+
 func init() {
 	Root.PersistentFlags().StringVarP(&user, "username", "u", os.Getenv("CLC_USERNAME"), "CLC Login Username")
 	Root.PersistentFlags().StringVarP(&pass, "password", "p", os.Getenv("CLC_PASSWORD"), "CLC Login Password")
@@ -39,13 +43,17 @@ func init() {
 
 	// Initialize client needed by the sub-commands
 	cobra.OnInitialize(func() {
-		var username, password = clcv2cli.ResolveUserAndPass(user, pass)
 		var err error
 
 		clcv2.Debug = debug
 		clcv2.ClientTimeout = timeout
 
-		client, err = clcv2.NewCLIClient(username, password, account)
+		client, err = clcv2.NewCLIClient(&clcv2.ClientConfig{
+			Username:     user,
+			Password:     pass,
+			LastAccount:  account,
+			LastLocation: location,
+		})
 		if err != nil {
 			exit.Errorf("failed to initialize client: %s", err)
 		}

@@ -121,9 +121,8 @@ func (l LoginRes) String() string {
 
 // NewClient returns an initialized client, performing the login request.
 func NewClient(user, pass string) (*Client, error) {
-	var client = newClient()
+	var client = newClient(user, pass)
 
-	client.LoginReq = LoginReq{user, pass}
 	if err := client.login(); err != nil {
 		return nil, err
 	}
@@ -131,8 +130,8 @@ func NewClient(user, pass string) (*Client, error) {
 }
 
 // newClient initializes the parts common to both Client and CLIClient
-func newClient() *Client {
-	var client = &Client{}
+func newClient(user, pass string) *Client {
+	var client = &Client{LoginReq: LoginReq{user, pass}}
 
 	client.requestor = &http.Client{
 		Transport: rehttp.NewTransport(nil, // default transport

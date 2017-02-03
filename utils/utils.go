@@ -10,6 +10,7 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
+	prompt "github.com/segmentio/go-prompt"
 )
 
 var (
@@ -31,6 +32,33 @@ func ExtractLocationFromServerName(serverName string) string {
 		return strings.ToUpper(m[1])
 	}
 	return ""
+}
+
+// ResolveUserAndPass supports multiple ways of resolving the username and password
+// 1. directly (pass-through),
+// 2. command-line flags (g_user, g_pass),
+// 3. environment variables (CLC_USERNAME, CLC_PASSWORD),
+// 4. prompt for values
+func ResolveUserAndPass(userDefault, passDefault string) (username, password string) {
+	var promptStr string = "Username"
+
+	if username = userDefault; username == "" {
+		username = os.Getenv("CLC_USERNAME")
+	}
+	if username == "" {
+		username = prompt.StringRequired(promptStr)
+		promptStr = "Password"
+	} else {
+		promptStr = fmt.Sprintf("Password for %s", username)
+	}
+
+	if password = passDefault; password == "" {
+		password = os.Getenv("CLC_PASSWORD")
+	}
+	if password == "" {
+		password = prompt.PasswordMasked(promptStr)
+	}
+	return username, password
 }
 
 // Parse time zone offset string @o

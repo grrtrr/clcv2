@@ -2,6 +2,7 @@ package clcv2
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -11,28 +12,60 @@ import (
 	"runtime"
 	"strings"
 
+	yaml "gopkg.in/yaml.v2"
+
+	"github.com/grrtrr/clcv2/utils"
 	"github.com/pkg/errors"
 )
 
 const (
 	// Name of the file to store the last bearer-token credentials
 	credentialsName = "credentials.json"
+
+	// Configuration file in CLC_HOME that stores the ClientConfig
+	configName = "client_config.yml"
 )
 
 // CLIClient specializes Client for command-line use
 type CLIClient struct {
 	*Client
-	ClientConfig
+	Config *ClientConfig
 }
 
 // ClientConfig encapsulates a commandline-client configuration file
 type ClientConfig struct {
-	Username string
-	Password string
+	Username     string `yaml:"User"`        // CLC portal username
+	Password     string `yaml:"Password"`    // CLC portal password (FIXME: store encrypted)
+	LastAccount  string `yaml:"Account"`     // account that was used last time
+	LastLocation string `yaml:"Data Centre"` // data centre that was used last time
+}
 
-	LastAccount  string // track account that was used last
-	LastLocation string // track data centre that was used last
-	*LoginRes
+func (c ClientConfig) String() string {
+	return fmt.Sprintf("user: %s, pass: %s, account: %q, location: %q",
+		c.Username, c.Password, c.LastAccount, c.LastLocation)
+}
+
+// LoadClientConfig attempts to load a configuration from CLC_HOME/configName
+func LoadClientConfig() (*ClientConfig, error) {
+	var confFile = path.Join(GetClcHome(), configName)
+
+	if _, err := os.Stat(confFile); err == nil {
+		var config ClientConfig
+
+		fd, err := os.Open(confFile)
+		if err != nil {
+			return nil, errors.Errorf("failed to load client config: %s", err)
+		}
+		defer fd.Close()
+
+		if content, err := ioutil.ReadAll(fd); err != nil {
+			return nil, errors.Errorf("failed to read %s: %s", confFile, err)
+		} else if err = yaml.Unmarshal(content, &config); err != nil {
+			return nil, errors.Errorf("failed to deserialize %s: %s", confFile, err)
+		}
+		return &config, nil
+	}
+	return configFromCliGo()
 }
 
 // NewCLIClient returns an authenticated commandline client.
@@ -41,11 +74,26 @@ type ClientConfig struct {
 // - CLC_ACCOUNT:  takes precedence over default AccountAlias
 // - CLC_LOCATION: takes precedence over default LocationAlias
 // - CLC_BASE_URL: overrides the API URL (for testing)
-func NewCLIClient(user, pass, account string) (*CLIClient, error) {
-	var client = &CLIClient{Client: newClient()}
+func NewCLIClient(conf *ClientConfig) (*CLIClient, error) {
+	// Attempt to load existing configuration first, and reconcile with @conf.
+	savedConfig, err := LoadClientConfig()
+	if err != nil && conf == nil {
+		return nil, errors.Errorf("failed to load saved configuration: %s", err)
 
-	client.LoginReq = LoginReq{user, pass}
+	} else if savedConfig != nil && (conf == nil || conf.Username == savedConfig.Username) {
+		conf = savedConfig
+	}
 
+	if conf == nil {
+		conf = &ClientConfig{}
+	}
+	// Ensure that both username and password were filled in
+	conf.Username, conf.Password = utils.ResolveUserAndPass(conf.Username, conf.Password)
+
+	client := &CLIClient{
+		Client: newClient(conf.Username, conf.Password),
+		Config: conf,
+	}
 	client.credentialsChanged = client.saveCredentials
 	if Debug {
 		client.Log = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
@@ -60,16 +108,18 @@ func NewCLIClient(user, pass, account string) (*CLIClient, error) {
 	}
 
 	// Set/override AccountAlias
-	if account != "" {
-		client.AccountAlias = account
-	} else if account = os.Getenv("CLC_ACCOUNT"); account != "" {
+	if conf.LastAccount != "" {
+		client.AccountAlias = conf.LastAccount
+	} else if account := os.Getenv("CLC_ACCOUNT"); account != "" {
 		client.AccountAlias = account
 	} else { // may have been initialized from disk
 		client.AccountAlias = client.credentials.AccountAlias
 	}
 
 	// Set/override LocationAlias
-	if location := os.Getenv("CLC_LOCATION"); location != "" {
+	if conf.LastLocation != "" {
+		client.LocationAlias = conf.LastLocation
+	} else if location := os.Getenv("CLC_LOCATION"); location != "" {
 		client.LocationAlias = location
 	} else {
 		client.LocationAlias = client.credentials.LocationAlias
@@ -88,6 +138,25 @@ func NewCLIClient(user, pass, account string) (*CLIClient, error) {
 	}
 
 	return client, nil
+}
+
+// SaveConfig writes the configuration data of @c to CLC_HOME/configName
+func (c *CLIClient) SaveConfig() error {
+	if c == nil || c.Client == nil {
+		return errors.New("attempt to save configuration for nil client")
+	} else if c.Config == nil {
+		return errors.New("attempt to save a nil client configuration")
+	}
+
+	// Update the last-used values
+	c.Config.LastLocation = c.Client.AccountAlias
+	c.Config.LastLocation = c.Client.LocationAlias
+
+	if enc, err := yaml.Marshal(c); err != nil {
+		return errors.Errorf("failed to serialize client configuration: %s", err)
+	} else {
+		return writeCLCdata(configName, enc, 0644)
+	}
 }
 
 // Populate and allocate c.credentials, either by loading from file or via a fresh login.
@@ -126,14 +195,7 @@ func (c *CLIClient) saveCredentials() error {
 	} else if enc, err := json.MarshalIndent(c.credentials, "", "\t"); err != nil {
 		return errors.Errorf("failed to serialize bearer credentials: %s", err)
 	} else {
-		var clcHome = GetClcHome()
-
-		if _, err := os.Stat(clcHome); os.IsNotExist(err) {
-			if err = os.MkdirAll(clcHome, 0700); err != nil {
-				return errors.Errorf("failed to create CLC home %s: %s", clcHome, err)
-			}
-		}
-		return ioutil.WriteFile(path.Join(clcHome, credentialsName), append(enc, '\n'), 0600)
+		return writeCLCdata(credentialsName, append(enc, '\n'), 0600)
 	}
 }
 
@@ -154,4 +216,44 @@ func GetClcHome() string {
 	} else {
 		return path.Join(u.HomeDir, ".clc")
 	}
+}
+
+// configFromCliGo checks to see if a clc-cli-go configuration file exists.
+// If yes, it will import a client configuration based on those settings.
+func configFromCliGo() (*ClientConfig, error) {
+	var confFile = path.Join(GetClcHome(), "config.yml")
+
+	if _, err := os.Stat(confFile); err == nil {
+		var cliGoData = make(map[string]interface{})
+
+		fd, err := os.Open(confFile)
+		if err != nil {
+			return nil, errors.Errorf("failed to load client config: %s", err)
+		}
+		defer fd.Close()
+
+		if content, err := ioutil.ReadAll(fd); err != nil {
+			return nil, errors.Errorf("failed to read %s: %s", confFile, err)
+		} else if err = yaml.Unmarshal(content, cliGoData); err != nil {
+			return nil, errors.Errorf("failed to deserialize %s: %s", confFile, err)
+		}
+		return &ClientConfig{
+			Username:     fmt.Sprint(cliGoData["user"]),
+			Password:     fmt.Sprint(cliGoData["password"]),
+			LastLocation: fmt.Sprint(cliGoData["defaultdatacenter"]),
+		}, nil
+	}
+	return nil, nil
+}
+
+// writeCLCitem writes @data to CLC_HOME/fileName
+func writeCLCdata(fileName string, data []byte, perm os.FileMode) error {
+	var clcHome = GetClcHome()
+
+	if _, err := os.Stat(clcHome); os.IsNotExist(err) {
+		if err = os.MkdirAll(clcHome, 0700); err != nil {
+			return errors.Errorf("failed to create CLC directory %s: %s", clcHome, err)
+		}
+	}
+	return ioutil.WriteFile(path.Join(clcHome, fileName), data, perm)
 }

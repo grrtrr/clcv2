@@ -17,6 +17,8 @@ func main() {
 	// Do not sort the commands alphabetically
 	cobra.EnableCommandSorting = false
 
+	defer cmd.ExitHandler()
+
 	if err := cmd.Root.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
