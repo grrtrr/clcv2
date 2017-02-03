@@ -37,9 +37,9 @@ func NewCLIClient() (*clcv2.CLIClient, error) {
 	clcv2.ClientTimeout = g_timeout
 
 	return clcv2.NewCLIClient(&clcv2.ClientConfig{
-		Username:     g_user,
-		Password:     g_pass,
-		LastAccount:  g_acct,
-		LastLocation: "",
+		Username: g_user,
+		Password: g_pass,
+		Account:  g_acct,
+		Location: "",
 	})
 }
