@@ -8,6 +8,7 @@ LINUX_TARGET   := clconsole
 .PHONY: all clean $(LINUX_TARGET)
 
 $(LINUX_TARGET):
+	go get -d
 	go build -o $@ .
 	strip -s $@
 
