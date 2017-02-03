@@ -2,6 +2,7 @@ package clcv2
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -33,10 +34,15 @@ type CLIClient struct {
 
 // ClientConfig encapsulates a commandline-client configuration file
 type ClientConfig struct {
-	Username string `yaml:"User"`        // CLC portal username
-	Password string `yaml:"Password"`    // CLC portal password (FIXME: store encrypted)
-	Account  string `yaml:"Account"`     // account that was used last time
-	Location string `yaml:"Data Centre"` // data centre that was used last time
+	Username string `yaml:"User"`     // CLC portal username
+	Password string `yaml:"Password"` // CLC portal password (FIXME: store encrypted)
+	Account  string `yaml:"Account"`  // account that was used last time
+	Location string `yaml:"Location"` // data centre that was used last time
+}
+
+func (c ClientConfig) String() string {
+	return fmt.Sprintf("Config(%s/%s, account: %q, location: %q)",
+		c.Username, c.Password, c.Account, c.Location)
 }
 
 // NewCLIClient returns an authenticated commandline client.
@@ -53,16 +59,25 @@ func NewCLIClient(conf *ClientConfig) (*CLIClient, error) {
 	}
 
 	if conf == nil {
-		conf = savedConfig
-	} else if conf.Username == "" && savedConfig != nil {
-		conf.Username, conf.Password = savedConfig.Username, savedConfig.Password
+		if conf = savedConfig; conf == nil {
+			conf = &ClientConfig{}
+		}
+	} else if savedConfig != nil { // Override only parameters that were not explicitly set
+		if conf.Username == "" {
+			conf.Username = savedConfig.Username
+		}
+		if conf.Password == "" {
+			conf.Password = savedConfig.Password
+		}
+		if conf.Account == "" {
+			conf.Account = savedConfig.Account
+		}
+		if conf.Location == "" {
+			conf.Location = savedConfig.Location
+		}
 	}
 
-	if conf == nil {
-		conf = &ClientConfig{}
-	}
-
-	// Ensure that both username and password were filled in
+	// Ensure that both username and password are filled in
 	conf.Username, conf.Password = utils.ResolveUserAndPass(conf.Username, conf.Password)
 
 	client := &CLIClient{

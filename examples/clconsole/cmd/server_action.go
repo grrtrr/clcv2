@@ -75,7 +75,7 @@ func init() {
 
 	Root.AddCommand(&cobra.Command{
 		Use:     "delsnap  [group|server [group|server]...]",
-		Aliases: []string{"delete-snapshot"},
+		Aliases: []string{"rmsnap", "delete-snapshot"},
 		Short:   "Delete snapshot of server(s)",
 		Long:    "Delete server snapshot if it exists (error condition of no snapshot exists)",
 		Run: func(cmd *cobra.Command, args []string) {
