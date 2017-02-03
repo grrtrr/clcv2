@@ -130,21 +130,6 @@ func NewClient(user, pass string) (*Client, error) {
 	return client, nil
 }
 
-// SetContext sets the cancellation context of @c to @ctx
-func (c *Client) SetContext(ctx context.Context) {
-	c.ctx, c.cancel = context.WithCancel(ctx)
-}
-
-// Cancel cancels @c.ctx
-func (c *Client) Cancel() {
-	c.cancel()
-}
-
-// Context returns the cancellation context of @c
-func (c *Client) Context() context.Context {
-	return c.ctx
-}
-
 // newClient initializes the parts common to both Client and CLIClient
 func newClient() *Client {
 	var client = &Client{}
@@ -181,6 +166,21 @@ func (c *Client) login() error {
 		return c.credentialsChanged()
 	}
 	return nil
+}
+
+// SetContext sets the cancellation context of @c to @ctx
+func (c *Client) SetContext(ctx context.Context) {
+	c.ctx, c.cancel = context.WithCancel(ctx)
+}
+
+// Cancel cancels @c.ctx
+func (c *Client) Cancel() {
+	c.cancel()
+}
+
+// Context returns the cancellation context of @c
+func (c *Client) Context() context.Context {
+	return c.ctx
 }
 
 // retryer implements the retry policy: (a) any failure, (b) temporary failure status codes
