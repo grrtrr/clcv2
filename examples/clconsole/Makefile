@@ -1,19 +1,28 @@
-#
-# Targets. Technically, it should be called 'CLC Console', but that is
-# hard to pronounce. Hence 'clonsole' :-)
-#
-WINDOWS_TARGET := clonsole.exe
-LINUX_TARGET   := clconsole
+# Targets
+TARGET         := clconsole
+WINDOWS_TARGET := $(TARGET).exe
+MAC_TARGET     := $(TARGET).mac
 
-.PHONY: all clean $(LINUX_TARGET)
 
-$(LINUX_TARGET):
+.PHONY: all linux windows mac clean get-deps
+
+linux:   $(TARGET)
+windows: $(WINDOWS_TARGET)
+mac:     $(MAC_TARGET)
+
+# Download dependencies
+get-deps:
 	go get -d
+
+$(TARGET): get-deps
 	go build -o $@ .
 	strip -s $@
 
-$(WINDOWS_TARGET):
+$(WINDOWS_TARGET): get-deps
 	GOOS=windows GOARCH=amd64 go build -o $@ .
 
+$(MAC_TARGET): get-deps
+	GOOS=darwin GOARCH=amd64 go build  -o $@ .
+
 clean:
-	$(RM) $(LINUX_TARGET) $(WINDOWS_TARGET) *~
+	$(RM) $(TARGET) $(WINDOWS_TARGET) $(MAC_TARGET) *~
