@@ -206,7 +206,6 @@ func printGroupStructure(g *clcv2.GroupInfo, indent string) {
 		fmt.Printf("%s%s\n", indent+"    ", s)
 	}
 
-	//	sort.Sort(g.Groups)
 	for _, g := range g.Groups {
 		printGroupStructure(g, indent+"    ")
 	}
@@ -226,17 +225,16 @@ func queryServerState(ctx context.Context, node *clcv2.GroupInfo) error {
 				return errors.Errorf("failed to get %q server information: %s", id, err)
 			}
 
-			servLine := id + " "
-			if len(srv.Details.Snapshots) > 0 { // add a tilde to indicate it has a snapshot
-				servLine += "~"
-			}
-
+			infoLine := fmt.Sprintf("%-16s", strings.Join(srv.IPs(), ", "))
 			if srv.Details.PowerState == "started" { // add an asterisk to indicate it's on
-				servLine += "*"
+				infoLine += "*"
+			}
+			if len(srv.Details.Snapshots) > 0 { // add a tilde to indicate it has a snapshot
+				infoLine += "~"
 			}
 
 			select {
-			case serverEntries <- fmt.Sprintf("%-50s %s", servLine, strings.Join(srv.IPs(), ", ")):
+			case serverEntries <- fmt.Sprintf("%-50s %s", id, infoLine):
 			case <-gctx.Done():
 				return gctx.Err()
 			}
