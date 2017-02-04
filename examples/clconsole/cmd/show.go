@@ -226,7 +226,7 @@ func queryServerState(ctx context.Context, node *clcv2.GroupInfo) error {
 				return errors.Errorf("failed to get %q server information: %s", id, err)
 			}
 
-			servLine := id
+			servLine := id + " "
 			if len(srv.Details.Snapshots) > 0 { // add a tilde to indicate it has a snapshot
 				servLine += "~"
 			}
@@ -448,7 +448,7 @@ func showServers(client *clcv2.CLIClient, servnames []string) {
 			// Append a tilde (~) to indicate it has snapshots
 			serverName := server.Name
 			if len(server.Details.Snapshots) > 0 {
-				serverName += "~"
+				serverName += " ~"
 			}
 
 			table.Append([]string{
