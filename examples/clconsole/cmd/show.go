@@ -19,16 +19,18 @@ import (
 )
 
 // Flags
-var (
-	showGroupDetails bool // whether to print group details instead of showing the contained servers
-	showGroupTree    bool // whether to display groups in tree format
-	showIP           bool // whether to just display server IPs (implies showGroupTree and showGroupDetails)
-)
+var showFlags struct {
+	GroupDetails bool // whether to print group details instead of showing the contained servers
+	GroupTree    bool // whether to display groups in tree format
+	GroupID      bool // whether to display the group (hex) UUID at the right hand side
+	IP           bool // whether to just display server IPs (implies GroupTree and GroupDetails)
+}
 
 func init() {
-	Show.Flags().BoolVar(&showGroupDetails, "group", false, "Print group details rather than the contained servers")
-	Show.Flags().BoolVar(&showGroupTree, "tree", false, "Display nested group structure in tree format")
-	Show.Flags().BoolVar(&showIP, "ips", false, "Print group structure with server IPs (implies --group and --tree)")
+	Show.Flags().BoolVar(&showFlags.GroupDetails, "group", false, "Print group details rather than the contained servers")
+	Show.Flags().BoolVar(&showFlags.GroupTree, "tree", false, "Display nested group structure in tree format")
+	Show.Flags().BoolVar(&showFlags.GroupID, "id", true, "Print the UUID of the group as well")
+	Show.Flags().BoolVar(&showFlags.IP, "ip", false, "Print IP addresses of servers as well")
 
 	Root.AddCommand(Show)
 }
@@ -45,34 +47,32 @@ var Show = &cobra.Command{
 		var err error
 
 		// Showing IP information implies printing the nested group structure
-		if showIP {
-			showGroupTree = true
-			showGroupDetails = true
+		if showFlags.IP {
+			showFlags.GroupTree = true
+			showFlags.GroupDetails = true
 			nodeCallback = queryServerState
 		}
 
 		switch l := len(args); l {
-		case 1:
-			// Allow user to specify data center name as only argument
+		case 1: // Allow user to specify data center name as sole argument
 			if regexp.MustCompile(`^[[:alpha:]]{2}\d$`).MatchString(args[0]) {
 				conf.Location = args[0]
 				args = append(args[:0], "")
-				showGroupTree = true
+				showFlags.GroupTree = true
 			}
-		case 0:
-			// The default behaviour is to list all the servers/groups in the default data centre.
+		case 0: // The default behaviour is to list all the servers/groups in the default data centre.
 			args = append(args, "")
-			showGroupTree = true
+			showFlags.GroupTree = true
 		}
 
-		if showGroupDetails || showGroupTree {
+		if showFlags.GroupDetails || showFlags.GroupTree {
 			for _, name := range args {
 				isServer, where, err := groupOrServer(name)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 				} else if isServer {
 					servers = append(servers, where)
-				} else if conf.Location == "" && showGroupTree {
+				} else if conf.Location == "" && showFlags.GroupTree {
 					// Printing group trees: requires to resolve the root first.
 					return errors.Errorf("Location argument (-l) is required in order to traverse nested groups.")
 				} else {
@@ -92,14 +92,14 @@ var Show = &cobra.Command{
 		}
 
 		for _, uuid := range groups {
-			if (uuid == "" || showGroupTree) && root == nil {
+			if (uuid == "" || showFlags.GroupTree) && root == nil {
 				root, err = client.GetGroups(conf.Location)
 				if err != nil {
 					return errors.Errorf("Failed to look up groups at %s: %s", conf.Location, err)
 				}
 			}
 
-			if showGroupTree {
+			if showFlags.GroupTree {
 				start := root
 				if uuid != "" {
 					start = clcv2.FindGroupNode(root, func(g *clcv2.Group) bool { return g.Id == uuid })
@@ -196,7 +196,11 @@ func printGroupStructure(g *clcv2.GroupInfo, indent string) {
 		groupLine = fmt.Sprintf("%s%s/", indent, g.Name)
 	}
 
-	fmt.Printf("%-70s %s\n", groupLine, g.ID)
+	if showFlags.GroupID {
+		fmt.Printf("%-70s %s\n", groupLine, g.ID)
+	} else {
+		fmt.Printf("%s\n", groupLine)
+	}
 
 	for _, s := range g.Servers {
 		fmt.Printf("%s%s\n", indent+"    ", s)
