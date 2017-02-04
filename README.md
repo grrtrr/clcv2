@@ -23,7 +23,7 @@ _Credentials_ can be passed in one of two forms:
   + `-p <your CLC-Portal-Password>`.
 
 2. Using _environment variables_:
-  + `CLC_USERNAME=<CLC-Portal-Username>`,
+  + `CLC_USER=<CLC-Portal-Username>`,
   + `CLC_PASSWORD=<CLC-Portal-Password>`.
 
 If you are using a _CLC sub-account_, _override the default Account Alias_ via one of

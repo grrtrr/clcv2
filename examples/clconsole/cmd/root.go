@@ -30,7 +30,7 @@ func ExitHandler() {
 }
 
 func init() {
-	Root.PersistentFlags().StringVarP(&conf.Username, "username", "u", os.Getenv("CLC_USERNAME"), "CLC Login Username")
+	Root.PersistentFlags().StringVarP(&conf.Username, "username", "u", os.Getenv("CLC_USER"), "CLC Login Username")
 	Root.PersistentFlags().StringVarP(&conf.Password, "password", "p", os.Getenv("CLC_PASSWORD"), "CLC Login Password")
 	Root.PersistentFlags().StringVarP(&conf.Account, "account", "a", os.Getenv("CLC_ACCOUNT"), "CLC account to use (instead of default)")
 	Root.PersistentFlags().StringVarP(&conf.Location, "location", "l", os.Getenv("CLC_LOCATION"), "CLC data centre to use (instead of default)")
