@@ -14,7 +14,7 @@ import (
 func init() {
 	Root.AddCommand(&cobra.Command{
 		Use:     "on  [group|server [group|server]...]",
-		Aliases: []string{"start", "power-on", "up"},
+		Aliases: []string{"start", "power-on", "up", "resume"},
 		Short:   "Power on server(s)",
 		Long:    "Powers on server(s), or resume from paused state",
 		Run: func(cmd *cobra.Command, args []string) {
