@@ -13,9 +13,10 @@ var autoCompleteFile string
 
 // inspired by hugo autocomplete
 var autoComplete = &cobra.Command{
-	Use:   "bash-complete",
-	Short: fmt.Sprintf("Generate  autocompletion script for %s", path.Base(os.Args[0])),
-	Long:  `Generates a shell autocompletion script, to be sourced via e.g. /etc/bash_completion.d`,
+	Use:    "bash-completion",
+	Hidden: true,
+	Short:  fmt.Sprintf("Generate  autocompletion script for %s", path.Base(os.Args[0])),
+	Long:   `Generates a shell autocompletion script, to be sourced via e.g. /etc/bash_completion.d`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := cmd.Root().GenBashCompletionFile(autoCompleteFile); err != nil {
 			return err

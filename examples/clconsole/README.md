@@ -80,6 +80,24 @@ under `credentials.json`. Should this token expire, the library will re-login to
 You can also set a _default data centre location_ via  `-l/--location` or `$CLC_LOCATION`. The program will remember the
 last datacentre, which is handy when doing multiple operations in the same location.
 
+### Bash Auto-Completion
+
+This program has support for [bash completion](https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html),
+which you can simply _generate_ by running
+```bash
+> clconsole bash-completion [-f /path/to/completion.file]
+```
+This will generate the bash-completion file. If that file is in a _non-standard location_, run
+```bash
+> source /path/to/completion.file
+```
+to activate the changes.
+
+If no `-f` flag is provided, the _default location_ is `/etc/bash_completion.d/clconsole.sh` (requires running with `root` permissions). For more details, run
+```bash
+> clconsole bash-completion -h          # or --help
+```
+
 ## Credits
 
 This tool has benefited a lot from studying the code of [clc-go-cli](https://github.com/CenturyLinkCloud/clc-go-cli),
