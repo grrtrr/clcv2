@@ -22,15 +22,6 @@ func init() {
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:     "off  [group|server [group|server]...]",
-		Aliases: []string{"power-off"},
-		Short:   "Power-off server(s)",
-		Long:    "Do a forceful power-off of server(s) (as opposed to a soft OS-level shutdown)",
-		Run: func(cmd *cobra.Command, args []string) {
-			serverCmd("power-off", client.PowerOffServer, args)
-		}})
-
-	Root.AddCommand(&cobra.Command{
 		Use:     "pause  [group|server [group|server]...]",
 		Aliases: []string{"suspend"},
 		Short:   "Pause server(s)",
@@ -54,14 +45,13 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			serverCmd("reboot", client.RebootServer, args)
 		}})
-
 	Root.AddCommand(&cobra.Command{
-		Use:     "halt  [group|server [group|server]...]",
-		Aliases: []string{"shutdown", "stop"},
-		Short:   "Shutdown server(s)",
-		Long:    "Soft (OS-level) shutdown, followed by power-off",
+		Use:     "off  [group|server [group|server]...]",
+		Aliases: []string{"power-off"},
+		Short:   "Power-off server(s)",
+		Long:    "Do a forceful power-off of server(s) (as opposed to a soft OS-level shutdown)",
 		Run: func(cmd *cobra.Command, args []string) {
-			serverCmd("shutdown", client.ShutdownServer, args)
+			serverCmd("power-off", client.PowerOffServer, args)
 		}})
 
 	Root.AddCommand(&cobra.Command{
