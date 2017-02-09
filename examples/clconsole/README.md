@@ -8,37 +8,32 @@ Usage:
   clconsole [command]
 
 Available Commands:
-  archive     Archive server(s)
-  restore     Restore server/group from archive
-  cpu         Set server #CPU
-  mem         Set server memory
-  desc        Change server description
-  pass        Set or generate server password
-  clone       Clone existing server
-  create      Create server from template/source
-  creds       Print login credentials of server(s)
-  rm          Delete server(s)/group(s) (CAUTION)
-  mkdir       Create a new folder
-  mv          Move server(s)/group(s) into different folder
-  nets        Show available networks
-  nic         Manage server NICs
-  ip          Add a public IP to a server
-  rawdisk     Add storage to a server
-  rename      Rename group
-  on          Power on server(s)
-  off         Power-off server(s)
-  pause       Pause server(s)
-  reset       Reset server(s)
-  reboot      Reboot server(s)
-  halt        Shutdown server(s)
-  snapshot    Snapshot server(s)
-  delsnap     Delete snapshot of server(s)
-  revert      Revert server(s) to snapshot
-  ls          Show server(s)/groups(s)
-  templates   List available templates
-  wait        Await completion of queue job and report status
-
-Use "clconsole [command] --help" for more information about a command.
+  archive         Archive server(s)
+  restore         Restore server/group from archive
+  cpu             Set server #CPU
+  mem             Set server memory
+  desc            Change server description
+  pass            Set or generate server password
+  clone           Clone existing server
+  create          Create server from template/source
+  creds           Print login credentials of server(s)
+  rm              Delete server(s)/group(s) (CAUTION)
+  mkdir           Create a new folder
+  mv              Move server(s)/group(s) into different folder
+  nets            Show available networks
+  nic             Manage server NICs
+  off             Power-off or suspend server(s)
+  ip              Add a public IP to a server
+  rawdisk         Add storage to a server
+  rename          Rename group
+  restart         Reboot or reset server(s)
+  on              Power on server(s)
+  snapshot        Snapshot server(s)
+  delsnap         Delete snapshot of server(s)
+  revert          Revert server(s) to snapshot
+  ls              Show server(s)/groups(s)
+  templates       List available templates
+  wait            Await completion of queue job and report status
 ```
 
 ## Building

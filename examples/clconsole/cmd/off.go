@@ -13,7 +13,7 @@ func init() {
 	var powerOff = &cobra.Command{
 		Use:   "off  [group|server [group|server]...]",
 		Short: "Power-off or suspend server(s)",
-		Long:  "Shutdown, power-off (if --hard is set), or pause (if --pause is set) a server",
+		Long:  "Shutdown, power-off (if --hard is set), or pause (if --pause is set) server(s)",
 		Run: func(cmd *cobra.Command, args []string) {
 			if offFlags.pause {
 				serverCmd("pause", client.PauseServer, args)
@@ -24,7 +24,6 @@ func init() {
 			}
 		},
 	}
-
 	powerOff.Flags().BoolVar(&offFlags.pause, "pause", false, "Whether to suspend (pause) server instead of shutting it down")
 	powerOff.Flags().BoolVar(&offFlags.hard, "hard", false, "Whether to use a hard power-off instead of an OS-level shutdown")
 

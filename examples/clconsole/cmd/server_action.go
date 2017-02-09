@@ -22,39 +22,6 @@ func init() {
 		}})
 
 	Root.AddCommand(&cobra.Command{
-		Use:     "pause  [group|server [group|server]...]",
-		Aliases: []string{"suspend"},
-		Short:   "Pause server(s)",
-		Long:    "Pause (suspend) server(s); can be resumed via 'on'",
-		Run: func(cmd *cobra.Command, args []string) {
-			serverCmd("pause", client.PauseServer, args)
-		}})
-
-	Root.AddCommand(&cobra.Command{
-		Use:   "reset  [group|server [group|server]...]",
-		Short: "Reset server(s)",
-		Long:  "Performs hard/forced power-cycle, like pressing the physical 'reset' button",
-		Run: func(cmd *cobra.Command, args []string) {
-			serverCmd("reset", client.ResetServer, args)
-		}})
-
-	Root.AddCommand(&cobra.Command{
-		Use:   "reboot  [group|server [group|server]...]",
-		Short: "Reboot server(s)",
-		Long:  "Soft (OS-level) reboot",
-		Run: func(cmd *cobra.Command, args []string) {
-			serverCmd("reboot", client.RebootServer, args)
-		}})
-	Root.AddCommand(&cobra.Command{
-		Use:     "off  [group|server [group|server]...]",
-		Aliases: []string{"power-off"},
-		Short:   "Power-off server(s)",
-		Long:    "Do a forceful power-off of server(s) (as opposed to a soft OS-level shutdown)",
-		Run: func(cmd *cobra.Command, args []string) {
-			serverCmd("power-off", client.PowerOffServer, args)
-		}})
-
-	Root.AddCommand(&cobra.Command{
 		Use:     "snapshot  [group|server [group|server]...]",
 		Aliases: []string{"snap", "sn"},
 		Short:   "Snapshot server(s)",
