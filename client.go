@@ -287,16 +287,16 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 			return errors.New("failed to re-authenticate, credentials may be invalid")
 		}
 		if _, isLoginReq := reqModel.(*LoginReq); !isLoginReq {
-			if Debug && c.Log != nil {
-				c.Log.Printf("credentials are stale, retrying login ...")
+			if c.Log != nil {
+				c.Log.Printf("%s credentials are stale, trying new login ...", c.Username)
 			}
 			// FIXME: the following is not thread-safe (multiple concurrent clients):
 			c.retryingLogin = true
 			if err = c.login(); err != nil {
 				return err
 			}
-			if Debug && c.Log != nil {
-				c.Log.Printf("re-authentication worked, retrying request ...")
+			if c.Log != nil {
+				c.Log.Printf("%s login successful, redoing original request ...", c.Username)
 			}
 			if err = c.getResponse(url, verb, reqModel, resModel); err != nil {
 				return err
@@ -314,7 +314,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 		return errors.Errorf("failed to read error response %d body: %s", res.StatusCode, err)
 	} else if len(body) > 0 {
 		//
-		// Currently 5 different types of response have been observed:
+		// So far 5 different types of response have been observed:
 		// 1) bare JSON string
 		// 2) struct { message: "string" }
 		// 3) struct { message: "string", "modelState": map[string]interface{} }
