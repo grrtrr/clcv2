@@ -55,7 +55,6 @@ func groupOrServer(name string) (isServer bool, id string, err error) {
 		/* If the first argument decodes as a hex value, assume it is a Hardware Group UUID */
 		return false, where, nil
 	} else if utils.LooksLikeServerName(where) { /* Starts with a location identifier and is not hex ... */
-		setLocationBasedOnServerName(where)
 		return true, strings.ToUpper(where), nil
 	} else if conf.Location != "" { /* Fallback: assume it is a group */
 		if group, err := client.GetGroupByName(where, conf.Location); err != nil {
