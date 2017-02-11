@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -8,6 +9,8 @@ import (
 	"os"
 	"path"
 	"strings"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/clcv2/utils"
@@ -44,6 +47,12 @@ func truncate(s string, maxlen int) string {
 	return s
 }
 
+// CLCItem is a representation of a name in CLC
+type CLCItem struct {
+	ID       string // server name or hardware group UUID
+	isServer bool   // whether @ID refers to a server
+}
+
 // groupOrServer decides whether @name refers to a CLCv2 hardware group or a server.
 // It indicates the result via a returned boolean flag, and resolves @name into @id.
 func groupOrServer(name string) (isServer bool, id string, err error) {
@@ -52,7 +61,7 @@ func groupOrServer(name string) (isServer bool, id string, err error) {
 		// An emtpy name by default refers to all entries in the default data centre.
 		return false, "", nil
 	} else if _, errHex := hex.DecodeString(where); errHex == nil {
-		/* If the first argument decodes as a hex value, assume it is a Hardware Group UUID */
+		/* If it decodes as a hex value, assume it is a Hardware Group UUID */
 		return false, where, nil
 	} else if utils.LooksLikeServerName(where) { /* Starts with a location identifier and is not hex ... */
 		return true, strings.ToUpper(where), nil
@@ -70,6 +79,46 @@ func groupOrServer(name string) (isServer bool, id string, err error) {
 	} else {
 		return false, "", errors.Errorf("unable to determine whether %q is a server or a group", where)
 	}
+}
+
+// resolveNames resolves @args into groups/servers in parallel
+func resolveNames(args []string) (groups, servers []string, err error) {
+	var eg, ctx = errgroup.WithContext(context.Background())
+	var ch = make(chan CLCItem, 0)
+
+	for _, arg := range args {
+		arg := arg
+		eg.Go(func() error {
+			isServer, where, err := groupOrServer(arg)
+			if err != nil {
+				return err
+			}
+			select {
+			case ch <- CLCItem{ID: where, isServer: isServer}:
+			case <-ctx.Done():
+			}
+			return ctx.Err()
+		})
+	}
+
+	// close channel when done
+	go func() {
+		eg.Wait()
+		close(ch)
+	}()
+
+	for item := range ch {
+		if item.isServer {
+			servers = append(servers, item.ID)
+		} else {
+			groups = append(groups, item.ID)
+		}
+	}
+	// Return the accumulated error
+	if err = eg.Wait(); err != nil {
+		return nil, nil, err
+	}
+	return groups, servers, nil
 }
 
 // setLocationBasedOnServerName corrects the global location value based on @serverName
