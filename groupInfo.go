@@ -52,8 +52,7 @@ type WalkFn func(*Group) error
 
 // WalkGroupTree is the equivalent of filepath.Walk for nested clcv2 Group trees.
 func WalkGroupTree(root *Group, w WalkFn) error {
-	err := w(root)
-	if err != nil {
+	if err := w(root); err != nil {
 		return err
 	}
 	for idx := range root.Groups {
@@ -64,10 +63,11 @@ func WalkGroupTree(root *Group, w WalkFn) error {
 	return nil
 }
 
-// WalkGroupHierarchy converts the tree at @root into a processed GroupInfo tree
+// WalkGroupHierarchy converts the tree at @root into a processed GroupInfo tree;
+// implementing the Visitor pattern by calling @cb on each visited node.
 // @ctx:  cancellation context
 // @root: root of the tree to start at
-// @cb:   callback function to process a single GroupInfo entry
+// @cb:   callback function to process a single GroupInfo entry (optional, may be nil)
 func WalkGroupHierarchy(
 	ctx context.Context,
 	root *Group,
@@ -137,10 +137,14 @@ func WalkGroupHierarchy(
 	}
 
 	for _, node := range m {
-		if node.Parent == "" { // root node
+		if node.Parent == "" { // root of the entire tree
 			ret = node
 		} else if parent, ok := m[node.Parent]; !ok {
-			return nil, errors.Errorf("no parent found for node %s/%s", node.Name, node.ID)
+			if node.ID == root.Id { // start sub-directory that was requested for this traversal
+				ret = node
+			} else { // sub-directory node: must have a parent node
+				return nil, errors.Errorf("no parent found for node %s/%s %+v", node.Name, node.ID, node)
+			}
 		} else if l := len(parent.Groups); l == 0 {
 			parent.Groups = append(parent.Groups, node)
 		} else if idx := sort.Search(l, func(i int) bool { return node.LT(parent.Groups[i]) }); idx == l {
