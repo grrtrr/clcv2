@@ -78,7 +78,12 @@ var delete = &cobra.Command{
 				if !deleteFlags.keep && deleteFlags.recurse { // wipe this directory and all of its children
 					deleteSingleGroup(eg, groupDir)
 				} else if len(groupDir.Servers) == 0 && (!deleteFlags.recurse || len(groupDir.Groups) == 0) {
-					log.Printf("Nothing to delete in %s - directory empty", groupDir.Name)
+					if l := len(groupDir.Groups); l == 0 {
+						log.Printf("Nothing to delete in %s - directory empty", groupDir.Name)
+					} else if !deleteFlags.recurse {
+						log.Printf("Nothing to delete in %s (will not delete %d subdirectories since --recurse=false)",
+							groupDir.Name, l)
+					}
 				} else {
 					for _, srv := range groupDir.Servers {
 						deleteSingleServer(eg, srv)
