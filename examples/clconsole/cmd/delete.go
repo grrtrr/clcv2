@@ -20,7 +20,7 @@ var deleteFlags struct {
 }
 
 func init() {
-	delete.Flags().BoolVarP(&deleteFlags.recurse, "recurse", "r", true, "When deleting a group directory, also delete all of its sub-directories.")
+	delete.Flags().BoolVarP(&deleteFlags.recurse, "recurse", "r", true, "When deleting a group directory, also delete all of its sub-directories")
 	delete.Flags().BoolVarP(&deleteFlags.keep, "keep-directory", "k", false, "Keep any specified group directories (only delete their contents)")
 
 	Root.AddCommand(delete)
