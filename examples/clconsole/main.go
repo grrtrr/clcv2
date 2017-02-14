@@ -11,8 +11,8 @@ import (
 )
 
 func main() {
-	// Logging format - we don't need date
-	log.SetFlags(log.Ltime | log.Lshortfile)
+	// Logging format - we don't need date/file
+	log.SetFlags(log.Ltime)
 
 	// Do not sort the commands alphabetically
 	cobra.EnableCommandSorting = false

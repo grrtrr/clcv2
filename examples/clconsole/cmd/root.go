@@ -50,6 +50,7 @@ func init() {
 		if err != nil {
 			exit.Errorf("failed to initialize client: %s", err)
 		}
+
 		// Set the fallback data centre if no location was given
 		if conf.Location == "" {
 			conf.Location = client.LocationAlias
