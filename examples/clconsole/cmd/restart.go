@@ -12,7 +12,7 @@ func init() {
 	var restart = &cobra.Command{
 		Use:   "restart  [group|server [group|server]...]",
 		Short: "Reboot or reset server(s)",
-		Long:  "Shutdown, power-off (if --hard is set), or pause (if --pause is set) a server",
+		Long:  "Reboot (OS-level) or reset (if --hard) a server",
 		Run: func(cmd *cobra.Command, args []string) {
 			if restartFlags.hard {
 				serverCmd("reset", client.ResetServer, args)
