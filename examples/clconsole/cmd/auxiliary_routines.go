@@ -86,6 +86,12 @@ func resolveNames(args []string) (groups, servers []string, err error) {
 	var eg, ctx = errgroup.WithContext(context.Background())
 	var ch = make(chan CLCItem, 0)
 
+	// Do a first pass to check if there are mixed server/group arguments.
+	// Correct the location based on the server name if necessary
+	for _, arg := range args {
+		setLocationBasedOnServerName(arg)
+	}
+
 	for _, arg := range args {
 		arg := arg
 		eg.Go(func() error {
@@ -123,13 +129,14 @@ func resolveNames(args []string) (groups, servers []string, err error) {
 
 // setLocationBasedOnServerName corrects the global location value based on @serverName
 func setLocationBasedOnServerName(serverName string) {
-	if srvLoc := utils.ExtractLocationFromServerName(serverName); conf.Location == "" {
+	if !utils.LooksLikeServerName(serverName) {
+		/* skip */
+	} else if srvLoc := utils.ExtractLocationFromServerName(serverName); conf.Location == "" {
 		conf.Location = srvLoc
 	} else if strings.ToUpper(conf.Location) != srvLoc {
 		fmt.Fprintf(os.Stderr, "Correcting location from %q to %q for server %s\n", conf.Location, srvLoc, serverName)
 		conf.Location = srvLoc
 	}
-
 }
 
 // resolveNet attempts to resolve @s into a Network in @location.
