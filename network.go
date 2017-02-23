@@ -2,8 +2,12 @@ package clcv2
 
 import (
 	"fmt"
+	"log"
 	"net"
+	"path"
+	"time"
 
+	"github.com/kr/pretty"
 	"github.com/pkg/errors"
 )
 
@@ -203,6 +207,64 @@ func (c *Client) GetNetworkDetailsByIp(ip, location string) (iad *IpAddressDetai
 		}
 	}
 	return
+}
+
+// ClaimNetwork claims a new network in @datacentre and returns a status URI for this request.
+func (c *Client) ClaimNetwork(datacentre string) (statusURI string, err error) {
+	var path = fmt.Sprintf("/v2-experimental/networks/%s/%s/claim", c.AccountAlias, datacentre)
+	var res struct {
+		ID  string `json:"operationId"`
+		URI string `json:"URI"`
+	}
+
+	if err := c.getCLCResponse("POST", path, nil, &res); err != nil {
+		return "", err
+	}
+	return res.URI, nil
+}
+
+// ReleaseNetwork releases @networkID in @datacentre
+func (c *Client) ReleaseNetwork(datacentre, networkID string) error {
+	path := fmt.Sprintf("/v2-experimental/networks/%s/%s/%s/release", c.AccountAlias, datacentre, networkID)
+	return c.getCLCResponse("POST", path, nil, nil)
+}
+
+// claimNetworkStatus is returned by a GET on the URI returned from a claim-network POST operation.
+type claimNetworkStatus struct {
+	Type    string
+	Status  QueueStatus
+	Summary struct {
+		BluePrintID uint64
+		Location    string
+	}
+	Source struct {
+		Username    string
+		RequestedAt time.Time
+	}
+	// Contains a single link "network", which then contains the network ID
+	Links []Link
+}
+
+// PollClaimNetworkStatus polls @uri until the claim-network request succeeds or fails.
+// FIXME: return network ID, take callback
+func (c *Client) PollClaimNetworkStatus(uri string) (status QueueStatus, err error) {
+	var cs claimNetworkStatus
+	for prevStatus := Unknown; ; {
+
+		err := c.getCLCResponse("GET", uri, nil, &cs)
+		if err != nil {
+			return Unknown, errors.Errorf("failed to query queue status of %s: %s", path.Base(uri), err)
+		}
+		pretty.Println(cs)
+		if cs.Status != prevStatus {
+			log.Printf("Claim network %d %s: %s", cs.Summary.BluePrintID, cs.Source.RequestedAt, cs.Status)
+			prevStatus = cs.Status
+		}
+		if cs.Status == Succeeded || cs.Status == Failed {
+			return cs.Status, nil
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
 }
 
 // Update the attributes of a given Network via PUT.
