@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/clcv2/clcv2cli"
 	"github.com/grrtrr/exit"
 	"github.com/kr/pretty"
@@ -49,24 +50,29 @@ func main() {
 	if *simple {
 		pretty.Println(details)
 	} else {
-		fmt.Printf("Details of %s (%s):\n", details.Name, details.Description)
-		fmt.Printf("CIDR:    %s\n", details.Cidr)
-		fmt.Printf("Gateway: %s\n", details.Gateway)
-		fmt.Printf("Type:    %s\n", details.Type)
-		fmt.Printf("VLAN:    %d\n", details.Vlan)
+		printNetworkDetails(details)
+	}
+}
 
-		if len(details.IpAddresses) > 0 {
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetAutoFormatHeaders(false)
-			table.SetAlignment(tablewriter.ALIGN_RIGHT)
-			table.SetAutoWrapText(false)
+// printNetworkDetails pretty-prints @details
+func printNetworkDetails(details clcv2.NetworkDetails) {
+	fmt.Printf("Details of %s (%s):\n", details.Name, details.Description)
+	fmt.Printf("CIDR:    %s\n", details.Cidr)
+	fmt.Printf("Gateway: %s\n", details.Gateway)
+	fmt.Printf("Type:    %s\n", details.Type)
+	fmt.Printf("VLAN:    %d\n", details.Vlan)
 
-			table.SetHeader([]string{"Address", "Claimed", "Server", "Type"})
-			for _, i := range details.IpAddresses {
-				table.Append([]string{i.Address, fmt.Sprint(i.Claimed), i.Server, i.Type})
-			}
-			table.Render()
+	if len(details.IpAddresses) > 0 {
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetAutoFormatHeaders(false)
+		table.SetAlignment(tablewriter.ALIGN_RIGHT)
+		table.SetAutoWrapText(false)
+
+		table.SetHeader([]string{"Address", "Claimed", "Server", "Type"})
+		for _, i := range details.IpAddresses {
+			table.Append([]string{i.Address, fmt.Sprint(i.Claimed), i.Server, i.Type})
 		}
+		table.Render()
 	}
 }
 

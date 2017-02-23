@@ -2,12 +2,9 @@ package clcv2
 
 import (
 	"fmt"
-	"log"
 	"net"
-	"path"
 	"time"
 
-	"github.com/kr/pretty"
 	"github.com/pkg/errors"
 )
 
@@ -139,6 +136,7 @@ type IpAddressDetails struct {
 	Server string
 }
 
+// NetworkDetails is returned in response to a get-network-details call.
 type NetworkDetails struct {
 	Network
 	IpAddresses []IpAddressDetails
@@ -154,7 +152,7 @@ type NetworkDetails struct {
 //              - "free"    (returns details of the network as well as information about free IP addresses) or
 //              - "all"     (returns details of the network as well as information about all IP addresses).
 func (c *Client) GetNetworkDetails(datacentre, network, ipQuery string) (det NetworkDetails, err error) {
-	path := fmt.Sprintf("/v2-experimental/networks/%s/%s/%s?ipAddresses=%s", c.credentials.AccountAlias, datacentre, network, ipQuery)
+	path := fmt.Sprintf("/v2-experimental/networks/%s/%s/%s?ipAddresses=%s", c.AccountAlias, datacentre, network, ipQuery)
 	err = c.getCLCResponse("GET", path, nil, &det)
 	return
 }
@@ -209,62 +207,64 @@ func (c *Client) GetNetworkDetailsByIp(ip, location string) (iad *IpAddressDetai
 	return
 }
 
-// ClaimNetwork claims a new network in @datacentre and returns a status URI for this request.
-func (c *Client) ClaimNetwork(datacentre string) (statusURI string, err error) {
-	var path = fmt.Sprintf("/v2-experimental/networks/%s/%s/claim", c.AccountAlias, datacentre)
-	var res struct {
-		ID  string `json:"operationId"`
-		URI string `json:"URI"`
+// claimNetworkStatus is returned by a GET on the URI returned from a claim-network POST operation.
+type claimNetworkStatus struct {
+	RequestType string
+	Status      QueueStatus
+	Source      struct {
+		Username    string
+		RequestedAt time.Time
 	}
+	Summary struct {
+		BlueprintID uint64
+		LocationID  string
+		Links       []StatusLink // Contains a single link "network", which then contains the network ID
+	}
+}
+
+// ClaimNetwork claims a new network in @datacentre and returns a status URI for this request.
+func (c *Client) ClaimNetwork(datacentre string, cb func(QueueStatus)) (networkID string, err error) {
+	var (
+		path = fmt.Sprintf("/v2-experimental/networks/%s/%s/claim", c.AccountAlias, datacentre)
+		res  struct {
+			ID  string `json:"operationId"`
+			URI string `json:"URI"`
+		}
+		cs claimNetworkStatus
+	)
 
 	if err := c.getCLCResponse("POST", path, nil, &res); err != nil {
 		return "", err
 	}
-	return res.URI, nil
+
+	for prevStatus := Unknown; ; {
+		if err := c.getCLCResponse("GET", res.URI, nil, &cs); err != nil {
+			return "", errors.Errorf("failed to query claim-network queue status: %s", err)
+		}
+		if cs.Status != prevStatus {
+			if cb != nil {
+				cb(cs.Status)
+			}
+			prevStatus = cs.Status
+		}
+		if cs.Status == Failed {
+			return "", errors.Errorf("claim-network failed with status %q", cs.Status)
+		} else if cs.Status == Succeeded {
+			for _, link := range cs.Summary.Links {
+				if link.Rel == "network" {
+					return link.Id, nil
+				}
+			}
+			return "", errors.Errorf("claim-network #%d succeeded, but returned no network ID", cs.Summary.BlueprintID)
+		}
+		time.Sleep(5 * time.Second) // operation may take several minutes
+	}
 }
 
 // ReleaseNetwork releases @networkID in @datacentre
 func (c *Client) ReleaseNetwork(datacentre, networkID string) error {
 	path := fmt.Sprintf("/v2-experimental/networks/%s/%s/%s/release", c.AccountAlias, datacentre, networkID)
 	return c.getCLCResponse("POST", path, nil, nil)
-}
-
-// claimNetworkStatus is returned by a GET on the URI returned from a claim-network POST operation.
-type claimNetworkStatus struct {
-	Type    string
-	Status  QueueStatus
-	Summary struct {
-		BluePrintID uint64
-		Location    string
-	}
-	Source struct {
-		Username    string
-		RequestedAt time.Time
-	}
-	// Contains a single link "network", which then contains the network ID
-	Links []Link
-}
-
-// PollClaimNetworkStatus polls @uri until the claim-network request succeeds or fails.
-// FIXME: return network ID, take callback
-func (c *Client) PollClaimNetworkStatus(uri string) (status QueueStatus, err error) {
-	var cs claimNetworkStatus
-	for prevStatus := Unknown; ; {
-
-		err := c.getCLCResponse("GET", uri, nil, &cs)
-		if err != nil {
-			return Unknown, errors.Errorf("failed to query queue status of %s: %s", path.Base(uri), err)
-		}
-		pretty.Println(cs)
-		if cs.Status != prevStatus {
-			log.Printf("Claim network %d %s: %s", cs.Summary.BluePrintID, cs.Source.RequestedAt, cs.Status)
-			prevStatus = cs.Status
-		}
-		if cs.Status == Succeeded || cs.Status == Failed {
-			return cs.Status, nil
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
 }
 
 // Update the attributes of a given Network via PUT.

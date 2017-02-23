@@ -14,6 +14,7 @@ type QueueStatus string
 const (
 	NotStarted QueueStatus = "notStarted"
 	Executing  QueueStatus = "executing"
+	Running    QueueStatus = "running" // used by the claim-network experimental code
 	Succeeded  QueueStatus = "succeeded"
 	Failed     QueueStatus = "failed"
 	Resumed    QueueStatus = "resumed"
