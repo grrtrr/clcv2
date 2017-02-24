@@ -13,6 +13,7 @@ import (
 
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/clcv2/utils"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -54,14 +55,37 @@ func main() {
 // printNetworkDetails pretty-prints @details
 // FIXME: duplicated from details.go
 func printNetworkDetails(details clcv2.NetworkDetails) {
-	fmt.Printf("Details of %s (%s):\n", details.Name, details.Description)
-	fmt.Printf("CIDR:    %s\n", details.Cidr)
-	fmt.Printf("Gateway: %s\n", details.Gateway)
-	fmt.Printf("Type:    %s\n", details.Type)
-	fmt.Printf("VLAN:    %d\n", details.Vlan)
+	var table = tablewriter.NewWriter(os.Stdout)
+	var claimed []clcv2.IpAddressDetails
+	var free []string
 
 	if len(details.IpAddresses) > 0 {
-		table := tablewriter.NewWriter(os.Stdout)
+		for _, addr := range details.IpAddresses {
+			if addr.Claimed {
+				claimed = append(claimed, addr)
+			} else {
+				free = append(free, addr.Address)
+			}
+		}
+	}
+
+	fmt.Printf("Details of network %q", details.Name)
+	if details.Description != details.Name {
+		fmt.Printf(" (%s)", details.Description)
+	}
+	fmt.Printf(", ID %s:\n", details.Id)
+	table.SetHeader([]string{"CIDR", "Gateway", fmt.Sprintf("Free IPs (%d)", len(free)), "Type", "VLAN"})
+	table.Append([]string{
+		details.Cidr,
+		details.Gateway,
+		strings.Join(utils.CollapseIpRanges(free), ", "),
+		details.Type,
+		fmt.Sprint(details.Vlan),
+	})
+	table.Render()
+
+	if len(claimed) > 0 {
+		table = tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_RIGHT)
 		table.SetAutoWrapText(false)

@@ -8,20 +8,17 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/clcv2/clcv2cli"
+	"github.com/grrtrr/clcv2/utils"
 	"github.com/grrtrr/exit"
-	"github.com/kr/pretty"
 	"github.com/olekukonko/tablewriter"
 )
 
 func main() {
-	var (
-		query    = flag.String("q", "none", "Filter IP addresses; one of 'none', 'claimed', 'free', or 'all'")
-		location = flag.String("l", os.Getenv("CLC_LOCATION"), "Data centre alias (needed to resolve IDs)")
-		simple   = flag.Bool("simple", false, "Use simple (debugging) output format")
-	)
+	var location = flag.String("l", os.Getenv("CLC_LOCATION"), "Data centre alias (needed to resolve IDs)")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options] -l <Location>  <Network-ID (hex)>\n", path.Base(os.Args[0]))
@@ -29,12 +26,11 @@ func main() {
 	}
 
 	flag.Parse()
+
 	/* Location is required (despite hex id), an empty location leads to a "404 Not Found" response. */
 	if flag.NArg() != 1 || *location == "" {
 		flag.Usage()
 		os.Exit(1)
-	} else if !inStringArray(*query, "none", "claimed", "free", "all") {
-		exit.Errorf("Invalid IP query %q. Try -h")
 	}
 
 	client, err := clcv2cli.NewCLIClient()
@@ -42,28 +38,48 @@ func main() {
 		exit.Fatal(err.Error())
 	}
 
-	details, err := client.GetNetworkDetails(*location, flag.Arg(0), *query)
+	// Always query all IPs. It does not increase the overhead much and is the most comprehensive variant.
+	// Other possible query types are: "claimed" , "free", and "none" (does not list any IP addresses).
+	details, err := client.GetNetworkDetails(*location, flag.Arg(0), "all")
 	if err != nil {
 		exit.Fatalf("failed to query network details of %s: %s", flag.Arg(0), err)
 	}
-
-	if *simple {
-		pretty.Println(details)
-	} else {
-		printNetworkDetails(details)
-	}
+	printNetworkDetails(details)
 }
 
 // printNetworkDetails pretty-prints @details
 func printNetworkDetails(details clcv2.NetworkDetails) {
-	fmt.Printf("Details of %s (%s):\n", details.Name, details.Description)
-	fmt.Printf("CIDR:    %s\n", details.Cidr)
-	fmt.Printf("Gateway: %s\n", details.Gateway)
-	fmt.Printf("Type:    %s\n", details.Type)
-	fmt.Printf("VLAN:    %d\n", details.Vlan)
+	var table = tablewriter.NewWriter(os.Stdout)
+	var claimed []clcv2.IpAddressDetails
+	var free []string
 
 	if len(details.IpAddresses) > 0 {
-		table := tablewriter.NewWriter(os.Stdout)
+		for _, addr := range details.IpAddresses {
+			if addr.Claimed {
+				claimed = append(claimed, addr)
+			} else {
+				free = append(free, addr.Address)
+			}
+		}
+	}
+
+	fmt.Printf("Details of network %q", details.Name)
+	if details.Description != details.Name {
+		fmt.Printf(" (%s)", details.Description)
+	}
+	fmt.Printf(", id %s:\n", details.Id)
+	table.SetHeader([]string{"CIDR", "Gateway", fmt.Sprintf("Free IPs (%d)", len(free)), "Type", "VLAN"})
+	table.Append([]string{
+		details.Cidr,
+		details.Gateway,
+		strings.Join(utils.CollapseIpRanges(free), ", "),
+		details.Type,
+		fmt.Sprint(details.Vlan),
+	})
+	table.Render()
+
+	if len(claimed) > 0 {
+		table = tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_RIGHT)
 		table.SetAutoWrapText(false)
@@ -74,14 +90,4 @@ func printNetworkDetails(details clcv2.NetworkDetails) {
 		}
 		table.Render()
 	}
-}
-
-/* go replacement for python 'x in list' */
-func inStringArray(s string, list ...string) bool {
-	for _, v := range list {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }
