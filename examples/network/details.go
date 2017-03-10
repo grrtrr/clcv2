@@ -67,7 +67,7 @@ func printNetworkDetails(details clcv2.NetworkDetails) {
 	if details.Description != details.Name {
 		fmt.Printf(" (%s)", details.Description)
 	}
-	fmt.Printf(", id %s:\n", details.Id)
+	fmt.Printf(", ID %s:\n", details.Id)
 	table.SetHeader([]string{"CIDR", "Gateway", fmt.Sprintf("Free IPs (%d)", len(free)), "Type", "VLAN"})
 	table.Append([]string{
 		details.Cidr,

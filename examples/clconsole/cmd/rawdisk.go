@@ -12,7 +12,7 @@ import (
 
 var Rawdisk = &cobra.Command{
 	Use:     "rawdisk <server> <sizeGB>",
-	Aliases: []string{"storage", "disk"},
+	Aliases: []string{"raw", "disk"},
 	Short:   "Add storage to a server",
 	Long:    "Adds @sizeGB of storage as 'raw' disk to @server",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
