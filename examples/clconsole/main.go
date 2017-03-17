@@ -14,8 +14,8 @@ func main() {
 	// Logging format - we don't need date/file
 	log.SetFlags(log.Ltime)
 
-	// Do not sort the commands alphabetically
-	cobra.EnableCommandSorting = false
+	// Do sort the commands alphabetically
+	cobra.EnableCommandSorting = true
 
 	defer cmd.ExitHandler()
 
