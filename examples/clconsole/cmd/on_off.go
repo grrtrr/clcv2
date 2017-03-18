@@ -1,5 +1,8 @@
 package cmd
 
+/*
+ * On/off, shutdown, pause and suspend operations on servers
+ */
 import "github.com/spf13/cobra"
 
 // offFlags groups the flags pertaining to powering off, shutting down, or pausing a server
@@ -29,6 +32,7 @@ func init() {
 
 	Root.AddCommand(powerOff)
 
+	// Pause - separete (hidden) command to suspend a server
 	Root.AddCommand(&cobra.Command{
 		Use:     "pause  [group|server [group|server]...]",
 		Hidden:  true, /* already included in 'off' */
@@ -39,6 +43,7 @@ func init() {
 			serverCmd("pause", client.PauseServer, args)
 		}})
 
+	// Shutdown - separate (hidden) command for OS-level (soft) shutdown
 	Root.AddCommand(&cobra.Command{
 		Use:     "shutdown  [group|server [group|server]...]",
 		Hidden:  true, /* already included in 'off' */
@@ -49,4 +54,13 @@ func init() {
 			serverCmd("shutdown", client.ShutdownServer, args)
 		}})
 
+	// Power-on / un-suspend a server
+	Root.AddCommand(&cobra.Command{
+		Use:     "on  [group|server [group|server]...]",
+		Aliases: []string{"start", "power-on", "up", "resume"},
+		Short:   "Power on server(s)",
+		Long:    "Powers on server(s), or resume from paused state",
+		Run: func(cmd *cobra.Command, args []string) {
+			serverCmd("power-on", client.PowerOnServer, args)
+		}})
 }
