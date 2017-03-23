@@ -14,6 +14,7 @@ import (
 	"github.com/grrtrr/clcv2"
 	"github.com/grrtrr/exit"
 	"github.com/olekukonko/tablewriter"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -50,15 +51,20 @@ func init() {
 }
 
 var Clone = &cobra.Command{
-	Use:     "clone  <srcName>  <destination>",
+	Use:     "clone  <srcName>  [<destination-folder>]",
 	Aliases: []string{"duplicate", "dup"},
 	Short:   "Clone existing server",
-	Long:    "Clone source server @srcName and put it into the @destination folder",
-	PreRunE: checkArgs(2, "Need a source server and a destination folder"),
+	Long:    "Clone source server @srcName into the optional @destination-folder (default: same folder as @srcName)",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if l := len(args); l != 1 && l != 2 {
+			return errors.Errorf("Need a source server and optionally a destination folder")
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var (
-			source      = args[0]                         // source server
-			dest        = strings.TrimRight(args[1], "/") // destination folder
+			source      = args[0] // source server
+			dest        string    // destination folder
 			wasStopped  bool
 			maxAttempts = 1
 			url, reqID  string
@@ -145,10 +151,11 @@ var Clone = &cobra.Command{
 			*req.Ttl = time.Now().Add(cloneFlags.ttl)
 		}
 
-		/* hwGroup may be hex uuid or group name */
-		if dest != "" {
+		if len(args) == 2 && args[1] != "" { // optional destination folder specified
+			dest = strings.TrimRight(args[1], "/")
 			req.GroupId = dest
 
+			// @dest may be hex uuid or group name
 			if _, err := hex.DecodeString(dest); err != nil {
 				log.Printf("Resolving ID of Hardware Group %q in %s ...", dest, src.LocationId)
 
@@ -160,6 +167,9 @@ var Clone = &cobra.Command{
 					req.GroupId = group.Id
 				}
 			}
+		} else { // by default, clone into same folder
+			dest = src.GroupId
+			req.GroupId = dest
 		}
 
 		/* net is supposed to be a (hex) ID, but allow network names, too */
