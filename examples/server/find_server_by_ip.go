@@ -22,9 +22,11 @@ func main() {
 	}
 
 	flag.Parse()
-	if flag.NArg() != 1 || *location == "" {
+	if flag.NArg() != 1 {
 		flag.Usage()
 		os.Exit(1)
+	} else if *location == "" {
+		exit.Errorf("need a location argument (-l)")
 	}
 
 	client, err := clcv2cli.NewCLIClient()

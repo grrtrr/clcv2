@@ -33,9 +33,9 @@ func main() {
 	if flag.NArg() != 2 || *size == 0 {
 		flag.Usage()
 		os.Exit(1)
-	} else if reMajMin.MatchString(flag.Arg(1)) {
+	} else if reMajMin.MatchString(flag.Arg(1)) { // full spec
 		id = flag.Arg(1)
-	} else if reMin.MatchString(flag.Arg(1)) {
+	} else if reMin.MatchString(flag.Arg(1)) { // only disk number specified
 		id = fmt.Sprintf("0:%s", flag.Arg(1))
 	} else {
 		exit.Errorf("invalid disk ID %q", flag.Arg(1))
@@ -63,8 +63,7 @@ func main() {
 				fmt.Printf("Disk %s size is already at %d GB.\n", id, disks[i].SizeGB)
 				os.Exit(0)
 			}
-			fmt.Printf("Changing disk %s size from %d to %d GB ...\n",
-				id, disks[i].SizeGB, *size)
+			fmt.Printf("Changing disk %s size from %d to %d GB ...\n", id, disks[i].SizeGB, *size)
 			disks[i].SizeGB = uint32(*size)
 		}
 	}
