@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/hex"
 	"fmt"
 	"os"
 	"reflect"
@@ -21,9 +22,10 @@ var (
 	tzRegexp = regexp.MustCompile(`^\s*([+-]?)(\d{1,2}):?(\d{2})(:?(\d{2}))?\s*$`)
 )
 
-// Return true if @s looks like a CLC server name
+// Return true if @s is not a hex string and otherwise conforms to the server-name regexp.
 func LooksLikeServerName(s string) bool {
-	return serverRegexp.MatchString(s)
+	_, err := hex.DecodeString(s)
+	return err != nil && serverRegexp.MatchString(s)
 }
 
 // Extract the Location prefix from @serverName, return in upper-case if found.
