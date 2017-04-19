@@ -37,7 +37,7 @@ func init() {
 
 var Show = &cobra.Command{
 	Use:     "ls  [group|server [group|server]...]",
-	Aliases: []string{"dir", "show"},
+	Aliases: []string{"dir", "show", "list"},
 	Short:   "Show server(s)/groups(s)",
 	Long:    "Display detailed server/group information. Group information requires -l to be set.",
 	RunE: func(cmd *cobra.Command, args []string) error {
