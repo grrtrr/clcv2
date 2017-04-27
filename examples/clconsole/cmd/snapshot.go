@@ -66,7 +66,7 @@ func snapshotHandler(serverId string) (reqId string, err error) {
 			log.Printf("%s delete current snapshot: %s", serverId, s)
 		})
 	} else if err != clcv2.ErrNoSnapshot {
-		return "", errors.Errorf("%s: failed to delete existing snapshot: %s", serverId, err)
+		return "", errors.Errorf("%s: failed to delete potentially existing snapshot: %s", serverId, err)
 	}
 	return client.CreateSnapshot(serverId, snapCreateFlags.days)
 }
