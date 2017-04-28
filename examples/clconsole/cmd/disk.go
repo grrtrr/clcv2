@@ -63,10 +63,7 @@ func init() {
 		Long:  "Add, remove, or grow server disks",
 	}
 
-	manageDisks.AddCommand(diskList)
-	manageDisks.AddCommand(diskAdd)
-	manageDisks.AddCommand(diskGrow)
-	manageDisks.AddCommand(diskRemove)
+	manageDisks.AddCommand(diskList, diskAdd, diskGrow, diskRemove)
 	Root.AddCommand(manageDisks)
 }
 
@@ -160,7 +157,7 @@ var diskAdd = &cobra.Command{
 
 		if reqID != "" {
 			client.PollStatusFn(reqID, intvl, func(s clcv2.QueueStatus) {
-				log.Printf("Adding %s GB to %s: %s", args[1], args[0], s)
+				log.Printf("Adding %s GB raw disk to %s: %s", args[1], args[0], s)
 			})
 		}
 		return nil

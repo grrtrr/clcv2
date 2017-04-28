@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"regexp"
 	"time"
 
 	"github.com/grrtrr/clcv2"
@@ -18,10 +17,7 @@ import (
 )
 
 func main() {
-	// Allow two types of ID: (a) <major>:<minor> syntax, (b) <minor> syntax
-	var reMajMin = regexp.MustCompile(`^\d+:\d+$`)
-	var reMin = regexp.MustCompile(`^\d+$`)
-	var ids []string
+	var ids clcv2.DiskIDList
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Server Name> <diskId> [<diskId> ...]\n", path.Base(os.Args[0]))
@@ -35,12 +31,10 @@ func main() {
 	}
 
 	for i := 1; i < flag.NArg(); i++ {
-		if reMajMin.MatchString(flag.Arg(i)) {
-			ids = append(ids, flag.Arg(i))
-		} else if reMin.MatchString(flag.Arg(i)) {
-			ids = append(ids, fmt.Sprintf("0:%s", flag.Arg(i)))
-		} else {
+		if id, err := clcv2.DiskIDFromString(flag.Arg(i)); err != nil {
 			exit.Errorf("invalid disk ID %q", flag.Arg(i))
+		} else {
+			ids.Add(id)
 		}
 	}
 
@@ -56,8 +50,8 @@ func main() {
 
 	disks := make([]clcv2.ServerAdditionalDisk, 0)
 	for i := range server.Details.Disks {
-		if inStringArray(server.Details.Disks[i].Id, ids...) {
-			fmt.Printf("Deleting disk %s (%d GB) ...\n", server.Details.Disks[i].Id, server.Details.Disks[i].SizeGB)
+		if ids.Contains(server.Details.Disks[i].Id) {
+			log.Printf("Deleting disk %s (%d GB) ...", server.Details.Disks[i].Id, server.Details.Disks[i].SizeGB)
 		} else {
 			disks = append(disks, clcv2.ServerAdditionalDisk{
 				Id:     server.Details.Disks[i].Id,
@@ -71,16 +65,6 @@ func main() {
 		exit.Fatalf("failed to update the disk configuration on %q: %s", flag.Arg(0), err)
 	}
 
-	log.Printf("Status Id for updating the disks on %s: %s", flag.Arg(0), reqID)
+	log.Printf("Status Id: %s", reqID)
 	client.PollStatus(reqID, 5*time.Second)
-}
-
-// inStringArray returns true if @s is found in @cand
-func inStringArray(s string, cand ...string) bool {
-	for _, c := range cand {
-		if c == s {
-			return true
-		}
-	}
-	return false
 }

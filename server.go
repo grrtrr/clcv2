@@ -83,7 +83,7 @@ type Server struct {
 		// The disks attached to the server
 		Disks []struct {
 			// Unique identifier of the disk
-			Id string
+			Id DiskID
 
 			// Size of the disk in GB
 			SizeGB uint32
@@ -322,22 +322,6 @@ type CreateServerReq struct {
 	// - windows2012R2Datacenter_64Bit,
 	// - ubuntu14_64Bit.
 	OsType string `json:"osType"`
-}
-
-// ServerAdditionalDisk is used to specify (additional) disks to attach/modify.
-type ServerAdditionalDisk struct {
-	// Id is used by the SetServerDisks() call exclusively
-	Id string `json:"diskId,omitempty"`
-
-	// File system path for disk (Windows drive letter or Linux mount point).
-	// Must not be one of the reserved names.
-	Path string `json:"path"`
-
-	// Amount in GB to allocate for disk, up to 1024 GB
-	SizeGB uint32 `json:"sizeGB"`
-
-	// Whether the disk should be "raw" or "partitioned"
-	Type string `json:"type"`
 }
 
 // Create a new server.
