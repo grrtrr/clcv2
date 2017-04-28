@@ -52,8 +52,8 @@ func init() {
 		}
 
 		removeNIC = &cobra.Command{
-			Use:     "remove  <serverName>  <net (ID | Name | CIDR | IP)>",
-			Aliases: []string{"rm", "del"},
+			Use:     "rm  <serverName>  <net (ID | Name | CIDR | IP)>",
+			Aliases: []string{"remove", "del"},
 			Short:   "Remove secondary NIC from server",
 			Long:    "Remove secondary NIC identified by @net (network ID, name, CIDR, or an IP on the network) from @serverName",
 			Run: func(cmd *cobra.Command, args []string) {
