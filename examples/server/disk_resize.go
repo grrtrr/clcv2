@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"regexp"
 	"time"
 
 	"github.com/grrtrr/clcv2"
@@ -19,10 +18,7 @@ import (
 
 func main() {
 	var size = flag.Uint("size", 0, "New size of the disk in GB")
-	// Allow the same ID types as in disk_remove.go
-	var reMajMin = regexp.MustCompile(`^\d+:\d+$`)
-	var reMin = regexp.MustCompile(`^\d+$`)
-	var id string
+	var found bool
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [options]  <Server-Name>  <Disk-ID>\n", path.Base(os.Args[0]))
@@ -33,11 +29,10 @@ func main() {
 	if flag.NArg() != 2 || *size == 0 {
 		flag.Usage()
 		os.Exit(1)
-	} else if reMajMin.MatchString(flag.Arg(1)) { // full spec
-		id = flag.Arg(1)
-	} else if reMin.MatchString(flag.Arg(1)) { // only disk number specified
-		id = fmt.Sprintf("0:%s", flag.Arg(1))
-	} else {
+	}
+
+	id, err := clcv2.DiskIDFromString(flag.Arg(1))
+	if err != nil {
 		exit.Errorf("invalid disk ID %q", flag.Arg(1))
 	}
 
@@ -58,14 +53,20 @@ func main() {
 			SizeGB: server.Details.Disks[i].SizeGB,
 		}
 		if disks[i].Id == id {
+			found = true
 			// The API does not allow to reduce the size of an existing disk.
 			if uint32(*size) <= disks[i].SizeGB {
-				fmt.Printf("Disk %s size is already at %d GB.\n", id, disks[i].SizeGB)
+				log.Printf("Disk %s size is already at %d GB", id, disks[i].SizeGB)
 				os.Exit(0)
 			}
-			fmt.Printf("Changing disk %s size from %d to %d GB ...\n", id, disks[i].SizeGB, *size)
+			log.Printf("Changing disk %s size from %d to %d GB ...", id, disks[i].SizeGB, *size)
 			disks[i].SizeGB = uint32(*size)
 		}
+	}
+
+	// Make sure the disk exists: otherwise the API will return an empty 204 response - and no status link.
+	if !found {
+		exit.Errorf("%s does not have a disk with ID %s", flag.Arg(0), id)
 	}
 
 	reqID, err := client.ServerSetDisks(flag.Arg(0), disks)
@@ -73,6 +74,6 @@ func main() {
 		exit.Fatalf("failed to update the disk configuration on %q: %s", flag.Arg(0), err)
 	}
 
-	log.Printf("Status Id for resizing the disk on %s: %s", flag.Arg(0), reqID)
+	log.Printf("Status Id: %s", reqID)
 	client.PollStatus(reqID, 10*time.Second)
 }
