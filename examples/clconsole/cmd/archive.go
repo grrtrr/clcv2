@@ -37,7 +37,7 @@ func init() {
 						if reqID, err = client.ArchiveGroup(where); err != nil {
 							fmt.Fprintf(os.Stderr, "ERROR archiving group %s: %s\n", name, err)
 						} else {
-							log.Printf("Archiving group %s: %s\n", name, reqID)
+							log.Printf("Archiving group %s: %s", name, reqID)
 						}
 					}
 
@@ -74,13 +74,13 @@ func init() {
 				if reqID, err = client.RestoreServer(where, dest); err != nil {
 					fmt.Fprintf(os.Stderr, "ERROR restoring server %s into %s: %s\n", where, args[1], err)
 				} else {
-					log.Printf("Restoring server %s: %s\n", args[0], reqID)
+					log.Printf("Restoring server %s: %s", args[0], reqID)
 				}
 			} else {
 				if reqID, err = client.RestoreGroup(where, dest); err != nil {
 					fmt.Fprintf(os.Stderr, "ERROR restoring group %s into %s %s\n", where, args[1], err)
 				} else {
-					log.Printf("Restoring group %s: %s\n", where, reqID)
+					log.Printf("Restoring group %s: %s", where, reqID)
 				}
 			}
 

@@ -111,7 +111,7 @@ func deleteSingleServer(eg *errgroup.Group, srv string) {
 		if reqID, err := client.DeleteServer(srv); err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR deleting server %s: %s\n", srv, err)
 		} else if reqID != "" {
-			log.Printf("Deleting %s: %s\n", srv, reqID)
+			log.Printf("Deleting %s: %s", srv, reqID)
 			client.PollStatusFn(reqID, intvl, func(s clcv2.QueueStatus) {
 				log.Printf("Deleting %s: %s", srv, s)
 			})
@@ -129,7 +129,7 @@ func deleteSingleGroup(eg *errgroup.Group, grp *clcv2.GroupInfo) {
 		if reqID, err := client.DeleteGroup(grp.ID); err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR deleting group %s (%s): %s\n", grp.Name, grp.ID, err)
 		} else if reqID != "" {
-			log.Printf("Deleting %s (%s): %s\n", grp.Name, grp.ID, reqID)
+			log.Printf("Deleting %s (%s): %s", grp.Name, grp.ID, reqID)
 			client.PollStatusFn(reqID, intvl, func(s clcv2.QueueStatus) {
 				log.Printf("Deleting %s (%s): %s", grp.Name, grp.ID, s)
 			})

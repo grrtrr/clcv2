@@ -16,40 +16,72 @@ import (
 )
 
 var diskGrow = &cobra.Command{
-	Use:     "grow <server> <sizeGB>", // XXX
+	Use:     "grow  <server> <diskID> <sizeGB>",
 	Aliases: []string{"resize", "increase"},
 	Short:   "Resize server disk",
-	Long:    "Resize server disk to @sizeGB (positive increment only)",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		// XXX FIXME
-		if len(args) != 2 {
-			return errors.Errorf("Need a server name and a disk size in GB")
-		} else if _, err := strconv.ParseUint(args[1], 10, 32); err != nil {
-			return errors.Errorf("Invalid disk-size value %q", args[1])
+	Long:    "Resize disk @diskID of @server to @sizeGB (disk ID uses [<maj>:]<min> format)",
+	Example: "grow   CA2GRRT-PROD-02 0:3 256\nresize CA2GRRT-PROD-02   3 256",
+	PreRunE: checkArgs(3, "Need a server, a disk ID, and the new disk size in GB"),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		var found bool
+
+		id, err := clcv2.DiskIDFromString(args[1])
+		if err != nil {
+			return errors.Errorf("invalid disk ID %q", args[1])
 		}
+
+		diskGB, err := strconv.ParseUint(args[2], 10, 32)
+		if err != nil {
+			return errors.Errorf("invalid size/GB value %q", args[2])
+		}
+
+		server, err := client.GetServer(args[0])
+		if err != nil {
+			exit.Fatalf("failed to list details of server %q: %s", args[0], err)
+		}
+
+		disks := make([]clcv2.ServerAdditionalDisk, len(server.Details.Disks))
+		for i := range server.Details.Disks {
+			disks[i] = clcv2.ServerAdditionalDisk{
+				Id:     server.Details.Disks[i].Id,
+				SizeGB: server.Details.Disks[i].SizeGB,
+			}
+			if disks[i].Id == id {
+				found = true
+				// The API does not allow to reduce the size of an existing disk.
+				if uint32(diskGB) <= disks[i].SizeGB {
+					return errors.Errorf("%s disk %s is already at %d GB.", args[0], id, disks[i].SizeGB)
+				}
+				log.Printf("Resizing %s disk %s from %d to %d GB ...", args[0], id, disks[i].SizeGB, diskGB)
+				disks[i].SizeGB = uint32(diskGB)
+			}
+		}
+
+		// Make sure the disk exists: otherwise the API will return an empty 204 response - and no status link.
+		if !found {
+			return errors.Errorf("%s does not have a disk with ID %s", args[0], id)
+		}
+
+		reqID, err := client.ServerSetDisks(args[0], disks)
+		if err != nil {
+			exit.Fatalf("failed to update the disk configuration on %q: %s", args[0], err)
+		}
+
+		log.Printf("%s resizing disk %s to %d GB: %s", args[0], id, diskGB, reqID)
+		client.PollStatusFn(reqID, intvl, func(s clcv2.QueueStatus) {
+			log.Printf("%s resizing disk %s to %d GB: %s", args[0], id, diskGB, s)
+		})
 		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		// FIXME
-		fmt.Fprintf(os.Stderr, "FIXME: this is not implemented yet")
 	},
 }
 
 var diskRemove = &cobra.Command{
-	Use:     "rm <server> <disk-ID>", // XXX
+	Use:     "rm  <server> <disk-ID>",
 	Aliases: []string{"remove", "del"},
 	Short:   "Remove server disk",
-	Long:    "Remove single server disk",
+	Long:    "Remove single server disk", // XXX
 	// Example: // XXX
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		// XXX FIXME
-		if len(args) != 2 {
-			return errors.Errorf("Need a server name and a disk size in GB")
-		} else if _, err := strconv.ParseUint(args[1], 10, 32); err != nil {
-			return errors.Errorf("Invalid disk-size value %q", args[1])
-		}
-		return nil
-	},
+	PreRunE: checkArgs(2, "Need a server name and a disk ID"),
 	Run: func(cmd *cobra.Command, args []string) {
 		// FIXME
 		fmt.Fprintf(os.Stderr, "FIXME: this is not implemented yet")
@@ -65,6 +97,54 @@ func init() {
 
 	manageDisks.AddCommand(diskList, diskAdd, diskGrow, diskRemove)
 	Root.AddCommand(manageDisks)
+}
+
+var diskAdd = &cobra.Command{
+	Use:     "new <server> <sizeGB>",
+	Aliases: []string{"add", "raw", "rawdisk"},
+	Short:   "Add disk to server",
+	Long:    "Adds @sizeGB of storage as 'raw' disk to @server",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) != 2 {
+			return errors.Errorf("Need a server name and a disk size in GB")
+		} else if _, err := strconv.ParseUint(args[1], 10, 32); err != nil {
+			return errors.Errorf("Invalid disk-size value %q", args[1])
+		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// First get the list of existing disks
+		server, err := client.GetServer(args[0])
+		if err != nil {
+			exit.Errorf("Failed to list details of server %q: %s", args[0], err)
+		}
+
+		diskGB, err := strconv.ParseUint(args[1], 10, 32)
+		if err != nil {
+			return errors.Errorf("invalid disk-size value %q", args[1])
+		}
+
+		disks := make([]clcv2.ServerAdditionalDisk, len(server.Details.Disks))
+		for i := range server.Details.Disks {
+			disks[i] = clcv2.ServerAdditionalDisk{
+				Id:     server.Details.Disks[i].Id,
+				SizeGB: server.Details.Disks[i].SizeGB,
+			}
+		}
+
+		// Add new disk at the end of the list of existing disks.
+		reqID, err := client.ServerSetDisks(args[0], append(disks,
+			clcv2.ServerAdditionalDisk{SizeGB: uint32(diskGB), Type: "raw"}))
+		if err != nil {
+			exit.Fatalf("failed to update the disk configuration on %q: %s", args[0], err)
+		}
+
+		log.Printf("%s adding %d GB raw storage: %s", args[0], diskGB, reqID)
+		client.PollStatusFn(reqID, intvl, func(s clcv2.QueueStatus) {
+			log.Printf("%s adding %d GB: %s", args[0], diskGB, s)
+		})
+		return nil
+	},
 }
 
 var diskList = &cobra.Command{
@@ -98,68 +178,19 @@ var diskList = &cobra.Command{
 			}()
 
 			for server := range servers {
-				fmt.Printf("%s disks (total %d GB storage):\n", server.Name, server.Details.StorageGb)
+				fmt.Printf("%s disks (total %d GB):\n", server.Name, server.Details.StorageGb)
 				table := tablewriter.NewWriter(os.Stdout)
 				table.SetAutoFormatHeaders(false)
 				table.SetAlignment(tablewriter.ALIGN_RIGHT)
 				table.SetAutoWrapText(true)
 
-				table.SetHeader([]string{"Disk ID", "Disk Size/GB", "Paths"})
+				table.SetHeader([]string{"ID", "Size/GB", "Paths"})
 				for _, d := range server.Details.Disks {
-					table.Append([]string{d.Id, fmt.Sprint(d.SizeGB), strings.Join(d.PartitionPaths, ", ")})
+					table.Append([]string{string(d.Id), fmt.Sprint(d.SizeGB), strings.Join(d.PartitionPaths, ", ")})
 				}
 				table.Render()
 				fmt.Printf("\n")
 			}
 		}
-	},
-}
-
-var diskAdd = &cobra.Command{
-	Use:     "add <server> <sizeGB>",
-	Aliases: []string{"raw", "rawdisk"},
-	Short:   "Add disk to server",
-	Long:    "Adds @sizeGB of storage as 'raw' disk to @server",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 2 {
-			return errors.Errorf("Need a server name and a disk size in GB")
-		} else if _, err := strconv.ParseUint(args[1], 10, 32); err != nil {
-			return errors.Errorf("Invalid disk-size value %q", args[1])
-		}
-		return nil
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		// First get the list of existing disks
-		server, err := client.GetServer(args[0])
-		if err != nil {
-			return errors.Errorf("Failed to list details of server %q: %s", args[0], err)
-		}
-
-		diskGB, err := strconv.ParseUint(args[1], 10, 32)
-		if err != nil {
-			return errors.Errorf("Invalid disk-size value %q", args[1])
-		}
-
-		disks := make([]clcv2.ServerAdditionalDisk, len(server.Details.Disks))
-		for i := range server.Details.Disks {
-			disks[i] = clcv2.ServerAdditionalDisk{
-				Id:     server.Details.Disks[i].Id,
-				SizeGB: server.Details.Disks[i].SizeGB,
-			}
-		}
-
-		// Add new disk at the end of the list of existing disks.
-		reqID, err := client.ServerSetDisks(args[0], append(disks,
-			clcv2.ServerAdditionalDisk{SizeGB: uint32(diskGB), Type: "raw"}))
-		if err != nil {
-			exit.Fatalf("failed to update the disk configuration on %q: %s", args[0], err)
-		}
-
-		if reqID != "" {
-			client.PollStatusFn(reqID, intvl, func(s clcv2.QueueStatus) {
-				log.Printf("Adding %s GB raw disk to %s: %s", args[1], args[0], s)
-			})
-		}
-		return nil
 	},
 }

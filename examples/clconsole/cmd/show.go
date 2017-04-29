@@ -340,9 +340,9 @@ func showServer(client *clcv2.CLIClient, server clcv2.Server) {
 		table.SetAlignment(tablewriter.ALIGN_RIGHT)
 		table.SetAutoWrapText(true)
 
-		table.SetHeader([]string{"Disk ID", "Disk Size/GB", "Paths"})
+		table.SetHeader([]string{"Disk ID", "Size/GB", "Paths"})
 		for _, d := range server.Details.Disks {
-			table.Append([]string{d.Id, fmt.Sprint(d.SizeGB), strings.Join(d.PartitionPaths, ", ")})
+			table.Append([]string{string(d.Id), fmt.Sprint(d.SizeGB), strings.Join(d.PartitionPaths, ", ")})
 		}
 		table.Render()
 	}
