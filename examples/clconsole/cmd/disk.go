@@ -16,15 +16,52 @@ import (
 )
 
 var diskRemove = &cobra.Command{
-	Use:     "rm  <server> <disk-ID>",
-	Aliases: []string{"remove", "del"},
-	Short:   "Remove server disk",
-	Long:    "Remove single server disk", // XXX
-	// Example: // XXX
-	PreRunE: checkArgs(2, "Need a server name and a disk ID"),
-	Run: func(cmd *cobra.Command, args []string) {
-		// FIXME
-		fmt.Fprintf(os.Stderr, "FIXME: this is not implemented yet")
+	Use:     "rm  <server> <diskId> [<diskId> ... ]",
+	Aliases: []string{"-", "remove", "del"},
+	Short:   "Remove server disk(s)",
+	Long:    "Remove one or more server disk(s)",
+	Example: `disk del WA1GRRT-RH5-05 0:3 0:4 0:5\ndisk rm  WA1GRRT-RH5-05   3   4   5`,
+	PreRunE: checkAtLeastArgs(2, "Need a server name and at least 1 disk-ID"),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		var ids clcv2.DiskIDList
+
+		for _, idStr := range args[1:] {
+			if id, err := clcv2.DiskIDFromString(idStr); err != nil {
+				return errors.Errorf("Invalid disk ID %q", idStr)
+			} else {
+				ids.Add(id)
+			}
+		}
+
+		log.Printf("Getting %s details ...", args[0])
+		server, err := client.GetServer(args[0])
+		if err != nil {
+			exit.Fatalf("failed to list details of server %q: %s", args[0], err)
+		}
+
+		disks := make([]clcv2.ServerAdditionalDisk, 0)
+		for i := range server.Details.Disks {
+			if ids.Contains(server.Details.Disks[i].Id) {
+				log.Printf("Will remove %s disk %s (%d GB)", args[0],
+					server.Details.Disks[i].Id, server.Details.Disks[i].SizeGB)
+			} else {
+				disks = append(disks, clcv2.ServerAdditionalDisk{
+					Id:     server.Details.Disks[i].Id,
+					SizeGB: server.Details.Disks[i].SizeGB,
+				})
+			}
+		}
+
+		reqID, err := client.ServerSetDisks(args[0], disks)
+		if err != nil {
+			exit.Fatalf("failed to update the disk configuration on %q: %s", args[0], err)
+		}
+
+		log.Printf("%s deleting disk %s: %s", args[0], ids, reqID)
+		client.PollStatusFn(reqID, intvl, func(s clcv2.QueueStatus) {
+			log.Printf("%s deleting disk %s: %s", args[0], ids, s)
+		})
+		return nil
 	},
 }
 
@@ -40,14 +77,15 @@ func init() {
 }
 
 var diskAdd = &cobra.Command{
-	Use:     "add <server> <sizeGB>",
-	Aliases: []string{"new", "raw", "rawdisk"},
+	Use:     "add  <server> <sizeGB>",
+	Aliases: []string{"new"},
 	Short:   "Add disk to server",
 	Long:    "Adds a @sizeGB disk as 'raw' storage to @server",
 	Example: "disk add WA1GRRT-RH5-05 2",
 	PreRunE: checkArgs(2, "Need a server name and a disk size in GB"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var diskType = "raw" // "raw" or "partitioned"
+		// FIXME: add -path argument for partitioned disk
 
 		diskGB, err := strconv.ParseUint(args[1], 10, 32)
 		if err != nil {
@@ -55,6 +93,7 @@ var diskAdd = &cobra.Command{
 		}
 
 		// First get the list of existing disks
+		log.Printf("Getting %s details ...", args[0])
 		server, err := client.GetServer(args[0])
 		if err != nil {
 			exit.Errorf("Failed to list details of server %q: %s", args[0], err)
@@ -103,6 +142,7 @@ var diskGrow = &cobra.Command{
 			return errors.Errorf("invalid size/GB value %q", args[2])
 		}
 
+		log.Printf("Getting %s details ...", args[0])
 		server, err := client.GetServer(args[0])
 		if err != nil {
 			exit.Fatalf("failed to list details of server %q: %s", args[0], err)
@@ -144,19 +184,21 @@ var diskGrow = &cobra.Command{
 }
 
 var diskList = &cobra.Command{
-	Use:     "ls <server>",
-	Aliases: []string{"list"},
+	Use:     "ls  <server|group> [<server|group> ...]",
+	Aliases: []string{"list", "show"},
 	Short:   "List server disks",
-	Long:    "Shows a tabulated breakdown of the disks of each server",
-	PreRunE: checkArgs(1, "Need a server name to query"),
+	Long:    "Shows a table of disks for each server, or server in the group",
+	PreRunE: checkAtLeastArgs(1, "Need at least 1 server or group to query"),
+	Example: "disk ls CA2GRRT-PROD-02\ndisk ls dr_vms/",
 	Run: func(cmd *cobra.Command, args []string) {
-		if servnames, err := extractServerNames(args); err != nil { // just show a list of servers
+		if servnames, err := extractServerNames(args); err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: failed to extract server names: %s\n", err)
 		} else {
 			var wg sync.WaitGroup
 			var servers = make(chan clcv2.Server)
 
-			for _, serverName := range servnames { // Query all servers in parallel
+			// Query all servers in parallel
+			for _, serverName := range servnames {
 				wg.Add(1)
 				go func(s string) {
 					if server, err := client.GetServer(s); err != nil {
@@ -168,11 +210,13 @@ var diskList = &cobra.Command{
 				}(serverName)
 			}
 
-			go func() { // Waiter function which closes the channel once we are done
+			// Waiter function which closes the channel once above goroutine is done
+			go func() {
 				wg.Wait()
 				close(servers)
 			}()
 
+			// Consume the produced server details
 			for server := range servers {
 				fmt.Printf("%s disks (total %d GB):\n", server.Name, server.Details.StorageGb)
 				table := tablewriter.NewWriter(os.Stdout)

@@ -39,6 +39,16 @@ func checkArgs(nargs int, errMsg string) func(cmd *cobra.Command, args []string)
 	}
 }
 
+// checkAtLeastArgs is analogous to checkArgs
+func checkAtLeastArgs(nargs int, errMsg string) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) < nargs {
+			return errors.Errorf(errMsg)
+		}
+		return nil
+	}
+}
+
 // truncate ensures that the length of @s does not exceed @maxlen
 func truncate(s string, maxlen int) string {
 	if len(s) >= maxlen {
