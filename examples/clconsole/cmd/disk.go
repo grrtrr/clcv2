@@ -15,11 +15,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Flags
-var addDiskFlags struct {
-	Mount string // optional mountpoint for disk (changes disk type to 'partitioned')
-}
-
 func init() {
 	var manageDisks = &cobra.Command{ // Top-level disk command
 		Use:   "disk",
@@ -27,7 +22,6 @@ func init() {
 		Long:  "Add, remove, or resize server disks",
 	}
 
-	diskAdd.Flags().StringVar(&addDiskFlags.Mount, "mount", "", "Optional mountpoint (otherwise disk type defaults to 'raw')")
 	manageDisks.AddCommand(diskList, diskAdd, diskGrow, diskRemove)
 	Root.AddCommand(manageDisks)
 }
@@ -42,10 +36,9 @@ var diskAdd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		diskGB, err := strconv.ParseUint(args[1], 10, 32)
 		if err != nil {
-			return errors.Errorf("invalid disk-size value %q", args[1])
+			return errors.Errorf("invalid disk/GB value %q", args[1])
 		}
 
-		// First get the list of existing disks
 		log.Printf("Getting %s details ...", args[0])
 		server, err := client.GetServer(args[0])
 		if err != nil {
@@ -62,21 +55,21 @@ var diskAdd = &cobra.Command{
 			}
 		}
 
-		// Add  new disk at end - if path is specified, type must be set to 'partitioned'.
+		// NOTE: the API supports a 'Path' in newDisk. On Linux this was tested to have
+		//       no impact (disks were not mounted); on Windows this allowed to only set
+		//       a drive letter. Hence not supporting the 'partitioned' type here (which
+		//       is required when using a non-empty 'Path' argument).
 		newDisk := clcv2.ServerAdditionalDisk{SizeGB: uint32(diskGB), Type: "raw"}
-		if addDiskFlags.Mount != "" {
-			newDisk.Path = addDiskFlags.Mount
-			newDisk.Type = "partitioned"
-		}
 
+		// Add new disk at the end of the list of existing disks.
 		reqID, err := client.ServerSetDisks(args[0], append(disks, newDisk))
 		if err != nil {
 			log.Fatalf("failed to update the disk configuration on %q: %s", args[0], err)
 		}
 
-		log.Printf("%s adding %s %d GB disk: %s", args[0], newDisk.Type, diskGB, reqID)
+		log.Printf("%s adding %d GB disk: %s", args[0], diskGB, reqID)
 		client.PollStatusFn(reqID, intvl, func(s clcv2.QueueStatus) {
-			log.Printf("%s adding %s %d GB disk: %s", args[0], newDisk.Type, diskGB, s)
+			log.Printf("%s adding %d GB disk: %s", args[0], diskGB, s)
 		})
 		return nil
 	},
