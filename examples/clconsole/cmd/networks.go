@@ -45,7 +45,7 @@ func showNetworks(client *clcv2.CLIClient, location, account string) {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_RIGHT)
-		table.SetAutoWrapText(false)
+		table.SetAutoWrapText(true)
 
 		table.SetHeader([]string{"CIDR", "Gateway", "VLAN", "Name", "Description", "Type", "ID"})
 		for _, l := range networks {
