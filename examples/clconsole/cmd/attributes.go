@@ -32,14 +32,13 @@ func init() {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Setting %s #CPUs to %s ...\n", args[0], args[1])
 			if reqID, err := client.ServerSetCpus(args[0], args[1]); err != nil {
 				exit.Fatalf("failed to change the number of CPUs on %q: %s", args[0], err)
 			} else {
-				log.Printf("%s changing number-of-CPUs: %s", args[0], reqID)
+				log.Printf("%s changing #CPUs to %s: %s", args[0], args[1], reqID)
 
 				client.PollStatusFn(reqID, intvl, func(s clcv2.QueueStatus) {
-					log.Printf("%s changing number-of-CPUs: %s", args[0], s)
+					log.Printf("%s changing #CPUs to %s: %s", args[0], args[1], s)
 				})
 			}
 		},
@@ -59,14 +58,13 @@ func init() {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Setting %s memory to %s GB ...\n", args[0], args[1])
 			if reqID, err := client.ServerSetMemory(args[0], args[1]); err != nil {
 				exit.Fatalf("failed to change the amount of memory on %q: %s", args[0], err)
 			} else {
-				log.Printf("%s changing memory size: %s", args[0], reqID)
+				log.Printf("%s changing memory to %s GB: %s", args[0], args[1], reqID)
 
 				client.PollStatusFn(reqID, intvl, func(s clcv2.QueueStatus) {
-					log.Printf("%s changing memory size: %s", args[0], s)
+					log.Printf("%s changing memory to %s GB: %s", args[0], args[1], s)
 				})
 			}
 		},
