@@ -130,9 +130,9 @@ var diskGrow = &cobra.Command{
 			log.Fatalf("failed to update the disk configuration on %q: %s", args[0], err)
 		}
 
-		log.Printf("%s resizing disk %s to %d GB: %s", args[0], id, diskGB, reqID)
+		log.Printf("%s resizing disk %s to %dGB: %s", args[0], id, diskGB, reqID)
 		client.PollStatusFn(reqID, intvl, func(s clcv2.QueueStatus) {
-			log.Printf("%s resizing disk %s to %d GB: %s", args[0], id, diskGB, s)
+			log.Printf("%s resizing disk %s to %dGB: %s", args[0], id, diskGB, s)
 		})
 		return nil
 	},
