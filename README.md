@@ -2,11 +2,11 @@
 
 This is a Go implementation of the [CLC v2 API](https://www.ctl.io/api-docs/v2).
 
-Contributions are welcome.
+It requires go >= 1.6 (since this package supports context in combination with client timeout).
 
 ### Getting started
 
-Get this package from inside your `$GOPATH`:
+Download from inside your `$GOPATH`:
 ```bash
 > go get -d  github.com/grrtrr/clcv2
 ```
@@ -14,7 +14,8 @@ Get this package from inside your `$GOPATH`:
 Try some of the examples in the `examples/` folder. These illustrate individual API calls.
 
 ### Environment and login
-Most have help screens (`-h`). The library supports _debug output_ via `-d`.
+
+Most examples have help screens (`-h`). The library supports _debug output_ via `-d`.
 
 _Credentials_ can be passed in one of two forms:
 

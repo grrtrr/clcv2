@@ -131,16 +131,22 @@ func NewClient(user, pass string) (*Client, error) {
 
 // newClient initializes the parts common to both Client and CLIClient
 func newClient(user, pass string) *Client {
-	var client = &Client{LoginReq: LoginReq{user, pass}}
+	var client = &Client{LoginReq: LoginReq{
+		Username: user,
+		Password: pass,
+	}}
 
 	client.requestor = &http.Client{
-		Transport: rehttp.NewTransport(nil, // default transport
+		Transport: rehttp.NewTransport(nil, // use http.DefaultTransport
 			client.retryer(MaxRetries),
 			// Note: using ClientTimeout as upper bound for the exponential backoff.
 			//       This means g_timeout has to be large enough to run MaxRetries
 			//       requests with individual retries.
 			rehttp.ExpJitterDelay(StepDelay, ClientTimeout),
 		),
+		// Timeout applies to client timeout as a whole.
+		// See https://medium.com/@nate510/don-t-use-go-s-default-http-client-4804cb19f779
+		Timeout: ClientTimeout,
 	}
 	client.ctx, client.cancel = context.WithCancel(context.Background())
 
