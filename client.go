@@ -77,7 +77,7 @@ type Client struct {
 	// controls automatic re-login
 	retryingLogin bool
 
-	// Optional callback which is called when @credentials is updated
+	// Optional callback which is called when @credentials are updated
 	credentialsChanged func() error
 }
 
@@ -221,7 +221,7 @@ func (c *Client) getCLCResponse(verb, path string, reqModel, resModel interface{
 // @resModel: result model to deserialize, must be a pointer to the expected result, or nil.
 // Evaluates the StatusCode of the BaseResponse (embedded) in @inModel and sets @err accordingly.
 // If @err == nil, fills in @resModel, else returns error.
-func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (err error) {
+func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) error {
 	var reqBody io.Reader
 
 	if reqModel != nil {
@@ -241,7 +241,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 
 	req, err := http.NewRequest(verb, url, reqBody)
 	if err != nil {
-		return
+		return err
 	} else if c.ctx != nil {
 		req = req.WithContext(c.ctx)
 	}
@@ -282,7 +282,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 		}
 		return nil
 	case 401:
-		// This is returned if the BearerToken is m<issing or has become stale.
+		// This is returned if the BearerToken is missing or has become stale.
 		if c.retryingLogin {
 			return errors.New("failed to re-authenticate, credentials may be invalid")
 		}
@@ -307,12 +307,13 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 		return ErrCredentialsInValid
 	}
 
-	// Remaining error cases: res.ContentLength is not reliable - in the SBS case, it used
+	// Remaining error cases: res.ContentLength is not reliable - in the SBS case, it uses
 	// Transfer-Encoding "chunked", without a Content-Length.
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil && res.ContentLength > 0 {
 		return errors.Errorf("failed to read error response %d body: %s", res.StatusCode, err)
 	} else if len(body) > 0 {
+		var errMsg = string(body)
 		//
 		// So far 5 different types of response have been observed:
 		// 1) bare JSON string
@@ -324,7 +325,6 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 		// 4) struct { error: "string" }, e.g. { "error":"Missing required parameter: serverId"}
 		// 5) struct { error: "string", validationMessages: ["string"] } - like (4), with array of messages
 		//
-		errMsg := string(body)
 		if ct, _, _ := mime.ParseMediaType(res.Header.Get("Content-Type")); ct == "application/json" {
 			/* Code thanks to & inspired by clc-go-cli */
 			var payload map[string]interface{}
@@ -357,9 +357,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) (
 				}
 			}
 		}
-		err = errors.Errorf("%s (status: %d)", errMsg, res.StatusCode)
-	} else {
-		err = errors.New(res.Status)
+		return errors.Errorf("%s (status: %d)", errMsg, res.StatusCode)
 	}
-	return
+	return errors.New(res.Status)
 }
