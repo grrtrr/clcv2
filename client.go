@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/rehttp"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/pkg/errors"
 )
 
@@ -144,7 +144,7 @@ func newClient(user, pass string) *Client {
 			//       requests with individual retries.
 			rehttp.ExpJitterDelay(StepDelay, ClientTimeout),
 		),
-		// Timeout applies to client timeout as a whole.
+		// Timeout applies to all retries taken together as a whole.
 		// See https://medium.com/@nate510/don-t-use-go-s-default-http-client-4804cb19f779
 		Timeout: ClientTimeout,
 	}
@@ -217,13 +217,14 @@ func (c *Client) retryer(maxRetries int) rehttp.RetryFn {
 // getCLCResponse performs a CLC v2 main API request
 // @verb: Http verb to use
 // @path: relative to BaseURL (includes the 'v2' version).
-func (c *Client) getCLCResponse(verb, path string, reqModel, resModel interface{}) (err error) {
+func (c *Client) getCLCResponse(verb, path string, reqModel, resModel interface{}) error {
 	return c.getResponse(baseURL+path, verb, reqModel, resModel)
 }
 
 // getResponse performs a generic request
-// @url:  request URL
-// @verb: request verb// @reqModel: request model to serialize, or nil.
+// @url:      request URL
+// @verb:     request verb
+// @reqModel: request model to serialize, or nil.
 // @resModel: result model to deserialize, must be a pointer to the expected result, or nil.
 // Evaluates the StatusCode of the BaseResponse (embedded) in @inModel and sets @err accordingly.
 // If @err == nil, fills in @resModel, else returns error.
@@ -241,7 +242,7 @@ func (c *Client) getResponse(url, verb string, reqModel, resModel interface{}) e
 	/* resModel must be a pointer type (call-by-value) */
 	if resModel != nil {
 		if resType := reflect.TypeOf(resModel); resType.Kind() != reflect.Ptr {
-			return errors.Errorf("Expecting pointer to result model %T", resModel)
+			return errors.Errorf("expecting pointer to result model %T", resModel)
 		}
 	}
 

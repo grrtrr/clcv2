@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	humanize "github.com/dustin/go-humanize"
@@ -36,9 +37,18 @@ func main() {
 	} else if *simple {
 		pretty.Println(vpns)
 	} else {
+		sort.Slice(vpns, func(i, j int) bool {
+			return vpns[i].Local.LocationAlias < vpns[j].Local.LocationAlias
+		})
+
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
+		table.SetColumnAlignment([]int{
+			tablewriter.ALIGN_LEFT, tablewriter.ALIGN_RIGHT,
+			tablewriter.ALIGN_CENTER, tablewriter.ALIGN_RIGHT,
+			tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT,
+		})
 		table.SetAutoWrapText(true)
 
 		table.SetHeader([]string{"CLC => Remote", "CLC Nets",
@@ -57,7 +67,7 @@ func main() {
 			}
 
 			table.Append([]string{
-				fmt.Sprintf("%s => %-15s", v.Local.LocationAlias, v.Remote.Address),
+				fmt.Sprintf("%s => %15s", v.Local.LocationAlias, v.Remote.Address),
 				strings.Join(v.Local.Subnets, ", "),
 				v.Remote.SiteName,
 				strings.Join(v.Remote.Subnets, ", "),
