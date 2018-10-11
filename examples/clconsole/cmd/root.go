@@ -32,8 +32,18 @@ func ExitHandler() {
 func init() {
 	Root.PersistentFlags().StringVarP(&conf.Username, "username", "u", os.Getenv("CLC_USER"), "CLC Login Username")
 	Root.PersistentFlags().StringVarP(&conf.Password, "password", "p", os.Getenv("CLC_PASSWORD"), "CLC Login Password")
-	Root.PersistentFlags().StringVarP(&conf.Account, "account", "a", os.Getenv("CLC_ACCOUNT"), "CLC account to use (instead of default)")
-	Root.PersistentFlags().StringVarP(&conf.Location, "location", "l", os.Getenv("CLC_LOCATION"), "CLC data centre to use (instead of default)")
+	// Account may be implicit or specified
+	if acct := os.Getenv("CLC_ACCOUNT"); acct != "" {
+		Root.PersistentFlags().StringVarP(&conf.Account, "account", "a", acct, "CLC account to use")
+	} else {
+		Root.PersistentFlags().StringVarP(&conf.Account, "account", "a", "", "CLC account to use (instead of default)")
+	}
+	// Location may also be implicit or specified
+	if location := os.Getenv("CLC_LOCATION"); location != "" {
+		Root.PersistentFlags().StringVarP(&conf.Location, "location", "l", location, "CLC data centre to use")
+	} else {
+		Root.PersistentFlags().StringVarP(&conf.Location, "location", "l", "", "CLC data centre to use (instead of default)")
+	}
 
 	Root.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Produce debug output")
 	Root.PersistentFlags().DurationVarP(&intvl, "poll-interval", "i", 1*time.Second, "Poll interval for status updates (use 0 to disable)")

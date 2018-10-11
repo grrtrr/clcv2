@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 )
 
 func init() {
@@ -15,6 +14,7 @@ func init() {
 		Use:     "creds [group|server [group|server]...]",
 		Aliases: []string{"credentials"},
 		Short:   "Print login credentials of server(s)",
+		PreRunE: checkAtLeastArgs(1, "Need at least 1 group or server name"),
 		Run: func(cmd *cobra.Command, args []string) {
 			if servers, err := extractServerNames(args); err != nil {
 				fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
@@ -39,9 +39,13 @@ func init() {
 						return err
 					})
 				}
-				_ = eg.Wait()
-				if numEntries > 0 {
+
+				if err := eg.Wait(); err != nil {
+					die("%s: failed to get credentials: %s", cmd.Name(), err)
+				} else if numEntries > 0 {
 					table.Render()
+				} else {
+					fmt.Println("No response.")
 				}
 			}
 		},
