@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 
@@ -13,6 +14,7 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
+	"github.com/kr/pretty"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -20,10 +22,10 @@ import (
 
 // Flags
 var showFlags struct {
-	GroupDetails bool // whether to print group details instead of showing the contained servers
-	GroupTree    bool // whether to display groups in tree format
-	GroupID      bool // whether to display the group (hex) UUID at the right hand side
-	IP           bool // whether to just display server IPs (implies GroupTree and GroupDetails)
+	GroupDetails bool // Whether to print group details instead of showing the contained servers
+	GroupTree    bool // Whether to display groups in tree format
+	GroupID      bool // Whether to display the group (hex) UUID at the right hand side
+	IP           bool // Whether to just display server IPs (implies GroupTree and GroupDetails)
 }
 
 func init() {
@@ -291,6 +293,7 @@ func showServer(client *clcv2.CLIClient, server clcv2.Server) {
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAutoWrapText(true)
 
+	pretty.Println(server)
 	// CPU, Memory, IP and Power status are not filled in until the server reaches 'active' state.
 	if server.Status == "active" {
 		table.SetHeader([]string{
@@ -298,7 +301,6 @@ func showServer(client *clcv2.CLIClient, server clcv2.Server) {
 			"CPU", "Mem", "IP", "Power",
 			"Last Change",
 		})
-
 	} else {
 		table.SetHeader([]string{
 			"Name", "Group", "Description", "OS",
@@ -383,18 +385,11 @@ func showServer(client *clcv2.CLIClient, server clcv2.Server) {
 // @client:    authenticated CLCv2 Client
 // @servnames: server names
 func showServers(client *clcv2.CLIClient, servnames []string) {
-	var wg sync.WaitGroup
-
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetAutoFormatHeaders(false)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAutoWrapText(true)
-
-	table.SetHeader([]string{
-		"Name", "Group", "Description", "OS",
-		"IP", "CPU", "Mem", "Storage",
-		"Status", "Last Change",
-	})
+	var (
+		wg      sync.WaitGroup
+		resChan = make(chan []string) // goroutine sends one row at a time
+		results [][]string
+	)
 
 	for _, servname := range servnames {
 		servname := servname
@@ -449,15 +444,46 @@ func showServers(client *clcv2.CLIClient, servnames []string) {
 				serverName += " ~"
 			}
 
-			table.Append([]string{
+			resChan <- []string{
 				serverName, grp.Name, truncate(desc, 30), truncate(server.OsType, 15),
 				strings.Join(IPs, " "),
 				fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024),
 				fmt.Sprintf("%d G", server.Details.StorageGb),
 				status, modifiedStr,
-			})
+			}
 		}()
 	}
-	wg.Wait()
-	table.Render()
+	// Waiter needs to run in the background, to close generator
+	go func() {
+		wg.Wait()
+		close(resChan)
+	}()
+
+	for res := range resChan {
+		results = append(results, res)
+	}
+
+	if len(results) > 0 {
+		var table = tablewriter.NewWriter(os.Stdout)
+		table.SetAutoFormatHeaders(false)
+		table.SetAlignment(tablewriter.ALIGN_LEFT)
+		table.SetAutoWrapText(true)
+
+		table.SetHeader([]string{
+			"Name", "Group", "Description", "OS",
+			"IP", "CPU", "Mem", "Storage",
+			"Status", "Last Change",
+		})
+
+		// Sort in ascending order of names.
+		sort.Slice(results, func(i, j int) bool {
+			if len(results[i]) > 0 && len(results[j]) > 0 {
+				return results[i][0] < results[j][0]
+			}
+			return true
+		})
+		table.AppendBulk(results)
+
+		table.Render()
+	}
 }
