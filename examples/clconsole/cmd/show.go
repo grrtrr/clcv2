@@ -271,7 +271,7 @@ func showServerByName(client *clcv2.CLIClient, servname string) {
 func showServer(client *clcv2.CLIClient, server clcv2.Server) {
 	grp, err := client.GetGroup(server.GroupId)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to resolve group UUID: %s", err)
+		fmt.Fprintf(os.Stderr, "Failed to resolve group UUID: %s\n", err)
 		return
 	}
 
@@ -385,10 +385,15 @@ func showServer(client *clcv2.CLIClient, server clcv2.Server) {
 // @client:    authenticated CLCv2 Client
 // @servnames: server names
 func showServers(client *clcv2.CLIClient, servnames []string) {
+	type asyncServerResult struct {
+		server clcv2.Server
+		group  clcv2.Group
+	}
+
 	var (
 		wg      sync.WaitGroup
-		resChan = make(chan []string) // goroutine sends one row at a time
-		results [][]string
+		resChan = make(chan asyncServerResult)
+		results []asyncServerResult
 	)
 
 	for _, servname := range servnames {
@@ -398,7 +403,7 @@ func showServers(client *clcv2.CLIClient, servnames []string) {
 			defer wg.Done()
 			server, err := client.GetServer(servname)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to list details of server %q: %s", servname, err)
+				fmt.Fprintf(os.Stderr, "Failed to list details of server %q: %s\n", servname, err)
 				return
 			}
 
@@ -407,49 +412,9 @@ func showServers(client *clcv2.CLIClient, servnames []string) {
 				fmt.Fprintf(os.Stderr, "Failed to resolve %s group UUID: %s\n", servname, err)
 				return
 			}
-
-			IPs := []string{}
-			for _, ip := range server.Details.IpAddresses {
-				if ip.Public != "" {
-					IPs = append(IPs, ip.Public)
-				}
-				if ip.Internal != "" {
-					IPs = append(IPs, ip.Internal)
-				}
-			}
-
-			status := server.Details.PowerState
-			if server.Details.InMaintenanceMode {
-				status = "MAINTENANCE"
-			} else if server.Status != "active" {
-				status = server.Status
-			}
-
-			desc := server.Description
-			if server.IsTemplate {
-				desc = "TPL: " + desc
-			}
-
-			modifiedStr := humanize.Time(server.ChangeInfo.ModifiedDate)
-			/* The ModifiedBy field can be an email address, or an API Key (hex string) */
-			if _, err := hex.DecodeString(server.ChangeInfo.ModifiedBy); err == nil {
-				modifiedStr += " via API Key"
-			} else {
-				modifiedStr += " by " + truncate(server.ChangeInfo.ModifiedBy, 6)
-			}
-
-			// Append a tilde (~) to indicate it has snapshots
-			serverName := server.Name
-			if len(server.Details.Snapshots) > 0 {
-				serverName += " ~"
-			}
-
-			resChan <- []string{
-				serverName, grp.Name, truncate(desc, 30), truncate(server.OsType, 15),
-				strings.Join(IPs, " "),
-				fmt.Sprint(server.Details.Cpu), fmt.Sprintf("%d G", server.Details.MemoryMb/1024),
-				fmt.Sprintf("%d G", server.Details.StorageGb),
-				status, modifiedStr,
+			resChan <- asyncServerResult{
+				server: server,
+				group:  *grp,
 			}
 		}()
 	}
@@ -465,6 +430,12 @@ func showServers(client *clcv2.CLIClient, servnames []string) {
 
 	if len(results) > 0 {
 		var table = tablewriter.NewWriter(os.Stdout)
+		// Sort in ascending order of last-modified date.
+
+		sort.Slice(results, func(i, j int) bool {
+			return results[i].server.ChangeInfo.ModifiedDate.Before(results[j].server.ChangeInfo.ModifiedDate)
+		})
+
 		table.SetAutoFormatHeaders(false)
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
 		table.SetAutoWrapText(true)
@@ -475,14 +446,51 @@ func showServers(client *clcv2.CLIClient, servnames []string) {
 			"Status", "Last Change",
 		})
 
-		// Sort in ascending order of names.
-		sort.Slice(results, func(i, j int) bool {
-			if len(results[i]) > 0 && len(results[j]) > 0 {
-				return results[i][0] < results[j][0]
+		for _, res := range results {
+			IPs := []string{}
+			for _, ip := range res.server.Details.IpAddresses {
+				if ip.Public != "" {
+					IPs = append(IPs, ip.Public)
+				}
+				if ip.Internal != "" {
+					IPs = append(IPs, ip.Internal)
+				}
 			}
-			return true
-		})
-		table.AppendBulk(results)
+
+			status := res.server.Details.PowerState
+			if res.server.Details.InMaintenanceMode {
+				status = "MAINTENANCE"
+			} else if res.server.Status != "active" {
+				status = res.server.Status
+			}
+
+			desc := res.server.Description
+			if res.server.IsTemplate {
+				desc = "TPL: " + desc
+			}
+
+			modifiedStr := humanize.Time(res.server.ChangeInfo.ModifiedDate)
+			// The ModifiedBy field can be an email address, or an API Key (hex string) //
+			if _, err := hex.DecodeString(res.server.ChangeInfo.ModifiedBy); err == nil {
+				modifiedStr += " via API Key"
+			} else {
+				modifiedStr += " by " + truncate(res.server.ChangeInfo.ModifiedBy, 6)
+			}
+
+			// Append a tilde (~) to indicate it has snapshots
+			serverName := res.server.Name
+			if len(res.server.Details.Snapshots) > 0 {
+				serverName += " ~"
+			}
+
+			table.Append([]string{
+				serverName, res.group.Name, truncate(desc, 30), truncate(res.server.OsType, 15),
+				strings.Join(IPs, " "),
+				fmt.Sprint(res.server.Details.Cpu), fmt.Sprintf("%d G", res.server.Details.MemoryMb/1024),
+				fmt.Sprintf("%d G", res.server.Details.StorageGb),
+				status, modifiedStr,
+			})
+		}
 
 		table.Render()
 	}
