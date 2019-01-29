@@ -14,7 +14,6 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/grrtrr/clcv2"
-	"github.com/kr/pretty"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -264,6 +263,11 @@ func showServerByName(client *clcv2.CLIClient, servname string) {
 		fmt.Fprintf(os.Stderr, "Failed to list details of server %q: %s\n", servname, err)
 	} else {
 		showServer(client, server)
+		if creds, err := client.GetServerCredentials(servname); err != nil {
+			die("unable to list %s credentials: %s", servname, err)
+		} else {
+			fmt.Printf("\nCredentials of %s: %s / %s\n", servname, creds.Username, creds.Password)
+		}
 	}
 }
 
@@ -293,7 +297,6 @@ func showServer(client *clcv2.CLIClient, server clcv2.Server) {
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAutoWrapText(true)
 
-	pretty.Println(server)
 	// CPU, Memory, IP and Power status are not filled in until the server reaches 'active' state.
 	if server.Status == "active" {
 		table.SetHeader([]string{

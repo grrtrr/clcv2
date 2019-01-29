@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/grrtrr/clcv2"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
@@ -19,35 +20,44 @@ func init() {
 			if servers, err := extractServerNames(args); err != nil {
 				fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 			} else if len(servers) > 0 {
-				var eg errgroup.Group
-				var numEntries int
-
-				table := tablewriter.NewWriter(os.Stdout)
-				table.SetAutoFormatHeaders(false)
-				table.SetAlignment(tablewriter.ALIGN_LEFT)
-				table.SetAutoWrapText(true)
-				table.SetHeader([]string{"VM", "Username", "Password"})
-
-				for _, name := range servers {
-					eg.Go(func() error {
-						if creds, err := client.GetServerCredentials(name); err != nil {
-							fmt.Fprintf(os.Stderr, "ERROR (%s): %s\n", name, err)
-						} else {
-							table.Append([]string{name, creds.Username, creds.Password})
-							numEntries++
-						}
-						return err
-					})
-				}
-
-				if err := eg.Wait(); err != nil {
-					die("%s: failed to get credentials: %s", cmd.Name(), err)
-				} else if numEntries > 0 {
-					table.Render()
-				} else {
-					fmt.Println("No response.")
-				}
+				showServerCredentials(client, servers...)
 			}
 		},
 	})
+}
+
+// showServerCredentials displays the login credentials of one or more @servers.
+func showServerCredentials(client *clcv2.CLIClient, servers ...string) {
+	if len(servers) > 0 {
+		var eg errgroup.Group
+		var numEntries int
+
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetAutoFormatHeaders(false)
+		table.SetAlignment(tablewriter.ALIGN_LEFT)
+		table.SetAutoWrapText(true)
+		table.SetHeader([]string{"VM", "Username", "Password"})
+
+		for _, name := range servers {
+			name := name
+			eg.Go(func() error {
+				creds, err := client.GetServerCredentials(name)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "ERROR (%s): %s\n", name, err)
+					return err
+				}
+				table.Append([]string{name, creds.Username, creds.Password})
+				numEntries++
+				return nil
+			})
+		}
+
+		if err := eg.Wait(); err != nil {
+			die("failed to get credentials: %s", err)
+		} else if numEntries > 0 {
+			table.Render()
+		} else {
+			fmt.Println("No credentials available.")
+		}
+	}
 }
