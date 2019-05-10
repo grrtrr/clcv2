@@ -24,6 +24,9 @@ func init() {
 		Short:   "Snapshot server(s)",
 		Long:    "Create new server snapshot, replacing previous snapshot if it exists",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return errors.Errorf("Need at least 1 server to snapshot")
+			}
 			if snapCreateFlags.days <= 0 || snapCreateFlags.days > 10 {
 				return errors.Errorf("Invalid number of days %d - must be in the range 1..10", snapCreateFlags.days)
 			}
@@ -37,20 +40,23 @@ func init() {
 
 	// Delete snapshot
 	Root.AddCommand(&cobra.Command{
-		Use:     "delsnap  [group|server [group|server]...]",
-		Aliases: []string{"rmsnap", "snapdel"},
+		// FIXME: should be sub-command of snapshot
+		Use:     "delsnap  server [server...]",
+		Aliases: []string{"rmsnap"},
 		Short:   "Delete snapshot of server(s)",
 		Long:    "Delete server snapshot if it exists (error condition of no snapshot exists)",
+		PreRunE: checkAtLeastArgs(1, "Need at least 1 server to remove snapshots from"),
 		Run: func(cmd *cobra.Command, args []string) {
 			serverCmd("delete snapshot", client.DeleteSnapshot, args)
 		}})
 
 	// Revert to snapshot
 	Root.AddCommand(&cobra.Command{
-		Use:     "revert  [group|server [group|server]...]",
+		Use:     "revert  server [server...]",
 		Aliases: []string{"rev"},
 		Short:   "Revert server(s) to snapshot",
 		Long:    "Revert server(s) to last snapshot (error condition if no snapshot exists)",
+		PreRunE: checkAtLeastArgs(1, "Need at least 1 server to revert"),
 		Run: func(cmd *cobra.Command, args []string) {
 			serverCmd("revert to snapshot", client.RevertToSnapshot, args)
 		}})
