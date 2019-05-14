@@ -263,11 +263,6 @@ func showServerByName(client *clcv2.CLIClient, servname string) {
 		fmt.Fprintf(os.Stderr, "Failed to list details of server %q: %s\n", servname, err)
 	} else {
 		showServer(client, server)
-		if creds, err := client.GetServerCredentials(servname); err != nil {
-			die("unable to list %s credentials: %s", servname, err)
-		} else {
-			fmt.Printf("\nCredentials of %s: %s / %s\n", servname, creds.Username, creds.Password)
-		}
 	}
 }
 
@@ -381,6 +376,14 @@ func showServer(client *clcv2.CLIClient, server clcv2.Server) {
 			table.Append([]string{s.Name})
 		}
 		table.Render()
+	}
+
+	if server.Status == "active" {
+		if creds, err := client.GetServerCredentials(server.Name); err != nil {
+			die("unable to list %s credentials: %s", server.Name, err)
+		} else {
+			fmt.Printf("\nCredentials of %s: %s / %s\n", server.Name, creds.Username, creds.Password)
+		}
 	}
 }
 
