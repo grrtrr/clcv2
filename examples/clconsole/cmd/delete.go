@@ -32,6 +32,9 @@ var delete = &cobra.Command{
 	Short:   "Delete server(s)/group(s) (CAUTION)",
 	Long:    "Completely and irreversibly removes servers/groups - USE WITH CAUTION",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return errors.Errorf("Need at least 1 server or group to remove")
+		}
 		for _, arg := range args {
 			if arg == "" {
 				return errors.Errorf("%s: you requested %q, which means EVERYTHING IN %s - refusing to continue",
