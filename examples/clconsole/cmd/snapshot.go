@@ -42,7 +42,7 @@ func init() {
 	Root.AddCommand(&cobra.Command{
 		// FIXME: should be sub-command of snapshot
 		Use:     "delsnap  server [server...]",
-		Aliases: []string{"rmsnap"},
+		Aliases: []string{"snapdel", "rmsnap", "snaprm", "remove-snapshot" },
 		Short:   "Delete snapshot of server(s)",
 		Long:    "Delete server snapshot if it exists (error condition of no snapshot exists)",
 		PreRunE: checkAtLeastArgs(1, "Need at least 1 server to remove snapshots from"),

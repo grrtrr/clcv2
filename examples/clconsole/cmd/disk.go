@@ -44,7 +44,7 @@ var diskAdd = &cobra.Command{
 		if err != nil {
 			exit.Errorf("Failed to list details of server %q: %s", args[0], err)
 		} else if len(server.Details.Snapshots) > 0 {
-			return errors.Errorf("Unable to add disks since %s has a snapshot.", args[0])
+			exit.Errorf("Unable to add disks since %s has a snapshot.", args[0])
 		}
 
 		disks := make([]clcv2.ServerAdditionalDisk, len(server.Details.Disks))
@@ -64,7 +64,7 @@ var diskAdd = &cobra.Command{
 		// Add new disk at the end of the list of existing disks.
 		reqID, err := client.ServerSetDisks(args[0], append(disks, newDisk))
 		if err != nil {
-			log.Fatalf("failed to update the disk configuration on %q: %s", args[0], err)
+			exit.Fatalf("failed to update the disk configuration on %q: %s", args[0], err)
 		}
 
 		log.Printf("%s adding %d GB disk: %s", args[0], diskGB, reqID)
