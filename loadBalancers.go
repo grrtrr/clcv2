@@ -83,7 +83,7 @@ type LoadBalancerNode struct {
 func (c *Client) GetSharedLoadBalancers(dc string) (lb []LoadBalancer, err error) {
 	path := fmt.Sprintf("/v2/sharedLoadBalancers/%s/%s", c.AccountAlias, dc)
 	err = c.getCLCResponse("GET", path, nil, &lb)
-	return
+	return lb, err
 }
 
 // CreateSharedLoadBalancer creates a new load balancer in @dc in @active state.
@@ -98,7 +98,7 @@ func (c *Client) CreateSharedLoadBalancer(name, desc, active, dc string) (lb Loa
 		Description string `json:"description"`
 		Status      string `json:"status"`
 	}{name, desc, active}, &lb)
-	return
+	return lb, err
 }
 
 // DeleteSharedLoadbalancer deletes the load balancer @id in @dc

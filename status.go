@@ -35,7 +35,7 @@ func (c *Client) GetStatus(statusID string) (status QueueStatus, err error) {
 		return Unknown, errors.Errorf("invalid status ID %q", statusID)
 	}
 	err = c.getCLCResponse("GET", path, nil, &struct{ Status *QueueStatus }{&status})
-	return
+	return status, err
 }
 
 // PollStatus polls the queue status of @ID and logs progress to stdout.
@@ -123,7 +123,7 @@ func (c *Client) getStatus(verb, path string, reqModel interface{}) (statusID st
 			statusID = sl.Id
 		}
 	}
-	return
+	return statusID, err
 }
 
 // StatusResponse is the type of response returned by operations such as
@@ -152,7 +152,7 @@ func (c *Client) getStatusResponse(verb, path string, useArray bool, reqModel in
 		var status []StatusResponse
 
 		if err = c.getCLCResponse(verb, path, reqModel, &status); err != nil {
-			return
+			return res, err
 		} else if len(status) == 0 {
 			err = errors.Errorf("empty status response from server")
 		} else if len(status) != 1 {
@@ -171,7 +171,7 @@ func (c *Client) getStatusResponse(verb, path string, useArray bool, reqModel in
 			err = errors.Errorf("request on %s was not queued", res.Server)
 		}
 	}
-	return
+	return res, err
 }
 
 // Wrap getStatusResponse() to only extract the statusID contained in the 'status' link
@@ -182,10 +182,10 @@ func (c *Client) getStatusResponseId(verb, path string, useArray bool, reqModel 
 
 	status, err = c.getStatusResponse(verb, path, useArray, reqModel)
 	if err != nil {
-		return
+		return statusID, err
 	}
 	if link, err = extractLink(status.Links, "status"); err == nil {
 		statusID = link.Id
 	}
-	return
+	return statusID, err
 }

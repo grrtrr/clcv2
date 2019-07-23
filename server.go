@@ -163,7 +163,7 @@ func (s *ServerIPAddress) IsPublic() bool {
 // @path: relative path of the server, as e.g. returned via 'self' link in CreateServer
 func (c *Client) GetServerByURI(path string) (res Server, err error) {
 	err = c.getCLCResponse("GET", path, nil, &res)
-	return
+	return res, err
 }
 
 // Get the details for a individual server.
@@ -209,7 +209,7 @@ func (c *Client) GetServerNets(s Server) (nets []Network, err error) {
 			nets = append(nets, *net)
 		}
 	}
-	return
+	return nets, nil
 }
 
 // GetIPs returns the (private, public) IP addresses associated with @serverID
@@ -341,7 +341,7 @@ func (c *Client) CreateServer(req *CreateServerReq) (url, statusId string, err e
 			url = link.Href
 		}
 	}
-	return
+	return url, statusId, nil
 }
 
 // Send the delete operation to a given server and add operation to queue.
@@ -376,7 +376,7 @@ type ImportOVF struct {
 // @locationId: Data center location identifier
 func (c *Client) GetServerImports(locationId string) (res []ImportOVF, err error) {
 	err = c.getCLCResponse("GET", fmt.Sprintf("/v2/vmImport/%s/%s/available", c.AccountAlias, locationId), nil, &res)
-	return
+	return res, err
 }
 
 /*
@@ -395,7 +395,7 @@ type ServerCredentials struct {
 // @serverId: ID of the server with the credentials to return.
 func (c *Client) GetServerCredentials(serverId string) (res ServerCredentials, err error) {
 	err = c.getCLCResponse("GET", fmt.Sprintf("/v2/servers/%s/%s/credentials", c.AccountAlias, serverId), nil, &res)
-	return
+	return res, err
 }
 
 // Change the administrator/root password on an existing server given the current administrator/root password.
@@ -694,7 +694,7 @@ func (c *Client) changeNic(verb, path string, reqModel interface{}) (err error) 
 			}
 		}
 	}
-	return
+	return err
 }
 
 // Add secondary network adapter to server.

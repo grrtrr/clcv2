@@ -49,7 +49,7 @@ type IntraDataCenterFirewallPolicy struct {
 func (c *Client) GetIntraDataCenterFirewallPolicy(location, policyId string) (res IntraDataCenterFirewallPolicy, err error) {
 	var path = fmt.Sprintf("/v2-experimental/firewallPolicies/%s/%s/%s", c.credentials.AccountAlias, location, policyId)
 	err = c.getCLCResponse("GET", path, nil, &res)
-	return
+	return res, err
 }
 
 // GetIntraDataCenterFirewallPolicyList lists intra-datacenter firewall policies for the given account.
@@ -62,7 +62,7 @@ func (c *Client) GetIntraDataCenterFirewallPolicyList(location, dstAccount strin
 		path += fmt.Sprintf("?destinationAccount=%s", dstAccount)
 	}
 	err = c.getCLCResponse("GET", path, nil, &res)
-	return
+	return res, err
 }
 
 // IntraDataCenterFirewallPolicyReq contains the requisite data to request a new cross-datacenter firewall policy.
@@ -95,7 +95,7 @@ func (c *Client) CreateIntraDataCenterFirewallPolicy(location string, req *Intra
 		/* The ID is contained as the last path field of the Href URL. There is no separate ID field. */
 		id = path.Base(link.Href)
 	}
-	return
+	return id, err
 }
 
 // DeleteIntraDataCenterFirewallPolicy deletes the given cross-datacenter firewall policy @id in datacenter @location.
@@ -150,7 +150,7 @@ func (c *Client) GetCrossDataCenterFirewallPolicyList(location, dstAccount strin
 		path += fmt.Sprintf("?destinationAccount=%s", dstAccount)
 	}
 	err = c.getCLCResponse("GET", path, nil, &res)
-	return
+	return res, err
 }
 
 // GetCrossDataCenterFirewallPolicy returns details of a single cross-datacenter policy
@@ -160,7 +160,7 @@ func (c *Client) GetCrossDataCenterFirewallPolicy(location, id string) (res Cros
 	var path = fmt.Sprintf("/v2-experimental/crossDcFirewallPolicies/%s/%s/%s", c.credentials.AccountAlias, location, id)
 
 	err = c.getCLCResponse("GET", path, nil, &res)
-	return
+	return res, err
 }
 
 // ToggleCrossDataCenterFirewallPolicy enables/disables the given cross-datacenter firewall policy.
@@ -194,7 +194,7 @@ type CrossDataCenterFirewallPolicyReq struct {
 // CreateCrossDataCenterFirewallPolicy creates a new cross-datacenter firewall policy at @location.
 func (c *Client) CreateCrossDataCenterFirewallPolicy(location string, req *CrossDataCenterFirewallPolicyReq) (res CrossDataCenterFirewallPolicy, err error) {
 	err = c.getCLCResponse("POST", fmt.Sprintf("/v2-experimental/crossDcFirewallPolicies/%s/%s", c.AccountAlias, location), req, &res)
-	return
+	return res, err
 }
 
 // DeleteCrossDataCenterFirewallPolicy deletes the given cross-datacenter firewall policy @id in datacenter @location.

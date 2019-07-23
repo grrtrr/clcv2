@@ -33,7 +33,7 @@ func (c *Client) AddPublicIPAddress(serverId string, req *PublicIPAddress) (stat
 func (c *Client) GetPublicIPAddress(serverId, publicIp string) (res PublicIPAddress, err error) {
 	path := fmt.Sprintf("/v2/servers/%s/%s/publicIPAddresses/%s", c.credentials.AccountAlias, serverId, publicIp)
 	err = c.getCLCResponse("GET", path, nil, &res)
-	return
+	return res, err
 }
 
 // Update a public IP address on an existing server.

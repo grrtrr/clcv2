@@ -48,7 +48,7 @@ func (c *Client) GetGroup(groupId string) (res *Group, err error) {
 	path := fmt.Sprintf("/v2/groups/%s/%s", c.AccountAlias, groupId)
 	res = new(Group)
 	err = c.getCLCResponse("GET", path, nil, res)
-	return
+	return res, err
 }
 
 // Gets a list of all groups with the specified search criteria.
@@ -56,12 +56,12 @@ func (c *Client) GetGroup(groupId string) (res *Group, err error) {
 func (c *Client) GetGroups(location string) (rootNode *Group, err error) {
 	dc, err := c.GetDatacenter(location, true)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	gl, err := extractLink(dc.Links, "group")
 	if err != nil {
-		return
+		return nil, err
 	}
 	return c.GetGroup(gl.Id)
 }
@@ -108,7 +108,7 @@ func (c *Client) GetGroupsFiltered(location string, found func(*Group) bool) (re
 			res = append(res, result)
 		}
 	}
-	return
+	return res, err
 }
 
 // Look for a (the first) Hardware Group satisfying a given criterion
@@ -123,7 +123,7 @@ func (c *Client) GetGroupFiltered(location string, found func(*Group) bool) (res
 	} else if len(groups) > 1 {
 		return nil, errors.Errorf("ambiguous - %d matching groups found in %s", len(groups), location)
 	}
-	return
+	return res, err
 }
 
 // Look up Hardware Group by @name and @location
@@ -147,10 +147,10 @@ func (c *Client) CreateGroup(name, parent, desc string, cf []SimpleCustomField) 
 		Name          string              `json:"name"`
 		Description   string              `json:"description"`
 		ParentGroupId string              `json:"parentGroupId"`
-		customFields  []SimpleCustomField `json:"customFields"`
+		CustomFields  []SimpleCustomField `json:"customFields"`
 	}{name, desc, parent, cf}
 	err = c.getCLCResponse("POST", fmt.Sprintf("/v2/groups/%s", c.AccountAlias), &req, &res)
-	return
+	return res, err
 }
 
 // Change the name of an existing group.
@@ -224,7 +224,7 @@ type GroupBillingDetails struct {
 func (c *Client) GetGroupBillingDetails(groupId string) (res GroupBillingDetails, err error) {
 	path := fmt.Sprintf("/v2/groups/%s/%s/billing", c.credentials.AccountAlias, groupId)
 	err = c.getCLCResponse("GET", path, nil, &res)
-	return
+	return res, err
 }
 
 /*
@@ -288,7 +288,7 @@ type GroupScheduledActivity struct {
 func (c *Client) GetGroupScheduledActivities(groupId string) (res []GroupScheduledActivity, err error) {
 	path := fmt.Sprintf("/v2/groups/%s/%s/ScheduledActivities", c.credentials.AccountAlias, groupId)
 	err = c.getCLCResponse("GET", path, nil, &res)
-	return
+	return res, err
 }
 
 /*
@@ -327,5 +327,5 @@ type GroupDefaultSetting struct {
 func (c *Client) SetGroupDefaults(groupId string, gd *GroupDefaults) (res map[string]GroupDefaultSetting, err error) {
 	path := fmt.Sprintf("/v2/groups/%s/%s/defaults", c.AccountAlias, groupId)
 	err = c.getCLCResponse("POST", path, gd, &res)
-	return
+	return res, err
 }

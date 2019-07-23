@@ -48,7 +48,7 @@ func (c *Client) GetNetworks(location, account string) (nets []Network, err erro
 		account = c.AccountAlias
 	}
 	err = c.getCLCResponse("GET", fmt.Sprintf("/v2-experimental/networks/%s/%s", account, location), nil, &nets)
-	return
+	return nets, err
 }
 
 // GetNetworkIdByName looks up a network by @name in @location
@@ -154,7 +154,7 @@ type NetworkDetails struct {
 func (c *Client) GetNetworkDetails(datacentre, network, ipQuery string) (det NetworkDetails, err error) {
 	path := fmt.Sprintf("/v2-experimental/networks/%s/%s/%s?ipAddresses=%s", c.AccountAlias, datacentre, network, ipQuery)
 	err = c.getCLCResponse("GET", path, nil, &det)
-	return
+	return det, err
 }
 
 // Utility routine to extract only the list of IP addresses from @detailsList
@@ -162,7 +162,7 @@ func ExtractIPs(detailsList []IpAddressDetails) (ips []string) {
 	for _, ip := range detailsList {
 		ips = append(ips, ip.Address)
 	}
-	return
+	return ips
 }
 
 // Look up network details (server) given just an IP address.
@@ -204,7 +204,7 @@ func (c *Client) GetNetworkDetailsByIp(ip, location string) (iad *IpAddressDetai
 			}
 		}
 	}
-	return
+	return iad, nil
 }
 
 // claimNetworkStatus is returned by a GET on the URI returned from a claim-network POST operation.

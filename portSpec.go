@@ -95,11 +95,11 @@ func ParsePortSpec(ps string) (p Port, err error) {
 	if len(el) != 2 {
 		if ps == "ping" || ps == "icmp" {
 			p.Protocol = "icmp"
-			return
+			return p, nil
 		} else if ps == "rdp" {
 			/* RDP may not be listed in /etc/services */
 			p.Protocol, p.Port = "tcp", 3389
-			return
+			return p, nil
 		}
 		/* Otherwise assume it's a tcp Service Name */
 		return ParsePortSpec("tcp/" + ps)
@@ -135,5 +135,5 @@ func ParsePortSpec(ps string) (p Port, err error) {
 		/* CLCv2 uses IPv4 addresses exclusively - look up v4 port names only */
 		p.Port, err = net.LookupPort(p.Protocol+"4", el[1])
 	}
-	return
+	return p, nil
 }

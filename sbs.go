@@ -39,26 +39,26 @@ type SBSregion struct {
 // SBSgetAllRegions retrieves a list of backup storage regions which are available in Simple Backup Service.
 func (c *Client) SBSgetAllRegions() (res []SBSregion, err error) {
 	err = c.getSBSResponse("GET", "regions", nil, &res)
-	return
+	return res, err
 }
 
 // SBSgetDatacenters returns a list of CLC data centres.
 func (c *Client) SBSgetDatacenters() (res []string, err error) {
 	err = c.getSBSResponse("GET", "datacenters", nil, &res)
-	return
+	return res, err
 }
 
 // SBSgetServersByDatacenter returns a list of servers associated with data center @dc.
 func (c *Client) SBSgetServersByDatacenter(dc string) (res []string, err error) {
 	var u = url.URL{Path: fmt.Sprintf("datacenters/%s/servers", dc)}
 	err = c.getSBSResponse("GET", u.EscapedPath(), nil, &res)
-	return
+	return res, err
 }
 
 // SBSgetOsTypes returns the list of Operating System Types supported by the Simple Backup Service.
 func (c *Client) SBSgetOsTypes() (res []string, err error) {
 	err = c.getSBSResponse("GET", "osTypes", nil, &res)
-	return
+	return res, err
 }
 
 // SBSAccountPolicy contains the actual SBS account policy information.
@@ -95,19 +95,19 @@ type SBSAccountPolicy struct {
 // SBScreatePolicy creates a new Account Policy
 func (c *Client) SBScreatePolicy(req *SBSAccountPolicy) (res SBSAccountPolicy, err error) {
 	err = c.getSBSResponse("POST", "accountPolicies", req, &res)
-	return
+	return res, err
 }
 
 // SBSupdatePolicy updates an existing Account Policy
 func (c *Client) SBSupdatePolicy(policyID string, req *SBSAccountPolicy) (res SBSAccountPolicy, err error) {
 	err = c.getSBSResponse("PUT", fmt.Sprintf("accountPolicies/%s", policyID), req, &res)
-	return
+	return res, err
 }
 
 // SBSgetPolicy returns the single Policy associated with @policyID, or an error.
 func (c *Client) SBSgetPolicy(policyID string) (res SBSAccountPolicy, err error) {
 	err = c.getSBSResponse("GET", fmt.Sprintf("accountPolicies/%s", policyID), nil, &res)
-	return
+	return res, err
 }
 
 // SBSgetPolicies returns the list of SBS backup policies associated with an account.
@@ -212,7 +212,7 @@ func (c *Client) SBScreateServerPolicy(acPolicyID, server, region string) (res S
 			Server  string `json:"serverId"`
 			Region  string `json:"storageRegion"`
 		}{c.AccountAlias, server, region}, &res)
-	return
+	return res, err
 }
 
 // SBSdeleteServerPolicy deletes the Server Policy specified by @srvPolicyID
@@ -237,7 +237,7 @@ func (c *Client) SBSgetServerPolicies(acPolicyId string) ([]SBSServerPolicy, err
 // SBSgetServerPolicyDetails returns SBS policy details associated with a single @server.
 func (c *Client) SBSgetServerPolicyDetails(server string) (res []SBSServerPolicy, err error) {
 	err = c.getSBSResponse("GET", fmt.Sprintf("serverPolicyDetails?serverId=%s", server), nil, &res)
-	return
+	return res, err
 }
 
 // SBSgetServerPolicy list SBS server policy details of the given @serverPolicyId
@@ -265,7 +265,7 @@ func (c *Client) SBSgetServerPolicy(serverPolicyId string) (*SBSServerPolicy, er
 func (c *Client) SBSpatchServerPolicyStatus(srvPolicyID, newValue string) (p *SBSServerPolicy, err error) {
 	p, err = c.SBSgetServerPolicy(srvPolicyID)
 	if err != nil {
-		return
+		return p, err
 	}
 
 	err = c.getSBSResponse("PATCH",
@@ -277,7 +277,7 @@ func (c *Client) SBSpatchServerPolicyStatus(srvPolicyID, newValue string) (p *SB
 			Path  string `json:"path"`
 			Value string `json:"value"`
 		}{"replace", "/status", newValue}, p)
-	return
+	return p, err
 }
 
 // SBSRestorePoint captures the details of a single restore point

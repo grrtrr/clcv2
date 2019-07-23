@@ -37,7 +37,6 @@ func (d DiskIDList) String() string {
 	var ret []string
 
 	for _, id := range d {
-		fmt.Sprintf("adding %s, %s", id, string(id))
 		ret = append(ret, string(id))
 	}
 	return strings.Join(ret, ", ")

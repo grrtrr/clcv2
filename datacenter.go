@@ -19,7 +19,7 @@ type DataCenter struct {
 // Get the list of data centers that a given account has access to.
 func (c *Client) GetLocations() (loc []DataCenter, err error) {
 	err = c.getCLCResponse("GET", "/v2/datacenters/"+c.AccountAlias, nil, &loc)
-	return
+	return loc, err
 }
 
 // Get the details of a specific data center.
@@ -28,7 +28,7 @@ func (c *Client) GetLocations() (loc []DataCenter, err error) {
 func (c *Client) GetDatacenter(location string, groupLinks bool) (res DataCenter, err error) {
 	path := fmt.Sprintf("/v2/datacenters/%s/%s?groupLinks=%t", c.AccountAlias, location, groupLinks)
 	err = c.getCLCResponse("GET", path, nil, &res)
-	return
+	return res, err
 }
 
 // IntResourceValue represents an integer value.
@@ -141,7 +141,7 @@ type Template struct {
 func (c *Client) GetDeploymentCapabilities(location string) (res DeploymentCapabilities, err error) {
 	path := fmt.Sprintf("/v2/datacenters/%s/%s/deploymentCapabilities", c.credentials.AccountAlias, location)
 	err = c.getCLCResponse("GET", path, nil, &res)
-	return
+	return res, err
 }
 
 /*
@@ -210,5 +210,5 @@ type BareMetalCapabilities struct {
 func (c *Client) GetBareMetalCapabilities(location string) (res BareMetalCapabilities, err error) {
 	path := fmt.Sprintf("/v2/datacenters/%s/%s/bareMetalCapabilities", c.credentials.AccountAlias, location)
 	err = c.getCLCResponse("GET", path, nil, &res)
-	return
+	return res, err
 }

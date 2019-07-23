@@ -96,7 +96,7 @@ func (c *Client) GetInvoiceData(year, month int, pricingAccount string) (res Inv
 		path += "?pricingAccount=" + pricingAccount
 	}
 	err = c.getCLCResponse("GET", path, nil, &res)
-	return
+	return res, err
 }
 
 // Used by the 'Get Group Billing Details' call

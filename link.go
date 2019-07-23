@@ -43,7 +43,7 @@ func ExtractLinks(from []Link, rel_type string) (res []Link) {
 			res = append(res, l)
 		}
 	}
-	return
+	return res
 }
 
 // Extract first Link whose 'Rel' field matches @rel_type, return nil if none found.
@@ -54,5 +54,5 @@ func extractLink(from []Link, rel_type string) (l *Link, err error) {
 	} else {
 		err = errors.Errorf("No link with Rel=%s found in %+v", rel_type, from)
 	}
-	return
+	return l, nil
 }

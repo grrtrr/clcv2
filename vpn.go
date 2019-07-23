@@ -47,7 +47,7 @@ type RemoteEntity struct {
 	Address string `json:"address"`
 
 	// Friendly name of the site
-	SiteName string `json:siteName"`
+	SiteName string `json:"siteName"`
 
 	// Friendly name of the device type
 	DeviceType string `json:"deviceType"`
@@ -118,11 +118,11 @@ type IPsecEntity struct {
 // GetVPNs returns the list of site-to-site VPNs associated with the given client AccountAlias.
 func (c *Client) GetVPNs() (res []SiteToSiteVPN, err error) {
 	err = c.getCLCResponse("GET", fmt.Sprintf("/v2/siteToSiteVpn?account=%s", c.AccountAlias), nil, &res)
-	return
+	return res, err
 }
 
 // GetVPN returns details of the specified Site-to-Site VPN.
 func (c *Client) GetVPN(vpnID string) (res SiteToSiteVPN, err error) {
 	err = c.getCLCResponse("GET", fmt.Sprintf("/v2/siteToSiteVpn/%s?account=%s", vpnID, c.credentials.AccountAlias), nil, &res)
-	return
+	return res, err
 }
