@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/rehttp"
-	"github.com/sirupsen/logrus"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const (

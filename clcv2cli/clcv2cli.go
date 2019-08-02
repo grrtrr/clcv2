@@ -5,6 +5,7 @@ package clcv2cli
  */
 import (
 	"flag"
+	"os"
 	"time"
 
 	"github.com/grrtrr/clcv2"
@@ -19,10 +20,10 @@ var (
 )
 
 func init() {
-	flag.StringVar(&g_user, "username", "", "CLC Login Username")
-	flag.StringVar(&g_pass, "password", "", "CLC Login Password")
+	flag.StringVar(&g_user, "username", os.Getenv("CLC_USER"), "CLC Login Username")
+	flag.StringVar(&g_pass, "password", os.Getenv("CLC_PASSWORD"), "CLC Login Password")
+	flag.StringVar(&g_acct, "a", os.Getenv("CLC_ACCOUNT"), "CLC Account Alias to use (instead of default)")
 	flag.BoolVar(&g_debug, "d", false, "Produce debug output")
-	flag.StringVar(&g_acct, "a", "", "CLC Account Alias to use (instead of default)")
 	/*
 	 * Caveat: keep the timeout value high, at least a few minutes.
 	 *         Some operations, such as querying details of a new server immediately
@@ -40,6 +41,6 @@ func NewCLIClient() (*clcv2.CLIClient, error) {
 		Username: g_user,
 		Password: g_pass,
 		Account:  g_acct,
-		Location: "",
+		Location: os.Getenv("CLC_LOCATION"),
 	})
 }
