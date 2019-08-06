@@ -8,28 +8,32 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
 )
 
 // Link adds hyperlink information to resources.
 type Link struct {
 	// The link type (depends on context)
-	Rel string
+	Rel string `json:"rel"`
 
 	// Address of the resource.
-	Href string
+	Href string `json:"href,omitempty"`
 
 	/*
 	 * Optional Fields
 	 */
 	// Unique ID of the resource.
-	Id string
+	Id string `json:"id,omitempty"`
+
+	// Resource UUID (currently LBaaS only)
+	ResourceId uuid.UUID `json:"resourceId,omitempty"`
 
 	// Friendly name of the resource.
-	Name string
+	Name string `json:"name,omitempty"`
 
 	// Valid HTTP verbs that can act on this resource.
 	// If none are explicitly listed, GET is assumed to be the only one.
-	Verbs []string
+	Verbs []string `json:"verbs,omitempty"`
 }
 
 func (l *Link) String() string {
